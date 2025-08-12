@@ -36,6 +36,15 @@ admin/web/          # Admin dashboard (Vite + React)
 mobile/flutter_app/ # Flutter app source (placeholder)
 ```
 
+## API Highlights
+- `GET /api/recipes/:id/grocery-list?includeCost=true` — Returns aggregated grocery items for the recipe and, if `includeCost=true` (default), estimated pricing per item plus total.
+- `POST /api/recipes/grocery-list` — Aggregates multiple recipes; request body `{ recipes: [{ id, servings? }, ...], includeCost?: boolean }`.
+- `GET /api/prices/cheapest?name=potatoes&unit=g` — Looks up the cheapest matching product across stores and returns price per base unit.
+
+## Scrapers
+- Weekly cron jobs fetch prices from Rimi, Maxima, Barbora and upsert into PostgreSQL (`stores`, `products`, `product_prices`).
+- On service start, scrapers perform an initial price update to seed data.
+
 ## Notes
 - All services listen on 0.0.0.0 inside containers.
 - Do not hardcode localhost in client code; use environment variables for base URLs.
