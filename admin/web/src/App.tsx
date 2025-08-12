@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
+import { t, setLang, getLang } from './i18n';
 
-const API = import.meta.env.VITE_API_BASE_URL;
+const API = (import.meta as any).env?.VITE_API_BASE_URL || window.__VITE__?.VITE_API_BASE_URL || '';
 
 export function App() {
   const [health, setHealth] = useState<string>('');
@@ -152,7 +153,17 @@ export function App() {
 
   return (
     <div style={{ fontFamily: 'system-ui', padding: 16, maxWidth: 900 }}>
-      <h1>Admin Dashboard</h1>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <h1>{t('adminDashboard')}</h1>
+        <div>
+          <label>{t('language')}: </label>
+          <select value={getLang()} onChange={e => setLang(e.target.value as any)}>
+            <option value="en">EN</option>
+            <option value="lv">LV</option>
+            <option value="ru">RU</option>
+          </select>
+        </div>
+      </div>
       <p>API: {API}</p>
       <p>Health: {health}</p>
 
@@ -166,7 +177,7 @@ export function App() {
       </section>
 
       <section style={{ marginTop: 24 }}>
-        <h2>Recipes</h2>
+        <h2>{t('recipes')}</h2>
         <button onClick={loadRecipes}>Load</button>
         <ul>
           {recipes.map(r => (
@@ -176,7 +187,7 @@ export function App() {
       </section>
 
       <section style={{ marginTop: 24 }}>
-        <h2>Weekly Planner</h2>
+        <h2>{t('weeklyPlanner')}</h2>
         <div>
           <input type="date" placeholder="Week start (YYYY-MM-DD)" value={weekStart} onChange={e => setWeekStart(e.target.value)} />
           <button onClick={loadWeekPlan} disabled={!token || !weekStart}>Load plan</button>
@@ -237,7 +248,7 @@ export function App() {
       </section>
 
       <section style={{ marginTop: 24 }}>
-        <h2>Preferences</h2>
+        <h2>{t('preferences')}</h2>
         <div>
           <button onClick={loadPreferences} disabled={!token}>Load</button>
         </div>
@@ -256,7 +267,7 @@ export function App() {
       </section>
 
       <section style={{ marginTop: 24 }}>
-        <h2>Recommendations</h2>
+        <h2>{t('recommendations')}</h2>
         <button onClick={loadRecommendations} disabled={!token}>Load</button>
         <ul>
           {recommendations.map(r => (
@@ -266,7 +277,7 @@ export function App() {
       </section>
 
       <section style={{ marginTop: 24 }}>
-        <h2>Submit Recipe</h2>
+        <h2>{t('submitRecipe')}</h2>
         <div>
           <input style={{ width: 400 }} placeholder="Title" value={submitTitle} onChange={e => setSubmitTitle(e.target.value)} />
         </div>
@@ -297,7 +308,7 @@ export function App() {
       </section>
 
       <section style={{ marginTop: 24 }}>
-        <h2>Upload Image (base64)</h2>
+        <h2>{t('uploadImage')}</h2>
         <div>
           <textarea style={{ width: 500, height: 120 }} placeholder="Paste data URL (data:image/png;base64,...)" value={dataUrl} onChange={e => setDataUrl(e.target.value)} />
         </div>
@@ -316,7 +327,7 @@ export function App() {
       </section>
 
       <section style={{ marginTop: 24 }}>
-        <h2>Ratings</h2>
+        <h2>{t('ratings')}</h2>
         <div>
           <select value={selectedRecipeId} onChange={e => setSelectedRecipeId(e.target.value)}>
             <option value="">— choose recipe —</option>
@@ -369,7 +380,7 @@ export function App() {
       </section>
 
       <section style={{ marginTop: 24 }}>
-        <h2>Comments</h2>
+        <h2>{t('comments')}</h2>
         <div>
           <select value={selectedRecipeId} onChange={e => setSelectedRecipeId(e.target.value)}>
             <option value="">— choose recipe —</option>
@@ -417,7 +428,7 @@ export function App() {
       </section>
 
       <section style={{ marginTop: 24 }}>
-        <h2>Admin: Approvals</h2>
+        <h2>{t('approvals')}</h2>
         <div>
           <button disabled={!token} onClick={async () => {
             // naive: list all recipes and filter in UI for demo (no dedicated endpoint yet)
@@ -443,7 +454,7 @@ export function App() {
       </section>
 
       <section style={{ marginTop: 24 }}>
-        <h2>Admin: Challenges</h2>
+        <h2>{t('challenges')}</h2>
         <div>
           <input placeholder="Title" value={newChallenge.title} onChange={e => setNewChallenge({ ...newChallenge, title: e.target.value })} />
           <input placeholder="Start (YYYY-MM-DD)" value={newChallenge.start} onChange={e => setNewChallenge({ ...newChallenge, start: e.target.value })} />
@@ -459,7 +470,7 @@ export function App() {
       </section>
 
       <section style={{ marginTop: 24 }}>
-        <h2>Admin: Monetization</h2>
+        <h2>{t('monetization')}</h2>
         <div style={{ background:'#fffbe6', border:'1px solid #ffe58f', color:'#613400', padding:8, margin:'8px 0 12px 0' }}>
           Billing (Stripe) is deferred until all phases are complete. Stub endpoints are used; no API keys required here.
         </div>
@@ -565,6 +576,99 @@ export function App() {
           </div>
         </div>
       </section>
+
+      <section style={{ marginTop: 24 }}>
+        <h2>{t('recipeCrud')}</h2>
+        <div style={{ border: '1px solid #ccc', padding: 12 }}>
+          <RecipeCrud API={API} token={token} onChange={loadRecipes} recipes={recipes} />
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function RecipeCrud({ API, token, onChange, recipes }: { API: string; token: string; onChange: () => void; recipes: any[] }) {
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [images, setImages] = useState('');
+  const [servings, setServings] = useState<number>(2);
+  const [totalTime, setTotalTime] = useState<string>('');
+  const [selected, setSelected] = useState('');
+  const [status, setStatus] = useState('');
+
+  async function create() {
+    setStatus('Creating...');
+    const res = await fetch(`${API}/api/admin/recipes`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({
+        title,
+        description,
+        images: images.split(',').map(s => s.trim()).filter(Boolean),
+        servings,
+        total_time_minutes: totalTime ? Number(totalTime) : null,
+        steps: [],
+        nutrition: {},
+        ingredients: []
+      })
+    });
+    const data = await res.json().catch(() => ({}));
+    setStatus(res.ok ? `Created id=${data.id}` : (data.error || 'Error'));
+    if (res.ok) onChange();
+  }
+
+  async function update() {
+    if (!selected) return;
+    setStatus('Updating...');
+    const res = await fetch(`${API}/api/admin/recipes/${selected}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({
+        title: title || null,
+        description: description || null,
+        images: images ? images.split(',').map(s => s.trim()).filter(Boolean) : null,
+        servings: servings || null,
+        total_time_minutes: totalTime ? Number(totalTime) : null
+      })
+    });
+    setStatus(res.status === 204 ? 'Updated' : 'Update failed');
+    if (res.ok) onChange();
+  }
+
+  async function remove() {
+    if (!selected) return;
+    setStatus('Deleting...');
+    const res = await fetch(`${API}/api/admin/recipes/${selected}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    setStatus(res.status === 204 ? 'Deleted' : 'Delete failed');
+    if (res.ok) onChange();
+  }
+
+  return (
+    <div>
+      <div style={{ marginBottom: 8 }}>
+        <select value={selected} onChange={e => setSelected(e.target.value)}>
+          <option value="">— select recipe —</option>
+          {recipes.map(r => (
+            <option key={r.id} value={r.id}>{r.title}</option>
+          ))}
+        </select>
+      </div>
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        <input placeholder="Title" value={title} onChange={e => setTitle(e.target.value)} />
+        <input placeholder="Description" value={description} onChange={e => setDescription(e.target.value)} style={{ width: 300 }} />
+        <input placeholder="Image URLs (comma)" value={images} onChange={e => setImages(e.target.value)} style={{ width: 260 }} />
+        <input type="number" placeholder="Servings" value={servings} onChange={e => setServings(Number(e.target.value || 2))} />
+        <input type="number" placeholder="Total time (min)" value={totalTime} onChange={e => setTotalTime(e.target.value)} />
+      </div>
+      <div style={{ marginTop: 8 }}>
+        <button disabled={!token || !title} onClick={create}>Create</button>
+        <button style={{ marginLeft: 8 }} disabled={!token || !selected} onClick={update}>Update</button>
+        <button style={{ marginLeft: 8 }} disabled={!token || !selected} onClick={remove}>Delete</button>
+        <span style={{ marginLeft: 8 }}>{status}</span>
+      </div>
     </div>
   );
 }

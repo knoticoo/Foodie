@@ -234,3 +234,15 @@ curl -X POST http://YOUR.PUBLIC.IP.OR.DOMAIN:3000/api/billing/portal \
   -H "Authorization: Bearer YOUR_JWT" -H "Content-Type: application/json" \
   -d '{"returnUrl":"http://YOUR.PUBLIC.IP.OR.DOMAIN:5173"}'
 ```
+
+### 15) New additions
+- CORS is now hardened. Set `CORS_ORIGIN` in `.env` to a comma-separated list of allowed origins (e.g., `http://admin.example.com`). `*` allows all.
+- Basic rate limiting enabled globally (100 req/min/IP). Adjust in `backend/src/index.ts` by changing `createRateLimiter(100, 100)`.
+- Ingredient search is available: `GET /api/recipes?ingredient=potato` with pagination via `limit` and `offset`.
+- Unit conversion improved to support `cup`, `tbsp`, `tsp`, with basic density mapping for common ingredients to aggregate consistently.
+- Admin Recipe CRUD endpoints:
+  - `POST /api/admin/recipes` (create)
+  - `PUT /api/admin/recipes/:id` (update)
+  - `DELETE /api/admin/recipes/:id` (delete)
+  All require admin auth headers.
+- Admin Web has language switch (EN/LV/RU). Server also parses `Accept-Language`/`X-Lang` and sets `req.locale`.

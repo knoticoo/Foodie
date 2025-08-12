@@ -2,6 +2,7 @@ import { pgPool } from '../db/pool.js';
 
 export interface RecipeListFilters {
   query?: string;
+  ingredientQuery?: string;
   diet?: string[];
   maxTimeMinutes?: number;
   maxCostCents?: number;
@@ -15,6 +16,14 @@ export async function findRecipes(filters: RecipeListFilters, limit = 20, offset
   if (filters.query) {
     params.push(`%${filters.query}%`);
     where.push(`title ILIKE $${params.length}`);
+  }
+  if (filters.ingredientQuery) {
+    params.push(`%${filters.ingredientQuery.toLowerCase()}%`);
+    // Search inside ingredients JSONB array for name match
+    where.push(`EXISTS (
+      SELECT 1 FROM jsonb_array_elements(ingredients) AS ing
+      WHERE lower(ing->>'name') LIKE $${params.length}
+    )`);
   }
   if (filters.diet && filters.diet.length > 0) {
     params.push(filters.diet);

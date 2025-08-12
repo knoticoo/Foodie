@@ -7,6 +7,68 @@ export const adminRouter = Router();
 
 adminRouter.use(requireAuth, requireAdmin);
 
+// Create recipe (admin)
+adminRouter.post('/recipes', async (req, res) => {
+  const body = req.body as any;
+  const title = String(body.title || '').trim();
+  if (title.length < 3) return res.status(400).json({ error: 'title required' });
+  const { rows } = await pgPool.query(
+    `INSERT INTO recipes (title, description, steps, images, servings, total_time_minutes, nutrition, ingredients, is_approved)
+     VALUES ($1, $2, $3::jsonb, $4::jsonb, COALESCE($5,2), $6, $7::jsonb, $8::jsonb, TRUE)
+     RETURNING id`,
+    [
+      title,
+      body.description ?? '',
+      JSON.stringify(body.steps ?? []),
+      JSON.stringify(body.images ?? []),
+      body.servings ?? 2,
+      body.total_time_minutes ?? null,
+      JSON.stringify(body.nutrition ?? {}),
+      JSON.stringify(body.ingredients ?? [])
+    ]
+  );
+  res.status(201).json({ id: rows[0].id });
+});
+
+// Update recipe (admin)
+adminRouter.put('/recipes/:id', async (req, res) => {
+  const id = String(req.params.id || '');
+  const body = req.body as any;
+  const result = await pgPool.query(
+    `UPDATE recipes SET
+      title = COALESCE($1, title),
+      description = COALESCE($2, description),
+      steps = COALESCE($3::jsonb, steps),
+      images = COALESCE($4::jsonb, images),
+      servings = COALESCE($5, servings),
+      total_time_minutes = COALESCE($6, total_time_minutes),
+      nutrition = COALESCE($7::jsonb, nutrition),
+      ingredients = COALESCE($8::jsonb, ingredients)
+     WHERE id=$9`,
+    [
+      body.title ?? null,
+      body.description ?? null,
+      body.steps ? JSON.stringify(body.steps) : null,
+      body.images ? JSON.stringify(body.images) : null,
+      body.servings ?? null,
+      body.total_time_minutes ?? null,
+      body.nutrition ? JSON.stringify(body.nutrition) : null,
+      body.ingredients ? JSON.stringify(body.ingredients) : null,
+      id
+    ]
+  );
+  const changed = Number(result.rowCount || 0) > 0;
+  return changed ? res.status(204).end() : res.status(404).json({ error: 'Not found' });
+});
+
+// Delete recipe (admin)
+adminRouter.delete('/recipes/:id', async (req, res) => {
+  const id = String(req.params.id || '');
+  const result = await pgPool.query('DELETE FROM recipes WHERE id=$1', [id]);
+  const changed = Number(result.rowCount || 0) > 0;
+  return changed ? res.status(204).end() : res.status(404).json({ error: 'Not found' });
+});
+
 // Approve or reject a recipe
 adminRouter.put('/recipes/:id/approval', async (req, res) => {
   const id = String(req.params.id || '');

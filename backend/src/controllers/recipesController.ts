@@ -4,7 +4,7 @@ import { getUserPreferences } from '../services/preferencesService.js';
 import jwt from 'jsonwebtoken';
 
 export async function listRecipes(req: Request, res: Response) {
-  const { q, diet, maxTime, maxCost, limit, offset } = req.query;
+  const { q, ingredient, diet, maxTime, maxCost, limit, offset } = req.query;
 
   let defaultDiet: string[] | undefined;
   let defaultBudget: number | undefined;
@@ -24,6 +24,7 @@ export async function listRecipes(req: Request, res: Response) {
 
   const filters = {
     query: typeof q === 'string' ? q : undefined,
+    ingredientQuery: typeof ingredient === 'string' ? ingredient : undefined,
     diet: typeof diet === 'string' ? diet.split(',').filter(Boolean) : defaultDiet,
     maxTimeMinutes: typeof maxTime === 'string' ? Number(maxTime) : undefined,
     maxCostCents: typeof maxCost === 'string' ? Number(maxCost) : defaultBudget
