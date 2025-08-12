@@ -39,11 +39,22 @@ STRIPE_PRICE_ID=
 STRIPE_WEBHOOK_SECRET=
 EOF
   fi
-  # Auto-generate a strong JWT_SECRET if placeholder is present
-  if grep -q "^JWT_SECRET=please_change_me$" .env; then
+fi
+
+# Ensure JWT_SECRET exists and is not placeholder/empty (generate once)
+if [[ -f .env ]]; then
+  set +e
+  CURRENT_LINE=$(grep -E '^JWT_SECRET=' .env | head -n1)
+  set -e
+  CURRENT_VALUE="${CURRENT_LINE#JWT_SECRET=}"
+  if [[ -z "${CURRENT_LINE}" || -z "${CURRENT_VALUE}" || "${CURRENT_VALUE}" == "please_change_me" ]]; then
     RANDOM_SECRET=$(head -c 32 /dev/urandom | base64 | tr -d '\n=/+' | head -c 48)
-    sed -i "s|^JWT_SECRET=please_change_me$|JWT_SECRET=${RANDOM_SECRET}|" .env
-    echo "[i] Generated JWT_SECRET in .env"
+    if grep -qE '^JWT_SECRET=' .env; then
+      sed -i "s|^JWT_SECRET=.*$|JWT_SECRET=${RANDOM_SECRET}|" .env
+    else
+      echo "JWT_SECRET=${RANDOM_SECRET}" >> .env
+    fi
+    echo "[i] Set JWT_SECRET in .env"
   fi
 fi
 
