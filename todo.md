@@ -123,60 +123,6 @@
 
 ## Changelog
 
-### 2025-08-12
-- Repo scaffolding: Created monorepo structure (`backend`, `database`, `scrapers`, `nginx`, `admin/web`, `mobile/flutter_app`).
-- Orchestration: Added `docker-compose.yml` connecting `db`, `api`, `scrapers`, `admin-web`, and `static` services over a shared network.
-- Config: Added `.env.example`, root `.gitignore`, `.dockerignore`, `README.md` (overview), and `setup.md` (Ubuntu guide).
-- Backend API:
-  - TypeScript Express app, env loader, CORS, JSON body parsing, global error handler.
-  - Routes: `/api/health`, `/api/recipes` (list/detail), `/api/recipes/:id/grocery-list`, `/api/recipes/:id/scale`, `POST /api/recipes/grocery-list`.
-  - Auth: JWT (`/api/auth/register`, `/api/auth/login`) and `requireAuth` middleware.
-  - Favorites: `/api/favorites` (GET, POST, DELETE) for save/remove/list.
-  - Grocery: scaling + basic unit conversions + aggregation.
-  - Database: `pg` pool and connection check; Dockerfile; `tsconfig.json`.
-- Database init: `pgcrypto` extension and initial schema + Phase 1 columns; `ingredients` JSONB; seed recipe.
-- Scrapers: TS cron service placeholders for prices and recipes; Dockerfile.
-- Static hosting: Nginx Dockerfile and `/nginx/static/` with placeholder `index.html`; `/images/` directory.
-- Admin Web: Vite + React TS scaffold, minimal health/auth/recipes UI; built to static and served via Nginx.
-- Versions pinned; Dockerfiles use `npm ci`; `setup.md` includes versions matrix.
-
-### 2025-08-13
-- Phase 2 start: Added DB columns `products.size_value`, `products.size_unit` and indexes for lookups.
-- Implemented price service in backend with `/api/recipes/...grocery-list?includeCost=true` pricing and `/api/prices/cheapest` endpoint.
-- Implemented scrapers warmup + weekly cron for Rimi, Maxima, Barbora with placeholder product sets and DB upserts.
-
-### 2025-08-14
-- Phase 2 complete: Cheapest brand substitution integrated in pricing service and `/api/prices/cheapest` endpoint.
-- Phase 3 scaffolding:
-  - DB: `planned_meals`, `user_preferences`, `cook_history` tables with indexes.
-  - API routes: `/api/planner` (weekly plan CRUD + grocery list), `/api/preferences` (get/update), `/api/history` (mark cooked), `/api/recommendations` (basic recommendations).
-
-### 2025-08-15
-- Phase 3 complete:
-  - Planner: `/api/planner/week` GET/PUT and `/api/planner/week/grocery-list` with scaling + price estimates; admin UI section for weekly planner and grocery list.
-  - Preferences: `/api/preferences` implemented; recipe list applies user preferences by default when no explicit filters are provided.
-  - Recommendations: `/api/recommendations` using diet overlap + recent history exclusion; admin UI to view recommendations.
-- Phase 4 start (scaffolding):
-  - DB: `008_community.sql` adds `recipes.author_user_id`, `recipes.is_approved`, `recipes.share_token`, tables `recipe_ratings`, `challenges`, `challenge_recipes`.
-  - API: `/api/recipes/submit` (user-submitted recipes), `/api/recipes/share/:token` (public view), ratings endpoints (`GET/POST /api/recipes/:id/ratings`), `/api/challenges` list, `/api/uploads/image-base64` for image uploads to shared static volume.
-  - Admin Web: sections for submit recipe, base64 image upload, ratings view/submit, challenges list.
-
-### 2025-08-16
-- Phase 4 complete:
-  - DB: Admin flag on users, comments table; community tables from 008.
-  - API: Comments under recipes, admin approvals (`PUT /api/admin/recipes/:id/approval`), challenges CRUD (`/api/admin/challenges`), share token route ordered before id to avoid conflicts.
-  - Admin Web: Approvals panel, comments UI, challenge creation.
-
-### 2025-08-17
-- Phase 5 start (scaffolding):
-  - DB: `010_monetization.sql` adds `users.is_premium`, `users.premium_expires_at`, `recipes.is_sponsored`, `recipes.sponsor_name`, `recipes.sponsor_url`, `stores.affiliate_url_template`.
-  - API:
-    - Premium middleware (`requirePremium`, `getPremiumStatus`) and gating on cost estimation and `/api/prices/compare`.
-    - Prices: Added `/api/prices/compare` returning unit price list + affiliate URLs.
-    - Recipes: grocery list cost estimation now premium-only.
-    - Admin: endpoints to set user premium, recipe sponsorship, and affiliate templates.
-  - Admin Web: Monetization section to grant/revoke premium, set sponsorship, and run price comparison.
-
 ### 2025-08-18
 - Public Web:
   - Added Admin link in navbar (visible only for `is_admin` users via `/api/auth/me`).
@@ -184,6 +130,9 @@
   - Added reusable `Modal` and `AdsBanner` components (ads hidden for premium users based on token).
   - Added pages: Submit Recipe, Preferences, Planner (with grocery list), Recommendations, Prices (cheapest + premium compare), Billing (Go Premium + Portal), Challenges.
   - Enhanced Recipe Detail with: favorites toggle, scaling, grocery list (premium-aware), ratings submit and list, comments list/add/delete, sponsor badge.
+  - Recipes list now supports filters (q, ingredient, diet, maxTime, maxCost) and pagination.
+- Admin Web:
+  - Modernized styling with a lightweight stylesheet (cards, buttons, inputs, header), no new deps.
 - API:
   - Added `GET /api/auth/me` returning `{ email, is_admin }` for the current user.
 - Notes:
