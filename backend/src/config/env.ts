@@ -2,6 +2,8 @@ export const env = {
   port: Number(process.env.API_PORT ?? 3000),
   host: String(process.env.API_HOST ?? '0.0.0.0'),
   corsOrigin: String(process.env.CORS_ORIGIN ?? '*'),
+  jwtSecret: String(process.env.JWT_SECRET || ''),
+  bcryptRounds: Number(process.env.BCRYPT_ROUNDS ?? 10),
   db: {
     host: String(process.env.POSTGRES_HOST ?? 'db'),
     port: Number(process.env.POSTGRES_PORT ?? 5432),
@@ -10,3 +12,7 @@ export const env = {
     database: String(process.env.POSTGRES_DB ?? 'recipes')
   }
 };
+
+if (!env.jwtSecret) {
+  throw new Error('JWT_SECRET is required');
+}
