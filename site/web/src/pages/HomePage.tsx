@@ -1,4 +1,5 @@
 import React from 'react';
+import { AdsBanner } from '../components/AdsBanner';
 
 const defaultApiBase = typeof window !== 'undefined'
   ? `http://${window.location.hostname}:3000`
@@ -11,6 +12,7 @@ export const HomePage: React.FC = () => {
     <div className="space-y-6">
       <h1 className="text-2xl font-semibold">Discover recipes</h1>
       <p className="text-gray-600">Browse curated Latvian recipes and save your favorites.</p>
+      <AdsBanner placement="home_top" />
     </div>
   );
 };

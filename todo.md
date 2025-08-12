@@ -182,7 +182,9 @@
   - Added Admin link in navbar (visible only for `is_admin` users via `/api/auth/me`).
   - Removed API health widget from Home page.
   - Added reusable `Modal` and `AdsBanner` components (ads hidden for premium users based on token).
+  - Added pages: Submit Recipe, Preferences, Planner (with grocery list), Recommendations, Prices (cheapest + premium compare), Billing (Go Premium + Portal), Challenges.
+  - Enhanced Recipe Detail with: favorites toggle, scaling, grocery list (premium-aware), ratings submit and list, comments list/add/delete, sponsor badge.
 - API:
   - Added `GET /api/auth/me` returning `{ email, is_admin }` for the current user.
 - Notes:
-  - Follow-up: build full public UI for comments/ratings, recipe submit with image upload, planner, preferences, recommendations, price comparison, and subscription (Stripe Checkout + Portal) using existing backend endpoints.
+  - Follow-up: UI polish (modals/forms), recipe search filters, drag-and-drop planner, pantry mode, offline support.
