@@ -18,7 +18,7 @@ if [[ ! -f .env ]]; then
     echo "[i] Creating .env from .env.example"
     cp .env.example .env
     # Optional: make a sensible default for host to 0.0.0.0 where relevant
-    sed -i "s|YOUR_PUBLIC_IP_OR_DOMAIN|127.0.0.1|g" .env || true
+    sed -i "s|YOUR_PUBLIC_IP_OR_DOMAIN|0.0.0.0|g" .env || true
   else
     echo "[i] No .env.example found. Creating minimal .env with safe defaults."
     cat > .env <<'EOF'
@@ -52,7 +52,35 @@ echo "[+] Waiting for database health..."
 # Compose has healthcheck for db; give some time for API to boot
 sleep 5
 
-API_URL="http://127.0.0.1:3000/api/health"
+# Determine host to advertise to users
+# Priority: PUBLIC_HOST env -> PUBLIC_IP_OR_DOMAIN env -> detected public IP -> first local IP -> 0.0.0.0
+HOST_TO_ADVERTISE="${PUBLIC_HOST:-${PUBLIC_IP_OR_DOMAIN:-}}"
+if [[ -z "${HOST_TO_ADVERTISE}" ]]; then
+  DETECTED_PUBLIC=""
+  if command -v curl >/dev/null 2>&1; then
+    set +e
+    DETECTED_PUBLIC=$(curl -s --max-time 2 https://ifconfig.me || curl -s --max-time 2 http://checkip.amazonaws.com)
+    set -e || true
+  fi
+  if [[ -n "${DETECTED_PUBLIC}" ]]; then
+    HOST_TO_ADVERTISE="${DETECTED_PUBLIC}"
+  else
+    # Fallback to first non-loopback local IP
+    if command -v hostname >/dev/null 2>&1; then
+      set +e
+      FIRST_IP=$(hostname -I 2>/dev/null | awk '{print $1}')
+      set -e || true
+      if [[ -n "${FIRST_IP:-}" ]]; then
+        HOST_TO_ADVERTISE="${FIRST_IP}"
+      fi
+    fi
+  fi
+fi
+HOST_TO_ADVERTISE="${HOST_TO_ADVERTISE:-0.0.0.0}"
+
+# Healthcheck should use a routable local address, not 0.0.0.0
+HEALTHCHECK_HOST="127.0.0.1"
+API_URL="http://${HEALTHCHECK_HOST}:3000/api/health"
 if command -v curl >/dev/null 2>&1; then
   echo "[+] Checking API health at ${API_URL}"
   set +e
@@ -68,8 +96,8 @@ if command -v curl >/dev/null 2>&1; then
 fi
 
 echo "[+] Services should now be up:"
-echo "    - API:         http://YOUR.PUBLIC.IP.OR.DOMAIN:3000"
-echo "    - Admin Web:   http://YOUR.PUBLIC.IP.OR.DOMAIN:5173"
-echo "    - Static imgs: http://YOUR.PUBLIC_IP_OR_DOMAIN:8080/images/"
+echo "    - API:         http://${HOST_TO_ADVERTISE}:3000"
+echo "    - Admin Web:   http://${HOST_TO_ADVERTISE}:5173"
+echo "    - Static imgs: http://${HOST_TO_ADVERTISE}:8080/images/"
 echo ""
 echo "Tip: adjust CORS_ORIGIN in .env to your admin domain(s)."
