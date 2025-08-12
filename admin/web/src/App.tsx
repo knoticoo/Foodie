@@ -22,6 +22,23 @@ export function App() {
   // Recommendations state
   const [recommendations, setRecommendations] = useState<any[]>([]);
 
+  const [submitTitle, setSubmitTitle] = useState('');
+  const [submitDescription, setSubmitDescription] = useState('');
+  const [submitImages, setSubmitImages] = useState(''); // comma-separated URLs
+  const [submitStatus, setSubmitStatus] = useState('');
+
+  const [dataUrl, setDataUrl] = useState('');
+  const [uploadPath, setUploadPath] = useState('');
+
+  const [selectedRecipeId, setSelectedRecipeId] = useState('');
+  const [ratingValue, setRatingValue] = useState(5);
+  const [ratingComment, setRatingComment] = useState('');
+  const [ratings, setRatings] = useState<any[]>([]);
+
+  const [challenges, setChallenges] = useState<any[]>([]);
+  const [pendingRecipes, setPendingRecipes] = useState<any[]>([]);
+  const [newChallenge, setNewChallenge] = useState({ title: '', description: '', start: '', end: '' });
+
   useEffect(() => {
     fetch(`${API}/api/health`).then(r => r.json()).then(d => setHealth(JSON.stringify(d))).catch(() => setHealth('error'));
   }, []);
@@ -232,6 +249,199 @@ export function App() {
             <li key={r.id}>{r.title}</li>
           ))}
         </ul>
+      </section>
+
+      <section style={{ marginTop: 24 }}>
+        <h2>Submit Recipe</h2>
+        <div>
+          <input style={{ width: 400 }} placeholder="Title" value={submitTitle} onChange={e => setSubmitTitle(e.target.value)} />
+        </div>
+        <div style={{ marginTop: 8 }}>
+          <textarea style={{ width: 400, height: 80 }} placeholder="Description" value={submitDescription} onChange={e => setSubmitDescription(e.target.value)} />
+        </div>
+        <div style={{ marginTop: 8 }}>
+          <input style={{ width: 400 }} placeholder="Image URLs (comma separated)" value={submitImages} onChange={e => setSubmitImages(e.target.value)} />
+        </div>
+        <div style={{ marginTop: 8 }}>
+          <button disabled={!token || !submitTitle} onClick={async () => {
+            setSubmitStatus('Submitting...');
+            const body = {
+              title: submitTitle,
+              description: submitDescription,
+              images: submitImages.split(',').map(s => s.trim()).filter(Boolean)
+            };
+            const res = await fetch(`${API}/api/recipes/submit`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+              body: JSON.stringify(body)
+            });
+            const data = await res.json().catch(() => ({}));
+            setSubmitStatus(res.ok ? `Submitted (id=${data.id}, share=${data.shareToken})` : (data.error || 'Error'));
+          }}>Submit</button>
+          <span style={{ marginLeft: 8 }}>{submitStatus}</span>
+        </div>
+      </section>
+
+      <section style={{ marginTop: 24 }}>
+        <h2>Upload Image (base64)</h2>
+        <div>
+          <textarea style={{ width: 500, height: 120 }} placeholder="Paste data URL (data:image/png;base64,...)" value={dataUrl} onChange={e => setDataUrl(e.target.value)} />
+        </div>
+        <div style={{ marginTop: 8 }}>
+          <button disabled={!token || !dataUrl} onClick={async () => {
+            const res = await fetch(`${API}/api/uploads/image-base64`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+              body: JSON.stringify({ dataUrl })
+            });
+            const data = await res.json().catch(() => ({}));
+            setUploadPath(res.ok ? data.path : (data.error || 'Error'));
+          }}>Upload</button>
+          <span style={{ marginLeft: 8 }}>Saved: {uploadPath || '—'}</span>
+        </div>
+      </section>
+
+      <section style={{ marginTop: 24 }}>
+        <h2>Ratings</h2>
+        <div>
+          <select value={selectedRecipeId} onChange={e => setSelectedRecipeId(e.target.value)}>
+            <option value="">— choose recipe —</option>
+            {recipes.map(r => (
+              <option key={r.id} value={r.id}>{r.title}</option>
+            ))}
+          </select>
+          <button disabled={!selectedRecipeId} onClick={async () => {
+            const res = await fetch(`${API}/api/recipes/${selectedRecipeId}/ratings`);
+            const data = await res.json();
+            setRatings(data.ratings || []);
+          }}>Load Ratings</button>
+        </div>
+        <div style={{ marginTop: 8 }}>
+          <label>Rating: </label>
+          <input type="number" min={1} max={5} value={ratingValue} onChange={e => setRatingValue(Number(e.target.value))} />
+          <input style={{ width: 400, marginLeft: 8 }} placeholder="Comment" value={ratingComment} onChange={e => setRatingComment(e.target.value)} />
+          <button disabled={!token || !selectedRecipeId} onClick={async () => {
+            const res = await fetch(`${API}/api/recipes/${selectedRecipeId}/ratings`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+              body: JSON.stringify({ rating: ratingValue, comment: ratingComment })
+            });
+            if (res.status === 204) {
+              const res2 = await fetch(`${API}/api/recipes/${selectedRecipeId}/ratings`);
+              const data2 = await res2.json();
+              setRatings(data2.ratings || []);
+            }
+          }}>Submit</button>
+        </div>
+        <ul>
+          {ratings.map((r, i) => (
+            <li key={i}>⭐ {r.rating} — {r.comment || ''}</li>
+          ))}
+        </ul>
+      </section>
+
+      <section style={{ marginTop: 24 }}>
+        <h2>Challenges</h2>
+        <button onClick={async () => {
+          const res = await fetch(`${API}/api/challenges`);
+          const data = await res.json();
+          setChallenges(data.challenges || []);
+        }}>Load</button>
+        <ul>
+          {challenges.map((c: any) => (
+            <li key={c.id}>{c.title} ({c.start_date} → {c.end_date})</li>
+          ))}
+        </ul>
+      </section>
+
+      <section style={{ marginTop: 24 }}>
+        <h2>Comments</h2>
+        <div>
+          <select value={selectedRecipeId} onChange={e => setSelectedRecipeId(e.target.value)}>
+            <option value="">— choose recipe —</option>
+            {recipes.map(r => (
+              <option key={r.id} value={r.id}>{r.title}</option>
+            ))}
+          </select>
+          <button disabled={!selectedRecipeId} onClick={async () => {
+            const res = await fetch(`${API}/api/recipes/${selectedRecipeId}/comments`);
+            const data = await res.json();
+            setRatings([]);
+            setChallenges([]);
+            setPlan([]);
+            setPrefsStatus('');
+            setRecommendations([]);
+            setHealth('');
+            setUploadPath('');
+            setSubmitStatus('');
+            setDietPreferences(dietPreferences);
+            setBudgetCents(budgetCents);
+            setEmail(email);
+            setPassword(password);
+            setRecipes(recipes);
+            setPlanStatus('');
+            // reuse ratings state to show comments list quickly
+            setRatings((data.comments || []).map((c: any) => ({ rating: '', comment: c.content })));
+          }}>Load Comments</button>
+        </div>
+        <div style={{ marginTop: 8 }}>
+          <input style={{ width: 400 }} placeholder="Add comment" value={ratingComment} onChange={e => setRatingComment(e.target.value)} />
+          <button disabled={!token || !selectedRecipeId || !ratingComment} onClick={async () => {
+            const res = await fetch(`${API}/api/recipes/${selectedRecipeId}/comments`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+              body: JSON.stringify({ content: ratingComment })
+            });
+            if (res.ok) {
+              const res2 = await fetch(`${API}/api/recipes/${selectedRecipeId}/comments`);
+              const data2 = await res2.json();
+              setRatings((data2.comments || []).map((c: any) => ({ rating: '', comment: c.content })));
+              setRatingComment('');
+            }
+          }}>Post</button>
+        </div>
+      </section>
+
+      <section style={{ marginTop: 24 }}>
+        <h2>Admin: Approvals</h2>
+        <div>
+          <button disabled={!token} onClick={async () => {
+            // naive: list all recipes and filter in UI for demo (no dedicated endpoint yet)
+            const res = await fetch(`${API}/api/recipes`);
+            const data = await res.json();
+            setPendingRecipes((data.recipes || []).filter((r: any) => r.is_approved === false));
+          }}>Load Pending</button>
+        </div>
+        <ul>
+          {pendingRecipes.map((r: any) => (
+            <li key={r.id}>
+              {r.title}
+              <button style={{ marginLeft: 8 }} disabled={!token} onClick={async () => {
+                await fetch(`${API}/api/admin/recipes/${r.id}/approval`, {
+                  method: 'PUT',
+                  headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                  body: JSON.stringify({ isApproved: true })
+                });
+              }}>Approve</button>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <section style={{ marginTop: 24 }}>
+        <h2>Admin: Challenges</h2>
+        <div>
+          <input placeholder="Title" value={newChallenge.title} onChange={e => setNewChallenge({ ...newChallenge, title: e.target.value })} />
+          <input placeholder="Start (YYYY-MM-DD)" value={newChallenge.start} onChange={e => setNewChallenge({ ...newChallenge, start: e.target.value })} />
+          <input placeholder="End (YYYY-MM-DD)" value={newChallenge.end} onChange={e => setNewChallenge({ ...newChallenge, end: e.target.value })} />
+          <button disabled={!token || !newChallenge.title} onClick={async () => {
+            await fetch(`${API}/api/admin/challenges`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+              body: JSON.stringify({ title: newChallenge.title, start_date: newChallenge.start, end_date: newChallenge.end, description: '' })
+            });
+          }}>Create</button>
+        </div>
       </section>
     </div>
   );

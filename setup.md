@@ -79,9 +79,12 @@ docker compose up -d --build
 ```
 This will start:
 - API (Express TS) on port 3000
-- Admin Web (Vite) on port 5173
+- Admin Web (Nginx) on port 5173
 - Static images (Nginx) on port 8080
 - PostgreSQL on port 5432 (if exposed)
+
+Notes:
+- API writes uploaded images to `/app/uploads/images` which is bind-mounted to `nginx/static/images`, so files are served publicly at `/images/...`.
 
 ### 7) Open firewall (UFW)
 If UFW is enabled, allow needed ports:
