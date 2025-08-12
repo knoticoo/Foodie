@@ -1,41 +1,52 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
+import { BrowserRouter, Link, Route, Routes } from 'react-router-dom';
+import { HomePage } from './pages/HomePage';
+import { LoginPage } from './pages/LoginPage';
+import { RegisterPage } from './pages/RegisterPage';
+import { RecipesPage } from './pages/RecipesPage';
+import { RecipeDetailPage } from './pages/RecipeDetailPage';
+import { FavoritesPage } from './pages/FavoritesPage';
+import { AuthProvider, useAuth } from './auth/AuthContext';
 
-const defaultApiBase = typeof window !== 'undefined'
-  ? `http://${window.location.hostname}:3000`
-  : 'http://127.0.0.1:3000';
-
-const API_BASE_URL = (import.meta as any).env?.VITE_API_BASE_URL ?? defaultApiBase;
+function NavBar() {
+  const { token, logout } = useAuth();
+  return (
+    <header className="bg-white border-b">
+      <div className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between">
+        <Link to="/" className="font-semibold">Latvian Recipes</Link>
+        <nav className="flex items-center gap-4 text-sm">
+          <Link to="/recipes" className="hover:underline">Browse</Link>
+          <Link to="/favorites" className="hover:underline">Favorites</Link>
+          {token ? (
+            <button onClick={logout} className="px-3 py-1 rounded bg-gray-900 text-white text-sm">Logout</button>
+          ) : (
+            <>
+              <Link to="/login" className="hover:underline">Login</Link>
+              <Link to="/register" className="hover:underline">Sign up</Link>
+            </>
+          )}
+        </nav>
+      </div>
+    </header>
+  );
+}
 
 export const App: React.FC = () => {
-  const [health, setHealth] = useState<string>('');
-  const [error, setError] = useState<string>('');
-
-  useEffect(() => {
-    fetch(`${API_BASE_URL}/api/health`)
-      .then(res => res.text())
-      .then(setHealth)
-      .catch(err => setError(String(err)));
-  }, []);
-
   return (
-    <div style={{ fontFamily: 'system-ui, sans-serif', padding: 24, lineHeight: 1.5 }}>
-      <h1>Latvian Recipes</h1>
-      <p>Welcome! This is the public site for browsing recipes. UI is a starter — extend as needed.</p>
-
-      <section style={{ marginTop: 24 }}>
-        <h2>API status</h2>
-        {health && <pre style={{ background: '#f6f8fa', padding: 12, borderRadius: 8 }}>{health}</pre>}
-        {error && <p style={{ color: 'crimson' }}>Failed to reach API: {error}</p>}
-      </section>
-
-      <section style={{ marginTop: 24 }}>
-        <h2>Quick links</h2>
-        <ul>
-          <li><a href={`http://${window.location.hostname}:3000/api/health`} target="_blank">API health</a></li>
-          <li><a href={`http://${window.location.hostname}:8080/images/`} target="_blank">Static images</a></li>
-          <li><a href={`http://${window.location.hostname}:5173`} target="_blank">Admin panel</a></li>
-        </ul>
-      </section>
-    </div>
+    <AuthProvider>
+      <BrowserRouter>
+        <NavBar />
+        <main className="max-w-5xl mx-auto px-4 py-6">
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
+            <Route path="/recipes" element={<RecipesPage />} />
+            <Route path="/recipes/:id" element={<RecipeDetailPage />} />
+            <Route path="/favorites" element={<FavoritesPage />} />
+          </Routes>
+        </main>
+      </BrowserRouter>
+    </AuthProvider>
   );
 };

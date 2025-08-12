@@ -26,6 +26,7 @@ if [[ ! -f .env ]]; then
 API_HOST=0.0.0.0
 API_PORT=3000
 CORS_ORIGIN=*
+# A random secret will be generated below if 'please_change_me'
 JWT_SECRET=please_change_me
 POSTGRES_HOST=db
 POSTGRES_PORT=5432
@@ -37,6 +38,12 @@ STRIPE_SECRET_KEY=
 STRIPE_PRICE_ID=
 STRIPE_WEBHOOK_SECRET=
 EOF
+  fi
+  # Auto-generate a strong JWT_SECRET if placeholder is present
+  if grep -q "^JWT_SECRET=please_change_me$" .env; then
+    RANDOM_SECRET=$(head -c 32 /dev/urandom | base64 | tr -d '\n=/+' | head -c 48)
+    sed -i "s|^JWT_SECRET=please_change_me$|JWT_SECRET=${RANDOM_SECRET}|" .env
+    echo "[i] Generated JWT_SECRET in .env"
   fi
 fi
 
