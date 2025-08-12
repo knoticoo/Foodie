@@ -18,7 +18,12 @@ const dict: Record<Lang, Record<string, string>> = {
     challenges: 'Admin: Challenges',
     monetization: 'Admin: Monetization',
     recipeCrud: 'Admin: Recipe CRUD',
-    language: 'Language'
+    language: 'Language',
+    load: 'Load',
+    save: 'Save',
+    create: 'Create',
+    update: 'Update',
+    delete: 'Delete'
   },
   lv: {
     adminDashboard: 'Administrēšanas panelis',
@@ -35,7 +40,12 @@ const dict: Record<Lang, Record<string, string>> = {
     challenges: 'Admins: Izaicinājumi',
     monetization: 'Admins: Monetizācija',
     recipeCrud: 'Admins: Receptes CRUD',
-    language: 'Valoda'
+    language: 'Valoda',
+    load: 'Ielādēt',
+    save: 'Saglabāt',
+    create: 'Izveidot',
+    update: 'Atjaunināt',
+    delete: 'Dzēst'
   },
   ru: {
     adminDashboard: 'Админ-панель',
@@ -52,7 +62,12 @@ const dict: Record<Lang, Record<string, string>> = {
     challenges: 'Админ: Челленджи',
     monetization: 'Админ: Монетизация',
     recipeCrud: 'Админ: Рецепты CRUD',
-    language: 'Язык'
+    language: 'Язык',
+    load: 'Загрузить',
+    save: 'Сохранить',
+    create: 'Создать',
+    update: 'Обновить',
+    delete: 'Удалить'
   }
 };
 

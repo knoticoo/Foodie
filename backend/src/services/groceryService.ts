@@ -19,18 +19,30 @@ const DENSITY_G_PER_ML: Record<string, number> = {
   'granulated sugar': 0.85,
   'sugar': 0.85,
   'brown sugar': 0.73,
+  'powdered sugar': 0.56,
   'cocoa powder': 0.45,
   'rice': 0.85,
   'oats': 0.38,
+  'salt': 1.20,
+  'baking powder': 0.90,
+  'baking soda': 1.20,
+  'yeast': 0.50,
   // liquids
   'water': 1.0,
   'milk': 1.03,
   'olive oil': 0.91,
   'oil': 0.91,
   'honey': 1.42,
+  'tomato paste': 1.06,
+  'tomato sauce': 1.03,
+  'vinegar': 1.01,
+  'soy sauce': 1.16,
+  'mayonnaise': 0.95,
+  'sour cream': 0.99,
   // fats
   'butter': 0.911,
-  'margarine': 0.90
+  'margarine': 0.90,
+  'cheese': 1.10
 };
 
 // Unit conversion map including cups/tbsp/tsp to ml
@@ -80,8 +92,14 @@ function toBaseWithName(name: string, quantity: number, unit: string): { base: s
 }
 
 function fromBase(value: number, base: string): { unit: string; value: number } {
-  // Keep base units for display; improving pretty-print is out of scope here
-  return { unit: base, value };
+  // Pretty display: promote g→kg and ml→l when large
+  if (base === 'g' && value >= 1000) {
+    return { unit: 'kg', value: Number((value / 1000).toFixed(2)) };
+  }
+  if (base === 'ml' && value >= 1000) {
+    return { unit: 'l', value: Number((value / 1000).toFixed(2)) };
+  }
+  return { unit: base, value: Number(value.toFixed(2)) };
 }
 
 export function aggregateGroceryList(ingredients: IngredientItem[]): GroceryLineItem[] {
@@ -101,7 +119,7 @@ export function aggregateGroceryList(ingredients: IngredientItem[]): GroceryLine
   for (const [key, { base, value }] of map.entries()) {
     const [name] = key.split('|');
     const display = fromBase(value, base);
-    result.push({ name, totalQuantity: Number(display.value.toFixed(2)), unit: display.unit });
+    result.push({ name, totalQuantity: display.value, unit: display.unit });
   }
   return result;
 }
