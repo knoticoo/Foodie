@@ -194,3 +194,15 @@ cat ~/recipes_backup_2024-01-01.sql | docker exec -i recipes_db psql -U "$POSTGR
 - Ports already in use: change host ports in `docker-compose.yml` or stop conflicting services.
 - Can’t reach from public Internet: verify firewall, cloud security groups, and that services bind to `0.0.0.0` (this project does by default).
 - DB exposed: Prefer removing `5432:5432` mapping and use an admin tool via SSH tunnel instead.
+
+### Versions matrix
+- Node.js: 20-alpine (containers)
+- PostgreSQL: 16 (container)
+- Nginx: stable-alpine (admin web, static images)
+- Backend (npm pinned):
+  - bcryptjs 2.4.3, cors 2.8.5, dotenv 16.4.5, express 4.19.2, jsonwebtoken 9.0.2, pg 8.11.5, zod 3.23.8
+  - dev: @types/node 20.12.12, @types/pg 8.15.5, typescript 5.4.5, ts-node 10.9.2, ts-node-dev 2.0.0
+- Scrapers (npm pinned): dotenv 16.4.5, node-cron 3.0.3, pg 8.11.5, undici 6.19.8
+- Admin Web (npm pinned): react 18.3.1, react-dom 18.3.1, vite 5.2.0, @vitejs/plugin-react 4.2.1, typescript 5.4.5, @types/react 18.3.3, @types/react-dom 18.3.0
+
+Note: Dockerfiles use `npm ci` with lockfiles for reproducible builds.
