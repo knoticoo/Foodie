@@ -101,3 +101,29 @@
 - Image Hosting: Nginx static file server on VPS
 - App Frontend: Flutter app calling API endpoints
 - Admin Panel: Web dashboard to add/edit recipes & approve user submissions
+
+---
+
+## Project Policies
+- Code commenting: All new code must include concise, meaningful comments and/or docstrings explaining purpose, inputs, outputs, and side effects.
+- Documentation: Every significant change must be summarized in the Changelog below.
+- No localhost: All services bind to `0.0.0.0` and use env-configured public base URLs.
+
+---
+
+## Changelog
+
+### 2025-08-12
+- Repo scaffolding: Created monorepo structure (`backend`, `database`, `scrapers`, `nginx`, `admin/web`, `mobile/flutter_app`).
+- Orchestration: Added `docker-compose.yml` connecting `db`, `api`, `scrapers`, `admin-web`, and `static` services over a shared network.
+- Config: Added `.env.example`, root `.gitignore`, `.dockerignore`, `README.md` (overview), and `setup.md` (Ubuntu guide).
+- Backend API:
+  - TypeScript Express app, env loader, CORS, JSON body parsing, global error handler.
+  - Routes: `/api/health`, `/api/recipes` (placeholder list + detail).
+  - Database: `pg` pool and connection check; Dockerfile; `tsconfig.json`.
+  - Auth groundwork: Added `bcryptjs`, `jsonwebtoken`, and `requireAuth` middleware (JWT) for future protected routes.
+- Database init: `pgcrypto` extension and initial schema for users, recipes, ingredients, favorites, stores, products, product_prices.
+- Scrapers: TS cron service with scheduled jobs placeholders for Rimi/Maxima/Barbora prices and open-source recipes; Dockerfile.
+- Static hosting: Nginx Dockerfile and `/nginx/static/` with placeholder `index.html`; `/images/` directory for uploads.
+- Admin Web: Vite + React TS scaffold with `vite.config.ts` binding to `0.0.0.0`; Dockerfile using vite preview.
+- Todo updates: Added Localization feature (Russian, Latvian, English).
