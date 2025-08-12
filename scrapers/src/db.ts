@@ -1,4 +1,5 @@
-import { Pool } from 'pg';
+import pkg from 'pg';
+const { Pool } = pkg;
 
 export const pool = new Pool({
   host: process.env.POSTGRES_HOST || 'db',
