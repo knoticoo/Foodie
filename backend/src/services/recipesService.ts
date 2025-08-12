@@ -32,7 +32,7 @@ export async function findRecipes(filters: RecipeListFilters, limit = 20, offset
   const whereSql = where.length > 0 ? `WHERE ${where.join(' AND ')}` : '';
 
   const sql = `
-    SELECT id, title, description, servings, total_time_minutes, cost_cents, is_approved
+    SELECT id, title, description, servings, total_time_minutes, cost_cents, is_approved, is_sponsored, sponsor_name, sponsor_url, is_premium_only
     FROM recipes
     ${whereSql}
     ORDER BY created_at DESC
@@ -45,7 +45,8 @@ export async function findRecipes(filters: RecipeListFilters, limit = 20, offset
 
 export async function getRecipeById(id: string) {
   const sql = `
-    SELECT id, title, description, steps, images, servings, total_time_minutes, nutrition, ingredients, is_approved, author_user_id, share_token
+    SELECT id, title, description, steps, images, servings, total_time_minutes, nutrition, ingredients, is_approved, author_user_id, share_token,
+           is_sponsored, sponsor_name, sponsor_url, is_premium_only
     FROM recipes WHERE id = $1
   `;
   const { rows } = await pgPool.query(sql, [id]);
@@ -54,7 +55,8 @@ export async function getRecipeById(id: string) {
 
 export async function getRecipeByShareToken(token: string) {
   const { rows } = await pgPool.query(
-    `SELECT id, title, description, steps, images, servings, total_time_minutes, nutrition, ingredients, is_approved, author_user_id, share_token
+    `SELECT id, title, description, steps, images, servings, total_time_minutes, nutrition, ingredients, is_approved, author_user_id, share_token,
+            is_sponsored, sponsor_name, sponsor_url, is_premium_only
      FROM recipes WHERE share_token = $1`,
     [token]
   );

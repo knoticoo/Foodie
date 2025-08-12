@@ -67,3 +67,38 @@ adminRouter.put('/challenges/:id/recipes', async (req, res) => {
     client.release();
   }
 });
+
+// Set or unset a user's premium status (and optional expiry)
+adminRouter.put('/users/:id/premium', async (req, res) => {
+  const id = String(req.params.id || '');
+  const body = req.body as { isPremium?: boolean; premiumExpiresAt?: string | null };
+  const isPremium = body.isPremium === true;
+  const expires = body.premiumExpiresAt ?? null;
+  await pgPool.query('UPDATE users SET is_premium=$1, premium_expires_at=$2 WHERE id=$3', [isPremium, expires, id]);
+  res.status(204).end();
+});
+
+// Update recipe sponsorship metadata and premium-only flag
+adminRouter.put('/recipes/:id/sponsorship', async (req, res) => {
+  const id = String(req.params.id || '');
+  const body = req.body as { isSponsored?: boolean; sponsorName?: string | null; sponsorUrl?: string | null; isPremiumOnly?: boolean | null };
+  await pgPool.query(
+    `UPDATE recipes
+     SET is_sponsored = COALESCE($1, is_sponsored),
+         sponsor_name = COALESCE($2, sponsor_name),
+         sponsor_url = COALESCE($3, sponsor_url),
+         is_premium_only = COALESCE($4, is_premium_only)
+     WHERE id = $5`,
+    [body.isSponsored ?? null, body.sponsorName ?? null, body.sponsorUrl ?? null, body.isPremiumOnly ?? null, id]
+  );
+  res.status(204).end();
+});
+
+// Set affiliate URL template for a store
+adminRouter.put('/stores/:id/affiliate-template', async (req, res) => {
+  const id = String(req.params.id || '');
+  const body = req.body as { template?: string };
+  const template = (body.template || '').trim();
+  await pgPool.query('UPDATE stores SET affiliate_url_template=$1 WHERE id=$2', [template || null, id]);
+  res.status(204).end();
+});

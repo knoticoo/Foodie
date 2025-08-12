@@ -32,7 +32,21 @@ export async function listRecipes(req: Request, res: Response) {
   const off = typeof offset === 'string' ? Math.max(Number(offset), 0) : 0;
   // Exclude unapproved recipes from public listing
   const recipes = await findRecipes(filters, lim, off);
-  res.json({ recipes: recipes.filter((r: any) => r.is_approved !== false), limit: lim, offset: off });
+
+  // For non-premium users, hide premium-only recipes from the list
+  let isPremium = false;
+  if (typeof req.headers.authorization === 'string' && req.headers.authorization.startsWith('Bearer ')) {
+    try {
+      const { getPremiumStatus } = await import('../middleware/premium.js');
+      isPremium = await getPremiumStatus(req);
+    } catch {}
+  }
+
+  res.json({
+    recipes: recipes.filter((r: any) => r.is_approved !== false && (isPremium || r.is_premium_only !== true)),
+    limit: lim,
+    offset: off
+  });
 }
 
 export async function getRecipe(req: Request, res: Response) {

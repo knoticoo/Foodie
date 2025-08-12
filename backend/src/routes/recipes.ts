@@ -20,7 +20,20 @@ recipesRouter.get('/share/:token', async (req, res) => {
 });
 
 // Get single recipe by id
-recipesRouter.get('/:id', getRecipe);
+recipesRouter.get('/:id', async (req, res, next) => {
+  try {
+    const r = await getRecipeById(req.params.id);
+    if (!r) return res.status(404).json({ error: 'Recipe not found' });
+    const isPremiumOnly = (r as any).is_premium_only === true;
+    if (!isPremiumOnly) return res.json(r);
+    const { getPremiumStatus } = await import('../middleware/premium.js');
+    const isPremium = await getPremiumStatus(req);
+    if (!isPremium) return res.status(402).json({ error: 'Premium required' });
+    return res.json(r);
+  } catch (e) {
+    next(e);
+  }
+});
 
 // Comments under a recipe
 recipesRouter.use('/:id/comments', commentsRouter);
@@ -66,6 +79,12 @@ recipesRouter.get('/:id/grocery-list', async (req, res) => {
   // Optional pricing integration
   const includeCost = String(req.query.includeCost ?? 'true') === 'true';
   if (includeCost) {
+    // Premium required to include cost; admins bypass
+    const { getPremiumStatus } = await import('../middleware/premium.js');
+    const isPremium = await getPremiumStatus(req);
+    if (!isPremium) {
+      return res.status(402).json({ error: 'Premium required for cost estimation', items: aggregated });
+    }
     const { priceGroceryItems } = await import('../services/priceService.js');
     const pricing = await priceGroceryItems(aggregated);
     return res.json({ items: aggregated, pricing });
@@ -102,6 +121,11 @@ recipesRouter.post('/grocery-list', async (req, res) => {
 
   const includeCost = body.includeCost ?? true;
   if (includeCost) {
+    const { getPremiumStatus } = await import('../middleware/premium.js');
+    const isPremium = await getPremiumStatus(req as any);
+    if (!isPremium) {
+      return res.status(402).json({ error: 'Premium required for cost estimation', items: aggregated });
+    }
     const { priceGroceryItems } = await import('../services/priceService.js');
     const pricing = await priceGroceryItems(aggregated);
     return res.json({ items: aggregated, pricing });

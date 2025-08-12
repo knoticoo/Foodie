@@ -8,6 +8,7 @@ export interface PricedLineItem {
   productName: string | null;
   unitPriceCents: number | null; // price per base unit
   estimatedCostCents: number | null;
+  affiliateUrl?: string | null;
 }
 
 const UNIT_TO_BASE: Record<string, { base: string; factor: number }> = {
@@ -80,6 +81,72 @@ async function getCheapestPerBaseUnit(ingredientName: string, desiredBaseUnit: s
   return best;
 }
 
+export async function compareProductOptions(ingredientName: string, desiredBaseUnit: string): Promise<{
+  storeName: string;
+  productName: string;
+  unitPriceCents: number;
+  packageBaseUnit: string;
+  packageBaseSize: number;
+  affiliateUrl: string | null;
+}[]> {
+  const sql = `
+    WITH latest_prices AS (
+      SELECT DISTINCT ON (product_id) product_id, price_cents, collected_at
+      FROM product_prices
+      ORDER BY product_id, collected_at DESC
+    )
+    SELECT s.id AS store_id, s.name AS store_name, s.affiliate_url_template, p.name AS product_name, p.unit, p.size_value, p.size_unit,
+           lp.price_cents
+    FROM products p
+    JOIN stores s ON s.id = p.store_id
+    JOIN latest_prices lp ON lp.product_id = p.id
+    WHERE p.name ILIKE $1
+  `;
+  const { rows } = await pgPool.query(sql, [`%${ingredientName}%`]);
+  const options: {
+    storeName: string;
+    productName: string;
+    unitPriceCents: number;
+    packageBaseUnit: string;
+    packageBaseSize: number;
+    affiliateUrl: string | null;
+  }[] = [];
+  for (const r of rows) {
+    const { value: packageSizeBase, base: packageBaseUnit } = productSizeToBase(Number(r.size_value), r.size_unit);
+    if (packageBaseUnit !== desiredBaseUnit && !(packageBaseUnit === 'pcs' && desiredBaseUnit === 'pcs')) {
+      continue;
+    }
+    const unitPrice = Math.round(Number(r.price_cents) / packageSizeBase);
+    const template: string | null = r.affiliate_url_template ?? null;
+    const affiliateUrl = template ? buildAffiliateUrl(template, ingredientName) : null;
+    options.push({
+      storeName: r.store_name,
+      productName: r.product_name,
+      unitPriceCents: unitPrice,
+      packageBaseUnit,
+      packageBaseSize: packageSizeBase,
+      affiliateUrl
+    });
+  }
+  // sort by unit price ascending
+  options.sort((a, b) => a.unitPriceCents - b.unitPriceCents);
+  return options;
+}
+
+function buildAffiliateUrl(template: string, query: string): string {
+  try {
+    return template.replace('{query}', encodeURIComponent(query));
+  } catch {
+    return template;
+  }
+}
+
+// Also include affiliateUrl in priced lines where available
+async function getStoreAffiliateTemplateByName(storeName: string): Promise<string | null> {
+  const { rows } = await pgPool.query('SELECT affiliate_url_template FROM stores WHERE name = $1', [storeName]);
+  return rows[0]?.affiliate_url_template ?? null;
+}
+
 export async function priceGroceryItems(items: { name: string; totalQuantity: number; unit: string }[]): Promise<{ lines: PricedLineItem[]; totalCents: number }>{
   const lines: PricedLineItem[] = [];
   let total = 0;
@@ -95,12 +162,15 @@ export async function priceGroceryItems(items: { name: string; totalQuantity: nu
         storeName: null,
         productName: null,
         unitPriceCents: null,
-        estimatedCostCents: null
+        estimatedCostCents: null,
+        affiliateUrl: null
       });
       continue;
     }
     const estimated = Math.round(cheapest.unitPriceCents * value);
     total += estimated;
+    const template = await getStoreAffiliateTemplateByName(cheapest.storeName);
+    const affiliateUrl = template ? buildAffiliateUrl(template, item.name) : null;
     lines.push({
       name: item.name,
       totalQuantity: item.totalQuantity,
@@ -108,7 +178,8 @@ export async function priceGroceryItems(items: { name: string; totalQuantity: nu
       storeName: cheapest.storeName,
       productName: cheapest.productName,
       unitPriceCents: cheapest.unitPriceCents,
-      estimatedCostCents: estimated
+      estimatedCostCents: estimated,
+      affiliateUrl
     });
   }
 

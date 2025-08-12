@@ -1,4 +1,6 @@
 import { Router } from 'express';
+import { requireAuth } from '../middleware/auth.js';
+import { requirePremium } from '../middleware/premium.js';
 
 export const pricesRouter = Router();
 
@@ -14,5 +16,20 @@ pricesRouter.get('/cheapest', async (req, res) => {
   } catch (err) {
     console.error(err);
     return res.status(500).json({ error: 'Failed to lookup cheapest product' });
+  }
+});
+
+// Premium: compare across stores
+pricesRouter.get('/compare', requireAuth, requirePremium, async (req, res) => {
+  const name = String(req.query.name || '').trim();
+  const unit = String(req.query.unit || 'g');
+  if (!name) return res.status(400).json({ error: 'name is required' });
+  try {
+    const { compareProductOptions } = await import('../services/priceService.js');
+    const options = await compareProductOptions(name, unit);
+    return res.json({ options });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: 'Failed to compare prices' });
   }
 });
