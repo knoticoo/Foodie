@@ -39,6 +39,14 @@ export function App() {
   const [pendingRecipes, setPendingRecipes] = useState<any[]>([]);
   const [newChallenge, setNewChallenge] = useState({ title: '', description: '', start: '', end: '' });
 
+  const [premiumUserId, setPremiumUserId] = useState('');
+  const [premiumUntil, setPremiumUntil] = useState('');
+  const [sponsorName, setSponsorName] = useState('');
+  const [sponsorUrl, setSponsorUrl] = useState('');
+  const [compareName, setCompareName] = useState('');
+  const [compareUnit, setCompareUnit] = useState('g');
+  const [compareResult, setCompareResult] = useState('');
+
   useEffect(() => {
     fetch(`${API}/api/health`).then(r => r.json()).then(d => setHealth(JSON.stringify(d))).catch(() => setHealth('error'));
   }, []);
@@ -441,6 +449,77 @@ export function App() {
               body: JSON.stringify({ title: newChallenge.title, start_date: newChallenge.start, end_date: newChallenge.end, description: '' })
             });
           }}>Create</button>
+        </div>
+      </section>
+
+      <section style={{ marginTop: 24 }}>
+        <h2>Admin: Monetization</h2>
+        <div style={{ border: '1px solid #ccc', padding: 12, marginBottom: 12 }}>
+          <h3>Set Premium for User</h3>
+          <input style={{ width: 340 }} placeholder="User ID" value={premiumUserId} onChange={e => setPremiumUserId(e.target.value)} />
+          <input style={{ width: 220, marginLeft: 8 }} type="datetime-local" placeholder="Expires at (optional)" value={premiumUntil} onChange={e => setPremiumUntil(e.target.value)} />
+          <button disabled={!token || !premiumUserId} onClick={async () => {
+            await fetch(`${API}/api/admin/users/${premiumUserId}/premium`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+              body: JSON.stringify({ isPremium: true, premiumExpiresAt: premiumUntil || null })
+            });
+          }}>Grant Premium</button>
+          <button style={{ marginLeft: 8 }} disabled={!token || !premiumUserId} onClick={async () => {
+            await fetch(`${API}/api/admin/users/${premiumUserId}/premium`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+              body: JSON.stringify({ isPremium: false, premiumExpiresAt: null })
+            });
+          }}>Revoke Premium</button>
+        </div>
+
+        <div style={{ border: '1px solid #ccc', padding: 12, marginBottom: 12 }}>
+          <h3>Recipe Sponsorship</h3>
+          <div>
+            <select value={selectedRecipeId} onChange={e => setSelectedRecipeId(e.target.value)}>
+              <option value="">— choose recipe —</option>
+              {recipes.map(r => (
+                <option key={r.id} value={r.id}>{r.title}</option>
+              ))}
+            </select>
+            <input style={{ marginLeft: 8 }} placeholder="Sponsor Name" value={sponsorName} onChange={e => setSponsorName(e.target.value)} />
+            <input style={{ marginLeft: 8, width: 300 }} placeholder="Sponsor URL" value={sponsorUrl} onChange={e => setSponsorUrl(e.target.value)} />
+            <button style={{ marginLeft: 8 }} disabled={!token || !selectedRecipeId} onClick={async () => {
+              await fetch(`${API}/api/admin/recipes/${selectedRecipeId}/sponsorship`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                body: JSON.stringify({ isSponsored: true, sponsorName, sponsorUrl })
+              });
+            }}>Mark Sponsored</button>
+            <button style={{ marginLeft: 8 }} disabled={!token || !selectedRecipeId} onClick={async () => {
+              await fetch(`${API}/api/admin/recipes/${selectedRecipeId}/sponsorship`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                body: JSON.stringify({ isSponsored: false, sponsorName: null, sponsorUrl: null })
+              });
+            }}>Clear Sponsorship</button>
+          </div>
+        </div>
+
+        <div style={{ border: '1px solid #ccc', padding: 12 }}>
+          <h3>Price Comparison (Premium)</h3>
+          <input placeholder="Ingredient name" value={compareName} onChange={e => setCompareName(e.target.value)} />
+          <select value={compareUnit} onChange={e => setCompareUnit(e.target.value)} style={{ marginLeft: 8 }}>
+            <option value="g">g</option>
+            <option value="ml">ml</option>
+            <option value="pcs">pcs</option>
+          </select>
+          <button style={{ marginLeft: 8 }} disabled={!token || !compareName} onClick={async () => {
+            const res = await fetch(`${API}/api/prices/compare?name=${encodeURIComponent(compareName)}&unit=${encodeURIComponent(compareUnit)}`, {
+              headers: { Authorization: `Bearer ${token}` }
+            });
+            const data = await res.json();
+            setCompareResult(JSON.stringify(data));
+          }}>Compare</button>
+          <div style={{ marginTop: 8 }}>
+            <textarea style={{ width: 700, height: 140 }} value={compareResult} onChange={() => {}} />
+          </div>
         </div>
       </section>
     </div>

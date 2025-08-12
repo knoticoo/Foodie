@@ -49,9 +49,9 @@
 
 - **Goal**: Start earning without losing users.
 - **Monetization**:
-  - [ ] Freemium model
-    - [ ] Free = ads + basic recipes
-    - [ ] Premium (€3.99/month) = ad-free, advanced meal plans, price comparison
+  - [x] Freemium scaffolding (premium gating, admin premium toggle, price comparison endpoint, affiliate links)
+  - [ ] Free = ads + basic recipes
+  - [ ] Premium (€3.99/month) = ad-free, advanced meal plans, price comparison
   - [ ] Grocery affiliate partnerships (earn from online orders)
   - [ ] Sponsored recipes from food brands
 
@@ -167,3 +167,13 @@
   - DB: Admin flag on users, comments table; community tables from 008.
   - API: Comments under recipes, admin approvals (`PUT /api/admin/recipes/:id/approval`), challenges CRUD (`/api/admin/challenges`), share token route ordered before id to avoid conflicts.
   - Admin Web: Approvals panel, comments UI, challenge creation.
+
+### 2025-08-17
+- Phase 5 start (scaffolding):
+  - DB: `010_monetization.sql` adds `users.is_premium`, `users.premium_expires_at`, `recipes.is_sponsored`, `recipes.sponsor_name`, `recipes.sponsor_url`, `stores.affiliate_url_template`.
+  - API:
+    - Premium middleware (`requirePremium`, `getPremiumStatus`) and gating on cost estimation and `/api/prices/compare`.
+    - Prices: Added `/api/prices/compare` returning unit price list + affiliate URLs.
+    - Recipes: grocery list cost estimation now premium-only.
+    - Admin: endpoints to set user premium, recipe sponsorship, and affiliate templates.
+  - Admin Web: Monetization section to grant/revoke premium, set sponsorship, and run price comparison.

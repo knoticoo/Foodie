@@ -66,6 +66,12 @@ recipesRouter.get('/:id/grocery-list', async (req, res) => {
   // Optional pricing integration
   const includeCost = String(req.query.includeCost ?? 'true') === 'true';
   if (includeCost) {
+    // Premium required to include cost; admins bypass
+    const { getPremiumStatus } = await import('../middleware/premium.js');
+    const isPremium = await getPremiumStatus(req);
+    if (!isPremium) {
+      return res.status(402).json({ error: 'Premium required for cost estimation', items: aggregated });
+    }
     const { priceGroceryItems } = await import('../services/priceService.js');
     const pricing = await priceGroceryItems(aggregated);
     return res.json({ items: aggregated, pricing });
@@ -102,6 +108,11 @@ recipesRouter.post('/grocery-list', async (req, res) => {
 
   const includeCost = body.includeCost ?? true;
   if (includeCost) {
+    const { getPremiumStatus } = await import('../middleware/premium.js');
+    const isPremium = await getPremiumStatus(req as any);
+    if (!isPremium) {
+      return res.status(402).json({ error: 'Premium required for cost estimation', items: aggregated });
+    }
     const { priceGroceryItems } = await import('../services/priceService.js');
     const pricing = await priceGroceryItems(aggregated);
     return res.json({ items: aggregated, pricing });
