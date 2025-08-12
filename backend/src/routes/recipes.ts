@@ -5,55 +5,59 @@ import { createSubmittedRecipe, getRecipeById, getRecipeByShareToken } from '../
 import { scaleIngredients } from '../services/scaleService.js';
 import { requireAuth } from '../middleware/auth.js';
 import { listRecipeRatings, upsertRecipeRating, getRecipeAverageRating } from '../services/ratingsService.js';
+import { commentsRouter } from './comments.js';
  
- export const recipesRouter = Router();
+export const recipesRouter = Router();
  
- // List recipes with filters
- recipesRouter.get('/', listRecipes);
+// List recipes with filters
+recipesRouter.get('/', listRecipes);
  
- // Get single recipe by id
- recipesRouter.get('/:id', getRecipe);
+// Get by share token (public link)
+recipesRouter.get('/share/:token', async (req, res) => {
+  const r = await getRecipeByShareToken(req.params.token);
+  if (!r) return res.status(404).json({ error: 'Recipe not found' });
+  res.json(r);
+});
+
+// Get single recipe by id
+recipesRouter.get('/:id', getRecipe);
+
+// Comments under a recipe
+recipesRouter.use('/:id/comments', commentsRouter);
  
- // Get by share token (public link)
- recipesRouter.get('/share/:token', async (req, res) => {
-   const r = await getRecipeByShareToken(req.params.token);
-   if (!r) return res.status(404).json({ error: 'Recipe not found' });
-   res.json(r);
- });
+// Submit a recipe (user-submitted, requires approval)
+recipesRouter.post('/submit', requireAuth, async (req, res) => {
+  const user = (req as any).user;
+  const body = req.body as { title?: string; description?: string; steps?: any[]; images?: string[] };
+  const title = (body?.title || '').trim();
+  if (title.length < 3) return res.status(400).json({ error: 'title is required (min 3 chars)' });
+  const created = await createSubmittedRecipe(user.id, {
+    title,
+    description: body?.description || '',
+    steps: Array.isArray(body?.steps) ? body!.steps : [],
+    images: Array.isArray(body?.images) ? body!.images : []
+  });
+  return res.status(201).json({ id: created.id, shareToken: created.share_token });
+});
  
- // Submit a recipe (user-submitted, requires approval)
- recipesRouter.post('/submit', requireAuth, async (req, res) => {
-   const user = (req as any).user;
-   const body = req.body as { title?: string; description?: string; steps?: any[]; images?: string[] };
-   const title = (body?.title || '').trim();
-   if (title.length < 3) return res.status(400).json({ error: 'title is required (min 3 chars)' });
-   const created = await createSubmittedRecipe(user.id, {
-     title,
-     description: body?.description || '',
-     steps: Array.isArray(body?.steps) ? body!.steps : [],
-     images: Array.isArray(body?.images) ? body!.images : []
-   });
-   return res.status(201).json({ id: created.id, shareToken: created.share_token });
- });
+// Ratings
+recipesRouter.get('/:id/ratings', async (req, res) => {
+  const ratings = await listRecipeRatings(req.params.id);
+  const avg = await getRecipeAverageRating(req.params.id);
+  return res.json({ average: avg, ratings });
+});
  
- // Ratings
- recipesRouter.get('/:id/ratings', async (req, res) => {
-   const ratings = await listRecipeRatings(req.params.id);
-   const avg = await getRecipeAverageRating(req.params.id);
-   return res.json({ average: avg, ratings });
- });
+recipesRouter.post('/:id/ratings', requireAuth, async (req, res) => {
+  const user = (req as any).user;
+  const rating = Number((req.body as any)?.rating);
+  const comment = typeof (req.body as any)?.comment === 'string' ? String((req.body as any).comment) : null;
+  if (!Number.isFinite(rating) || rating < 1 || rating > 5) return res.status(400).json({ error: 'rating must be 1..5' });
+  await upsertRecipeRating(user.id, req.params.id, rating, comment);
+  return res.status(204).end();
+});
  
- recipesRouter.post('/:id/ratings', requireAuth, async (req, res) => {
-   const user = (req as any).user;
-   const rating = Number((req.body as any)?.rating);
-   const comment = typeof (req.body as any)?.comment === 'string' ? String((req.body as any).comment) : null;
-   if (!Number.isFinite(rating) || rating < 1 || rating > 5) return res.status(400).json({ error: 'rating must be 1..5' });
-   await upsertRecipeRating(user.id, req.params.id, rating, comment);
-   return res.status(204).end();
- });
- 
- // Get aggregated grocery list for a recipe
- recipesRouter.get('/:id/grocery-list', async (req, res) => {
+// Get aggregated grocery list for a recipe
+recipesRouter.get('/:id/grocery-list', async (req, res) => {
   const recipe = await getRecipeById(req.params.id);
   if (!recipe) return res.status(404).json({ error: 'Recipe not found' });
   const ingredients = (recipe as any).ingredients ?? [];

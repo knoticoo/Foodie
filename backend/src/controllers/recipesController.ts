@@ -30,8 +30,9 @@ export async function listRecipes(req: Request, res: Response) {
   };
   const lim = typeof limit === 'string' ? Math.min(Number(limit), 100) : 20;
   const off = typeof offset === 'string' ? Math.max(Number(offset), 0) : 0;
+  // Exclude unapproved recipes from public listing
   const recipes = await findRecipes(filters, lim, off);
-  res.json({ recipes, limit: lim, offset: off });
+  res.json({ recipes: recipes.filter((r: any) => r.is_approved !== false), limit: lim, offset: off });
 }
 
 export async function getRecipe(req: Request, res: Response) {

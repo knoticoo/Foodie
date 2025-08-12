@@ -36,6 +36,8 @@ export function App() {
   const [ratings, setRatings] = useState<any[]>([]);
 
   const [challenges, setChallenges] = useState<any[]>([]);
+  const [pendingRecipes, setPendingRecipes] = useState<any[]>([]);
+  const [newChallenge, setNewChallenge] = useState({ title: '', description: '', start: '', end: '' });
 
   useEffect(() => {
     fetch(`${API}/api/health`).then(r => r.json()).then(d => setHealth(JSON.stringify(d))).catch(() => setHealth('error'));
@@ -350,6 +352,96 @@ export function App() {
             <li key={c.id}>{c.title} ({c.start_date} → {c.end_date})</li>
           ))}
         </ul>
+      </section>
+
+      <section style={{ marginTop: 24 }}>
+        <h2>Comments</h2>
+        <div>
+          <select value={selectedRecipeId} onChange={e => setSelectedRecipeId(e.target.value)}>
+            <option value="">— choose recipe —</option>
+            {recipes.map(r => (
+              <option key={r.id} value={r.id}>{r.title}</option>
+            ))}
+          </select>
+          <button disabled={!selectedRecipeId} onClick={async () => {
+            const res = await fetch(`${API}/api/recipes/${selectedRecipeId}/comments`);
+            const data = await res.json();
+            setRatings([]);
+            setChallenges([]);
+            setPlan([]);
+            setPrefsStatus('');
+            setRecommendations([]);
+            setHealth('');
+            setUploadPath('');
+            setSubmitStatus('');
+            setDietPreferences(dietPreferences);
+            setBudgetCents(budgetCents);
+            setEmail(email);
+            setPassword(password);
+            setRecipes(recipes);
+            setPlanStatus('');
+            // reuse ratings state to show comments list quickly
+            setRatings((data.comments || []).map((c: any) => ({ rating: '', comment: c.content })));
+          }}>Load Comments</button>
+        </div>
+        <div style={{ marginTop: 8 }}>
+          <input style={{ width: 400 }} placeholder="Add comment" value={ratingComment} onChange={e => setRatingComment(e.target.value)} />
+          <button disabled={!token || !selectedRecipeId || !ratingComment} onClick={async () => {
+            const res = await fetch(`${API}/api/recipes/${selectedRecipeId}/comments`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+              body: JSON.stringify({ content: ratingComment })
+            });
+            if (res.ok) {
+              const res2 = await fetch(`${API}/api/recipes/${selectedRecipeId}/comments`);
+              const data2 = await res2.json();
+              setRatings((data2.comments || []).map((c: any) => ({ rating: '', comment: c.content })));
+              setRatingComment('');
+            }
+          }}>Post</button>
+        </div>
+      </section>
+
+      <section style={{ marginTop: 24 }}>
+        <h2>Admin: Approvals</h2>
+        <div>
+          <button disabled={!token} onClick={async () => {
+            // naive: list all recipes and filter in UI for demo (no dedicated endpoint yet)
+            const res = await fetch(`${API}/api/recipes`);
+            const data = await res.json();
+            setPendingRecipes((data.recipes || []).filter((r: any) => r.is_approved === false));
+          }}>Load Pending</button>
+        </div>
+        <ul>
+          {pendingRecipes.map((r: any) => (
+            <li key={r.id}>
+              {r.title}
+              <button style={{ marginLeft: 8 }} disabled={!token} onClick={async () => {
+                await fetch(`${API}/api/admin/recipes/${r.id}/approval`, {
+                  method: 'PUT',
+                  headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                  body: JSON.stringify({ isApproved: true })
+                });
+              }}>Approve</button>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <section style={{ marginTop: 24 }}>
+        <h2>Admin: Challenges</h2>
+        <div>
+          <input placeholder="Title" value={newChallenge.title} onChange={e => setNewChallenge({ ...newChallenge, title: e.target.value })} />
+          <input placeholder="Start (YYYY-MM-DD)" value={newChallenge.start} onChange={e => setNewChallenge({ ...newChallenge, start: e.target.value })} />
+          <input placeholder="End (YYYY-MM-DD)" value={newChallenge.end} onChange={e => setNewChallenge({ ...newChallenge, end: e.target.value })} />
+          <button disabled={!token || !newChallenge.title} onClick={async () => {
+            await fetch(`${API}/api/admin/challenges`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+              body: JSON.stringify({ title: newChallenge.title, start_date: newChallenge.start, end_date: newChallenge.end, description: '' })
+            });
+          }}>Create</button>
+        </div>
       </section>
     </div>
   );

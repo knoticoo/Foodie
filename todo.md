@@ -38,10 +38,10 @@
 
 - **Goal**: User-driven content & engagement.
 - **Features**:
-  - [ ] User-submitted recipes (with image upload to VPS) — scaffolded: `/api/recipes/submit`, `/api/uploads/image-base64`, DB author/approval fields
-  - [ ] Ratings & comments — scaffolded: `/api/recipes/:id/ratings` (GET/POST), DB `recipe_ratings`
-  - [ ] Seasonal challenges (e.g., Midsummer BBQ week) — scaffolded: DB `challenges`, endpoint `/api/challenges`
-  - [ ] Share recipes via link/social media — scaffolded: `/api/recipes/share/:token`
+  - [x] User-submitted recipes (with image upload to VPS) — `/api/recipes/submit`, `/api/uploads/image-base64`, DB author/approval fields
+  - [x] Ratings & comments — `/api/recipes/:id/ratings` (GET/POST), `/api/recipes/:id/comments` (GET/POST/DELETE)
+  - [x] Seasonal challenges (e.g., Midsummer BBQ week) — DB `challenges`, endpoints `/api/challenges`, admin CRUD under `/api/admin/challenges`
+  - [x] Share recipes via link/social media — `/api/recipes/share/:token`
 
 ---
 
@@ -161,3 +161,9 @@
   - DB: `008_community.sql` adds `recipes.author_user_id`, `recipes.is_approved`, `recipes.share_token`, tables `recipe_ratings`, `challenges`, `challenge_recipes`.
   - API: `/api/recipes/submit` (user-submitted recipes), `/api/recipes/share/:token` (public view), ratings endpoints (`GET/POST /api/recipes/:id/ratings`), `/api/challenges` list, `/api/uploads/image-base64` for image uploads to shared static volume.
   - Admin Web: sections for submit recipe, base64 image upload, ratings view/submit, challenges list.
+
+### 2025-08-16
+- Phase 4 complete:
+  - DB: Admin flag on users, comments table; community tables from 008.
+  - API: Comments under recipes, admin approvals (`PUT /api/admin/recipes/:id/approval`), challenges CRUD (`/api/admin/challenges`), share token route ordered before id to avoid conflicts.
+  - Admin Web: Approvals panel, comments UI, challenge creation.

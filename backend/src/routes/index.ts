@@ -10,17 +10,19 @@ import { historyRouter } from './history.js';
 import { recommendationsRouter } from './recommendations.js';
 import { uploadsRouter } from './uploads.js';
 import { challengesRouter } from './challenges.js';
- 
- export const router = Router();
- 
- router.use('/health', healthRouter);
- router.use('/recipes', recipesRouter);
- router.use('/auth', authRouter);
- router.use('/favorites', favoritesRouter);
- router.use('/prices', pricesRouter);
- router.use('/planner', plannerRouter);
- router.use('/preferences', preferencesRouter);
- router.use('/history', historyRouter);
- router.use('/recommendations', recommendationsRouter);
- router.use('/uploads', uploadsRouter);
- router.use('/challenges', challengesRouter);
+import { adminRouter } from './admin.js';
+
+export const router = Router();
+
+router.use('/health', healthRouter);
+router.use('/recipes', recipesRouter);
+router.use('/auth', authRouter);
+router.use('/favorites', favoritesRouter);
+router.use('/prices', pricesRouter);
+router.use('/planner', plannerRouter);
+router.use('/preferences', preferencesRouter);
+router.use('/history', historyRouter);
+router.use('/recommendations', recommendationsRouter);
+router.use('/uploads', uploadsRouter);
+router.use('/challenges', challengesRouter);
+router.use('/admin', adminRouter);

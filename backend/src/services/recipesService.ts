@@ -32,7 +32,7 @@ export async function findRecipes(filters: RecipeListFilters, limit = 20, offset
   const whereSql = where.length > 0 ? `WHERE ${where.join(' AND ')}` : '';
 
   const sql = `
-    SELECT id, title, description, servings, total_time_minutes, cost_cents
+    SELECT id, title, description, servings, total_time_minutes, cost_cents, is_approved
     FROM recipes
     ${whereSql}
     ORDER BY created_at DESC
