@@ -27,10 +27,10 @@
 
 - **Goal**: Make the app part of user’s daily routine.
 - **Features**:
-  - [ ] Weekly meal planner calendar
-  - [ ] Auto-generated shopping list from planned meals
-  - [ ] Save dietary preferences (vegan, keto, traditional Latvian, budget-friendly)
-  - [ ] Smart recipe recommendations based on cooking history
+  - [x] Weekly meal planner calendar
+  - [x] Auto-generated shopping list from planned meals
+  - [x] Save dietary preferences (vegan, keto, traditional Latvian, budget-friendly)
+  - [x] Smart recipe recommendations based on cooking history
 
 ---
 
@@ -38,10 +38,10 @@
 
 - **Goal**: User-driven content & engagement.
 - **Features**:
-  - [ ] User-submitted recipes (with image upload to VPS)
-  - [ ] Ratings & comments
-  - [ ] Seasonal challenges (e.g., Midsummer BBQ week)
-  - [ ] Share recipes via link/social media
+  - [ ] User-submitted recipes (with image upload to VPS) — scaffolded: `/api/recipes/submit`, `/api/uploads/image-base64`, DB author/approval fields
+  - [ ] Ratings & comments — scaffolded: `/api/recipes/:id/ratings` (GET/POST), DB `recipe_ratings`
+  - [ ] Seasonal challenges (e.g., Midsummer BBQ week) — scaffolded: DB `challenges`, endpoint `/api/challenges`
+  - [ ] Share recipes via link/social media — scaffolded: `/api/recipes/share/:token`
 
 ---
 
@@ -151,3 +151,13 @@
 - Phase 3 scaffolding:
   - DB: `planned_meals`, `user_preferences`, `cook_history` tables with indexes.
   - API routes: `/api/planner` (weekly plan CRUD + grocery list), `/api/preferences` (get/update), `/api/history` (mark cooked), `/api/recommendations` (basic recommendations).
+
+### 2025-08-15
+- Phase 3 complete:
+  - Planner: `/api/planner/week` GET/PUT and `/api/planner/week/grocery-list` with scaling + price estimates; admin UI section for weekly planner and grocery list.
+  - Preferences: `/api/preferences` implemented; recipe list applies user preferences by default when no explicit filters are provided.
+  - Recommendations: `/api/recommendations` using diet overlap + recent history exclusion; admin UI to view recommendations.
+- Phase 4 start (scaffolding):
+  - DB: `008_community.sql` adds `recipes.author_user_id`, `recipes.is_approved`, `recipes.share_token`, tables `recipe_ratings`, `challenges`, `challenge_recipes`.
+  - API: `/api/recipes/submit` (user-submitted recipes), `/api/recipes/share/:token` (public view), ratings endpoints (`GET/POST /api/recipes/:id/ratings`), `/api/challenges` list, `/api/uploads/image-base64` for image uploads to shared static volume.
+  - Admin Web: sections for submit recipe, base64 image upload, ratings view/submit, challenges list.
