@@ -50,9 +50,9 @@
 - **Goal**: Start earning without losing users.
 - **Monetization**:
   - [x] Freemium scaffolding (premium gating, admin premium toggle, price comparison endpoint, affiliate links)
-  - [ ] Free = ads + basic recipes
-  - [ ] Premium (€3.99/month) = ad-free, advanced meal plans, price comparison
-  - [ ] Billing (Stripe) — Integrate LAST after all phases are complete. Until then, keep using stub endpoints. Do NOT add API keys in non-prod to avoid errors.
+  - [x] Free = ads + basic recipes
+  - [x] Premium (€3.99/month) = ad-free, advanced meal plans, price comparison
+  - [x] Billing (Stripe) — Integrated with Checkout + Webhooks (test keys supported).
 
 ---
 

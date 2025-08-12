@@ -5,10 +5,20 @@ import { requireAdmin } from '../middleware/admin.js';
 
 export const adsRouter = Router();
 
-// Public: list active ads for a placement
+// Public: list active ads for a placement (premium users see no ads if they send a valid token)
 adsRouter.get('/', async (req, res) => {
   const placement = String(req.query.placement || '').trim();
   if (!placement) return res.status(400).json({ error: 'placement is required' });
+
+  try {
+    // If Authorization header present and user is premium, return empty ads
+    if (typeof req.headers.authorization === 'string' && req.headers.authorization.startsWith('Bearer ')) {
+      const { getPremiumStatus } = await import('../middleware/premium.js');
+      const isPremium = await getPremiumStatus(req as any);
+      if (isPremium) return res.json({ ads: [] });
+    }
+  } catch {}
+
   const { rows } = await pgPool.query(
     `SELECT id, placement, image_url, target_url
      FROM ad_slots
