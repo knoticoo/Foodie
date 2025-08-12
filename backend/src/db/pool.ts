@@ -8,7 +8,12 @@ export const pgPool = new Pool({
   password: env.db.password,
   database: env.db.database,
   max: 10,
-  idleTimeoutMillis: 30000
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 2000
+});
+
+pgPool.on('error', (err) => {
+  console.warn('[db] unexpected error on idle client:', err.message);
 });
 
 export async function assertDatabaseConnectionOk(): Promise<void> {
