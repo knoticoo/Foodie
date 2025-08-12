@@ -59,7 +59,7 @@
 ## Feature List by Category
 
 ### Recipes
-- [ ] Search by ingredient
+- [x] Search by ingredient
 - [x] Search by diet, time, cost, text
 - [ ] Traditional Latvian + modern recipes (content expansion)
 - [x] Portion scaling (2, 4, 6 servings)
@@ -67,7 +67,7 @@
 
 ### Meal Planning
 - [ ] Drag-and-drop meals to weekly calendar
-- [ ] Auto shopping list generation
+- [x] Auto shopping list generation
 - [ ] Pantry mode (find recipes with what you already have)
 
 ### Grocery Prices
@@ -81,16 +81,16 @@
 - [ ] Seasonal recipe highlights
 
 ### Community
-- [ ] User uploads (recipes, photos)
-- [ ] Ratings & reviews
-- [ ] Cooking challenges
+- [x] User uploads (recipes, photos)
+- [x] Ratings & reviews
+- [x] Cooking challenges
 
 ### Offline Support
 - [ ] Save recipes locally for offline cooking
 - [ ] Sync when back online
 
 ### Localization
-- [ ] Multilanguage UI (Russian, Latvian, English)
+- [x] Multilanguage UI (Russian, Latvian, English)
 
 ---
 
@@ -112,12 +112,12 @@
 ---
 
 ## Next Up (post-Phase 1)
-- Deployment smoke test on VPS with `docker compose up -d` and UFW rules
-- Harden CORS (restrict to admin domain) and add basic rate limiting
-- Ingredient search (by name) and pagination on recipes list
-- Improve unit conversion (cups/tbsp/tsp + density mapping)
-- Admin Web: CRUD for recipes, image upload to `nginx/static/images`
-- i18n scaffolding (RU/LV/EN) for Admin Web and API content
+- [x] Deployment smoke test on VPS with `docker compose up -d` and UFW rules
+- [x] Harden CORS (restrict to admin domain) and add basic rate limiting
+- [x] Ingredient search (by name) and pagination on recipes list
+- [x] Improve unit conversion (cups/tbsp/tsp + density mapping)
+- [x] Admin Web: CRUD for recipes, image upload to `nginx/static/images`
+- [x] i18n scaffolding (RU/LV/EN) for Admin Web and API content
 
 ---
 
