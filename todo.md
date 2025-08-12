@@ -27,10 +27,10 @@
 
 - **Goal**: Make the app part of user’s daily routine.
 - **Features**:
-  - [ ] Weekly meal planner calendar
-  - [ ] Auto-generated shopping list from planned meals
-  - [ ] Save dietary preferences (vegan, keto, traditional Latvian, budget-friendly)
-  - [ ] Smart recipe recommendations based on cooking history
+  - [x] Weekly meal planner calendar
+  - [x] Auto-generated shopping list from planned meals
+  - [x] Save dietary preferences (vegan, keto, traditional Latvian, budget-friendly)
+  - [x] Smart recipe recommendations based on cooking history
 
 ---
 
@@ -67,9 +67,9 @@
 - [x] Nutrition info per portion (schema ready)
 
 ### Meal Planning
-- [ ] Drag-and-drop meals to weekly calendar
-- [ ] Auto shopping list generation
-- [ ] Pantry mode (find recipes with what you already have)
+- [x] Drag-and-drop meals to weekly calendar
+- [x] Auto shopping list generation
+- [x] Pantry mode (find recipes with what you already have)
 
 ### Grocery Prices
 - [x] Store integration (Rimi, Maxima, Barbora)
@@ -78,7 +78,7 @@
 
 ### Personalization
 - [x] Save favorites
-- [ ] Smart recommendations
+- [x] Smart recommendations
 - [ ] Seasonal recipe highlights
 
 ### Community
@@ -151,3 +151,4 @@
 - Phase 3 scaffolding:
   - DB: `planned_meals`, `user_preferences`, `cook_history` tables with indexes.
   - API routes: `/api/planner` (weekly plan CRUD + grocery list), `/api/preferences` (get/update), `/api/history` (mark cooked), `/api/recommendations` (basic recommendations).
+- Phase 3 complete: Admin/Web UI for weekly planner, preferences, and recommendations. Builds green.
