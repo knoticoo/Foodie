@@ -46,6 +46,12 @@ export function App() {
   const [compareName, setCompareName] = useState('');
   const [compareUnit, setCompareUnit] = useState('g');
   const [compareResult, setCompareResult] = useState('');
+  const [premiumOnly, setPremiumOnly] = useState(false);
+  const [adPlacement, setAdPlacement] = useState('home_top');
+  const [adImageUrl, setAdImageUrl] = useState('');
+  const [adTargetUrl, setAdTargetUrl] = useState('');
+  const [storeId, setStoreId] = useState('1');
+  const [affiliateTemplate, setAffiliateTemplate] = useState('https://example.com/search?q={query}&aff=YOURID');
 
   useEffect(() => {
     fetch(`${API}/api/health`).then(r => r.json()).then(d => setHealth(JSON.stringify(d))).catch(() => setHealth('error'));
@@ -485,20 +491,54 @@ export function App() {
             </select>
             <input style={{ marginLeft: 8 }} placeholder="Sponsor Name" value={sponsorName} onChange={e => setSponsorName(e.target.value)} />
             <input style={{ marginLeft: 8, width: 300 }} placeholder="Sponsor URL" value={sponsorUrl} onChange={e => setSponsorUrl(e.target.value)} />
+            <label style={{ marginLeft: 8 }}>
+              <input type="checkbox" checked={premiumOnly} onChange={e => setPremiumOnly(e.target.checked)} /> Premium-only
+            </label>
             <button style={{ marginLeft: 8 }} disabled={!token || !selectedRecipeId} onClick={async () => {
               await fetch(`${API}/api/admin/recipes/${selectedRecipeId}/sponsorship`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-                body: JSON.stringify({ isSponsored: true, sponsorName, sponsorUrl })
+                body: JSON.stringify({ isSponsored: true, sponsorName, sponsorUrl, isPremiumOnly: premiumOnly })
               });
-            }}>Mark Sponsored</button>
+            }}>Save</button>
             <button style={{ marginLeft: 8 }} disabled={!token || !selectedRecipeId} onClick={async () => {
               await fetch(`${API}/api/admin/recipes/${selectedRecipeId}/sponsorship`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-                body: JSON.stringify({ isSponsored: false, sponsorName: null, sponsorUrl: null })
+                body: JSON.stringify({ isSponsored: false, sponsorName: null, sponsorUrl: null, isPremiumOnly: false })
               });
-            }}>Clear Sponsorship</button>
+            }}>Clear</button>
+          </div>
+        </div>
+
+        <div style={{ border: '1px solid #ccc', padding: 12, marginBottom: 12 }}>
+          <h3>Ads</h3>
+          <div>
+            <input placeholder="Placement" value={adPlacement} onChange={e => setAdPlacement(e.target.value)} />
+            <input placeholder="Image URL" value={adImageUrl} onChange={e => setAdImageUrl(e.target.value)} style={{ marginLeft: 8, width: 300 }} />
+            <input placeholder="Target URL" value={adTargetUrl} onChange={e => setAdTargetUrl(e.target.value)} style={{ marginLeft: 8, width: 300 }} />
+            <button style={{ marginLeft: 8 }} disabled={!token || !adPlacement || !adImageUrl || !adTargetUrl} onClick={async () => {
+              await fetch(`${API}/api/ads`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                body: JSON.stringify({ placement: adPlacement, image_url: adImageUrl, target_url: adTargetUrl, is_active: true })
+              });
+            }}>Create Ad</button>
+          </div>
+        </div>
+
+        <div style={{ border: '1px solid #ccc', padding: 12 }}>
+          <h3>Affiliate Template</h3>
+          <div>
+            <input placeholder="Store ID" value={storeId} onChange={e => setStoreId(e.target.value)} />
+            <input placeholder="Template (use {query})" value={affiliateTemplate} onChange={e => setAffiliateTemplate(e.target.value)} style={{ marginLeft: 8, width: 500 }} />
+            <button style={{ marginLeft: 8 }} disabled={!token || !storeId} onClick={async () => {
+              await fetch(`${API}/api/admin/stores/${encodeURIComponent(storeId)}/affiliate-template`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                body: JSON.stringify({ template: affiliateTemplate })
+              });
+            }}>Save Template</button>
           </div>
         </div>
 

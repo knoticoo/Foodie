@@ -20,7 +20,20 @@ recipesRouter.get('/share/:token', async (req, res) => {
 });
 
 // Get single recipe by id
-recipesRouter.get('/:id', getRecipe);
+recipesRouter.get('/:id', async (req, res, next) => {
+  try {
+    const r = await getRecipeById(req.params.id);
+    if (!r) return res.status(404).json({ error: 'Recipe not found' });
+    const isPremiumOnly = (r as any).is_premium_only === true;
+    if (!isPremiumOnly) return res.json(r);
+    const { getPremiumStatus } = await import('../middleware/premium.js');
+    const isPremium = await getPremiumStatus(req);
+    if (!isPremium) return res.status(402).json({ error: 'Premium required' });
+    return res.json(r);
+  } catch (e) {
+    next(e);
+  }
+});
 
 // Comments under a recipe
 recipesRouter.use('/:id/comments', commentsRouter);

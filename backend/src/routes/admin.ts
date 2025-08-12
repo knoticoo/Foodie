@@ -78,17 +78,18 @@ adminRouter.put('/users/:id/premium', async (req, res) => {
   res.status(204).end();
 });
 
-// Update recipe sponsorship metadata
+// Update recipe sponsorship metadata and premium-only flag
 adminRouter.put('/recipes/:id/sponsorship', async (req, res) => {
   const id = String(req.params.id || '');
-  const body = req.body as { isSponsored?: boolean; sponsorName?: string | null; sponsorUrl?: string | null };
+  const body = req.body as { isSponsored?: boolean; sponsorName?: string | null; sponsorUrl?: string | null; isPremiumOnly?: boolean | null };
   await pgPool.query(
     `UPDATE recipes
      SET is_sponsored = COALESCE($1, is_sponsored),
          sponsor_name = COALESCE($2, sponsor_name),
-         sponsor_url = COALESCE($3, sponsor_url)
-     WHERE id = $4`,
-    [body.isSponsored ?? null, body.sponsorName ?? null, body.sponsorUrl ?? null, id]
+         sponsor_url = COALESCE($3, sponsor_url),
+         is_premium_only = COALESCE($4, is_premium_only)
+     WHERE id = $5`,
+    [body.isSponsored ?? null, body.sponsorName ?? null, body.sponsorUrl ?? null, body.isPremiumOnly ?? null, id]
   );
   res.status(204).end();
 });

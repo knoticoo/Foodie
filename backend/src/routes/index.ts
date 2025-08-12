@@ -11,9 +11,10 @@ import { recommendationsRouter } from './recommendations.js';
 import { uploadsRouter } from './uploads.js';
 import { challengesRouter } from './challenges.js';
 import { adminRouter } from './admin.js';
-
+import { adsRouter } from './ads.js';
+ 
 export const router = Router();
-
+ 
 router.use('/health', healthRouter);
 router.use('/recipes', recipesRouter);
 router.use('/auth', authRouter);
@@ -25,4 +26,5 @@ router.use('/history', historyRouter);
 router.use('/recommendations', recommendationsRouter);
 router.use('/uploads', uploadsRouter);
 router.use('/challenges', challengesRouter);
+router.use('/ads', adsRouter);
 router.use('/admin', adminRouter);
