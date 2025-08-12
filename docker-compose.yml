@@ -1,0 +1,71 @@
+version: "3.9"
+
+networks:
+  app-net:
+    driver: bridge
+
+services:
+  db:
+    image: postgres:16
+    container_name: recipes_db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./database/init:/docker-entrypoint-initdb.d:ro
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - app-net
+
+  api:
+    build: ./backend
+    container_name: recipes_api
+    env_file: .env
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "3000:3000"
+    networks:
+      - app-net
+
+  scrapers:
+    build: ./scrapers
+    container_name: recipes_scrapers
+    env_file: .env
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - app-net
+
+  admin-web:
+    build: ./admin/web
+    container_name: recipes_admin_web
+    env_file: .env
+    ports:
+      - "5173:5173"
+    networks:
+      - app-net
+
+  static:
+    build: ./nginx
+    container_name: recipes_static
+    ports:
+      - "8080:80"
+    volumes:
+      - ./nginx/static:/usr/share/nginx/html:ro
+    networks:
+      - app-net
+
+volumes:
+  db-data:
+    driver: local
