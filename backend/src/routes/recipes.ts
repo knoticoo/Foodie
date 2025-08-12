@@ -18,6 +18,14 @@ recipesRouter.get('/:id/grocery-list', async (req, res) => {
   if (!recipe) return res.status(404).json({ error: 'Recipe not found' });
   const ingredients = (recipe as any).ingredients ?? [];
   const aggregated = aggregateGroceryList(ingredients);
+
+  // Optional pricing integration
+  const includeCost = String(req.query.includeCost ?? 'true') === 'true';
+  if (includeCost) {
+    const { priceGroceryItems } = await import('../services/priceService.js');
+    const pricing = await priceGroceryItems(aggregated);
+    return res.json({ items: aggregated, pricing });
+  }
   res.json({ items: aggregated });
 });
 
@@ -33,7 +41,7 @@ recipesRouter.get('/:id/scale', async (req, res) => {
 
 // Aggregate grocery list for multiple recipes
 recipesRouter.post('/grocery-list', async (req, res) => {
-  const body = req.body as { recipes: { id: string; servings?: number }[] };
+  const body = req.body as { recipes: { id: string; servings?: number }[]; includeCost?: boolean };
   if (!body?.recipes || !Array.isArray(body.recipes) || body.recipes.length === 0) {
     return res.status(400).json({ error: 'recipes array required' });
   }
@@ -47,5 +55,12 @@ recipesRouter.post('/grocery-list', async (req, res) => {
     all.push(...scaled);
   }
   const aggregated = aggregateGroceryList(all);
+
+  const includeCost = body.includeCost ?? true;
+  if (includeCost) {
+    const { priceGroceryItems } = await import('../services/priceService.js');
+    const pricing = await priceGroceryItems(aggregated);
+    return res.json({ items: aggregated, pricing });
+  }
   res.json({ items: aggregated });
 });

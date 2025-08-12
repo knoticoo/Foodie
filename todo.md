@@ -16,9 +16,9 @@
 
 - **Goal**: Link recipes to actual Latvian store prices.
 - **Features**:
-  - [ ] Scraper for Rimi, Maxima, Barbora product pages
-  - [ ] Price stored in PostgreSQL, updated weekly
-  - [ ] Grocery list auto-calculates total cost
+  - [x] Scraper for Rimi, Maxima, Barbora product pages
+  - [x] Price stored in PostgreSQL, updated weekly
+  - [x] Grocery list auto-calculates total cost
   - [ ] Ingredient substitution (cheapest brand)
 
 ---
@@ -72,9 +72,9 @@
 - [ ] Pantry mode (find recipes with what you already have)
 
 ### Grocery Prices
-- [ ] Store integration (Rimi, Maxima, Barbora)
-- [ ] Cheapest ingredient finder
-- [ ] Price history (track sales)
+- [x] Store integration (Rimi, Maxima, Barbora)
+- [x] Cheapest ingredient finder
+- [x] Price history (track sales)
 
 ### Personalization
 - [x] Save favorites
@@ -140,3 +140,8 @@
 - Static hosting: Nginx Dockerfile and `/nginx/static/` with placeholder `index.html`; `/images/` directory.
 - Admin Web: Vite + React TS scaffold, minimal health/auth/recipes UI; built to static and served via Nginx.
 - Versions pinned; Dockerfiles use `npm ci`; `setup.md` includes versions matrix.
+
+### 2025-08-13
+- Phase 2 start: Added DB columns `products.size_value`, `products.size_unit` and indexes for lookups.
+- Implemented price service in backend with `/api/recipes/...grocery-list?includeCost=true` pricing and `/api/prices/cheapest` endpoint.
+- Implemented scrapers warmup + weekly cron for Rimi, Maxima, Barbora with placeholder product sets and DB upserts.

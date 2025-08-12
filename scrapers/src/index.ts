@@ -25,7 +25,15 @@ cron.schedule('0 4 * * 1', async () => {
   console.log('[Cron] Recipe scraping finished');
 });
 
-// Run immediately on start (optional warmup)
+// Run immediately on start to get initial data
 (async () => {
-  console.log('[Warmup] Running initial checks');
+  console.log('[Warmup] Running initial price updates...');
+  try {
+    await scrapeRimiPrices();
+    await scrapeMaximaPrices();
+    await scrapeBarboraPrices();
+    console.log('[Warmup] Initial price updates completed');
+  } catch (e) {
+    console.error('[Warmup] Price warmup failed', e);
+  }
 })();
