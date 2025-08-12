@@ -19,7 +19,7 @@
   - [x] Scraper for Rimi, Maxima, Barbora product pages
   - [x] Price stored in PostgreSQL, updated weekly
   - [x] Grocery list auto-calculates total cost
-  - [ ] Ingredient substitution (cheapest brand)
+  - [x] Ingredient substitution (cheapest brand)
 
 ---
 
@@ -145,3 +145,9 @@
 - Phase 2 start: Added DB columns `products.size_value`, `products.size_unit` and indexes for lookups.
 - Implemented price service in backend with `/api/recipes/...grocery-list?includeCost=true` pricing and `/api/prices/cheapest` endpoint.
 - Implemented scrapers warmup + weekly cron for Rimi, Maxima, Barbora with placeholder product sets and DB upserts.
+
+### 2025-08-14
+- Phase 2 complete: Cheapest brand substitution integrated in pricing service and `/api/prices/cheapest` endpoint.
+- Phase 3 scaffolding:
+  - DB: `planned_meals`, `user_preferences`, `cook_history` tables with indexes.
+  - API routes: `/api/planner` (weekly plan CRUD + grocery list), `/api/preferences` (get/update), `/api/history` (mark cooked), `/api/recommendations` (basic recommendations).
