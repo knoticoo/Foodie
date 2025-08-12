@@ -7,9 +7,16 @@ import { RecipesPage } from './pages/RecipesPage';
 import { RecipeDetailPage } from './pages/RecipeDetailPage';
 import { FavoritesPage } from './pages/FavoritesPage';
 import { AuthProvider, useAuth } from './auth/AuthContext';
+import { SubmitRecipePage } from './pages/SubmitRecipePage';
+import { PreferencesPage } from './pages/PreferencesPage';
+import { PlannerPage } from './pages/PlannerPage';
+import { RecommendationsPage } from './pages/RecommendationsPage';
+import { PricesPage } from './pages/PricesPage';
+import { BillingPage } from './pages/BillingPage';
+import { ChallengesPage } from './pages/ChallengesPage';
 
 function NavBar() {
-  const { token, logout } = useAuth();
+  const { token, isAdmin, logout } = useAuth();
   return (
     <header className="bg-white border-b">
       <div className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between">
@@ -17,6 +24,20 @@ function NavBar() {
         <nav className="flex items-center gap-4 text-sm">
           <Link to="/recipes" className="hover:underline">Browse</Link>
           <Link to="/favorites" className="hover:underline">Favorites</Link>
+          <Link to="/challenges" className="hover:underline">Challenges</Link>
+          {token && (
+            <>
+              <Link to="/submit" className="hover:underline">Submit</Link>
+              <Link to="/planner" className="hover:underline">Planner</Link>
+              <Link to="/preferences" className="hover:underline">Preferences</Link>
+              <Link to="/recommendations" className="hover:underline">For you</Link>
+              <Link to="/prices" className="hover:underline">Prices</Link>
+              <Link to="/billing" className="hover:underline">Premium</Link>
+            </>
+          )}
+          {isAdmin && (
+            <a href={`http://${window.location.hostname}:5173`} className="hover:underline" target="_blank" rel="noreferrer">Admin</a>
+          )}
           {token ? (
             <button onClick={logout} className="px-3 py-1 rounded bg-gray-900 text-white text-sm">Logout</button>
           ) : (
@@ -44,6 +65,13 @@ export const App: React.FC = () => {
             <Route path="/recipes" element={<RecipesPage />} />
             <Route path="/recipes/:id" element={<RecipeDetailPage />} />
             <Route path="/favorites" element={<FavoritesPage />} />
+            <Route path="/submit" element={<SubmitRecipePage />} />
+            <Route path="/preferences" element={<PreferencesPage />} />
+            <Route path="/planner" element={<PlannerPage />} />
+            <Route path="/recommendations" element={<RecommendationsPage />} />
+            <Route path="/prices" element={<PricesPage />} />
+            <Route path="/billing" element={<BillingPage />} />
+            <Route path="/challenges" element={<ChallengesPage />} />
           </Routes>
         </main>
       </BrowserRouter>

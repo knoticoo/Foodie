@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useMemo, useState } from 'react';
+import React, { createContext, useContext, useMemo, useState, useEffect } from 'react';
 
 const defaultApiBase = typeof window !== 'undefined'
   ? `http://${window.location.hostname}:3000`
@@ -8,16 +8,57 @@ const API_BASE_URL = (import.meta as any).env?.VITE_API_BASE_URL ?? defaultApiBa
 
 type AuthContextValue = {
   token: string | null;
+  isAdmin: boolean;
+  isPremium: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string) => Promise<void>;
   logout: () => void;
   authorizedFetch: (input: RequestInfo, init?: RequestInit) => Promise<Response>;
+  refreshStatus: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [token, setToken] = useState<string | null>(() => localStorage.getItem('token'));
+  const [isAdmin, setIsAdmin] = useState<boolean>(false);
+  const [isPremium, setIsPremium] = useState<boolean>(false);
+
+  const fetchMe = async (jwt: string) => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/auth/me`, { headers: { Authorization: `Bearer ${jwt}` } });
+      if (!res.ok) throw new Error('me failed');
+      const me = await res.json();
+      setIsAdmin(Boolean(me?.is_admin));
+    } catch {
+      setIsAdmin(false);
+    }
+  };
+
+  const fetchBillingStatus = async (jwt: string) => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/billing/status`, { headers: { Authorization: `Bearer ${jwt}` } });
+      if (!res.ok) throw new Error('status failed');
+      const d = await res.json();
+      setIsPremium(Boolean(d?.isPremium));
+    } catch {
+      setIsPremium(false);
+    }
+  };
+
+  const refreshStatus = async () => {
+    if (!token) return;
+    await Promise.allSettled([fetchMe(token), fetchBillingStatus(token)]);
+  };
+
+  useEffect(() => {
+    if (token) {
+      refreshStatus();
+    } else {
+      setIsAdmin(false);
+      setIsPremium(false);
+    }
+  }, [token]);
 
   const login = async (email: string, password: string) => {
     const res = await fetch(`${API_BASE_URL}/api/auth/login`, {
@@ -46,6 +87,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const logout = () => {
     localStorage.removeItem('token');
     setToken(null);
+    setIsAdmin(false);
+    setIsPremium(false);
   };
 
   const authorizedFetch = async (input: RequestInfo, init?: RequestInit) => {
@@ -54,7 +97,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return fetch(input, { ...init, headers });
   };
 
-  const value = useMemo(() => ({ token, login, register, logout, authorizedFetch }), [token]);
+  const value = useMemo(() => ({ token, isAdmin, isPremium, login, register, logout, authorizedFetch, refreshStatus }), [token, isAdmin, isPremium]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
