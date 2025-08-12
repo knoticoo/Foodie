@@ -12,6 +12,7 @@ import { uploadsRouter } from './uploads.js';
 import { challengesRouter } from './challenges.js';
 import { adminRouter } from './admin.js';
 import { adsRouter } from './ads.js';
+import { billingRouter } from './billing.js';
  
 export const router = Router();
  
@@ -27,4 +28,5 @@ router.use('/recommendations', recommendationsRouter);
 router.use('/uploads', uploadsRouter);
 router.use('/challenges', challengesRouter);
 router.use('/ads', adsRouter);
+router.use('/billing', billingRouter);
 router.use('/admin', adminRouter);

@@ -209,3 +209,28 @@ cat ~/recipes_backup_2024-01-01.sql | docker exec -i recipes_db psql -U "$POSTGR
 - Admin Web (npm pinned): react 18.3.1, react-dom 18.3.1, vite 5.2.0, @vitejs/plugin-react 4.2.1, typescript 5.4.5, @types/react 18.3.3, @types/react-dom 18.3.0
 
 Note: Dockerfiles use `npm ci` with lockfiles for reproducible builds.
+
+### 14) Stripe (test mode)
+- Set these in `.env` (test keys):
+```
+STRIPE_SECRET_KEY=sk_test_...
+STRIPE_PRICE_ID=price_...
+STRIPE_WEBHOOK_SECRET=whsec_...
+```
+- Expose webhook URL publicly (for local dev use `stripe cli`; on VPS use your domain/IP):
+  - Webhook endpoint: `POST http://YOUR.PUBLIC.IP.OR.DOMAIN:3000/api/billing/webhook`
+  - Subscribe to events: `checkout.session.completed`, `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted`
+- Create Checkout Session:
+```
+curl -X POST http://YOUR.PUBLIC.IP.OR.DOMAIN:3000/api/billing/checkout \
+  -H "Authorization: Bearer YOUR_JWT" \
+  -H "Content-Type: application/json" \
+  -d '{"successUrl":"http://YOUR.PUBLIC.IP.OR.DOMAIN:5173","cancelUrl":"http://YOUR.PUBLIC.IP.OR.DOMAIN:5173"}'
+```
+- Open returned `url` to complete test subscription.
+- Optional: Customer Portal URL:
+```
+curl -X POST http://YOUR.PUBLIC.IP.OR.DOMAIN:3000/api/billing/portal \
+  -H "Authorization: Bearer YOUR_JWT" -H "Content-Type: application/json" \
+  -d '{"returnUrl":"http://YOUR.PUBLIC.IP.OR.DOMAIN:5173"}'
+```

@@ -10,6 +10,11 @@ export const env = {
     user: String(process.env.POSTGRES_USER ?? 'recipes'),
     password: String(process.env.POSTGRES_PASSWORD ?? 'recipes_password_change_me'),
     database: String(process.env.POSTGRES_DB ?? 'recipes')
+  },
+  stripe: {
+    secretKey: String(process.env.STRIPE_SECRET_KEY || ''),
+    priceId: String(process.env.STRIPE_PRICE_ID || ''),
+    webhookSecret: String(process.env.STRIPE_WEBHOOK_SECRET || '')
   }
 };
 
