@@ -107,6 +107,9 @@ Replace `YOUR.PUBLIC.IP.OR.DOMAIN` below.
 # API health
 curl -s http://YOUR.PUBLIC.IP.OR.DOMAIN:3000/api/health | jq
 
+# Public web (open in browser)
+# http://YOUR.PUBLIC.IP.OR.DOMAIN/
+
 # Admin web (open in browser)
 # http://YOUR.PUBLIC.IP.OR.DOMAIN:5173
 
@@ -197,6 +200,7 @@ cat ~/recipes_backup_2024-01-01.sql | docker exec -i recipes_db psql -U "$POSTGR
 - Ports already in use: change host ports in `docker-compose.yml` or stop conflicting services.
 - Can’t reach from public Internet: verify firewall, cloud security groups, and that services bind to `0.0.0.0` (this project does by default).
 - DB exposed: Prefer removing `5432:5432` mapping and use an admin tool via SSH tunnel instead.
+- Public site shows blank: ensure API reachable from the browser and set `VITE_API_BASE_URL` if the API is on a different host/port.
 
 ### Versions matrix
 - Node.js: 20-alpine (containers)

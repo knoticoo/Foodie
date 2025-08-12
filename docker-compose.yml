@@ -57,6 +57,14 @@ services:
     networks:
       - app-net
 
+  public-web:
+    build: ./site/web
+    container_name: recipes_public_web
+    ports:
+      - "80:80"
+    networks:
+      - app-net
+
   static:
     build: ./nginx
     container_name: recipes_static

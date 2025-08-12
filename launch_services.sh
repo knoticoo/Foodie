@@ -96,6 +96,7 @@ if command -v curl >/dev/null 2>&1; then
 fi
 
 echo "[+] Services should now be up:"
+echo "    - Public Web:  http://${HOST_TO_ADVERTISE}/"
 echo "    - API:         http://${HOST_TO_ADVERTISE}:3000"
 echo "    - Admin Web:   http://${HOST_TO_ADVERTISE}:5173"
 echo "    - Static imgs: http://${HOST_TO_ADVERTISE}:8080/images/"
