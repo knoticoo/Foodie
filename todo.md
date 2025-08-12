@@ -54,6 +54,7 @@
   - [ ] Premium (€3.99/month) = ad-free, advanced meal plans, price comparison
   - [ ] Grocery affiliate partnerships (earn from online orders)
   - [ ] Sponsored recipes from food brands
+  - [ ] Billing (Stripe) — Integrate LAST after all phases are complete. Until then, keep using stub endpoints. Do NOT add API keys in non-prod to avoid errors.
 
 ---
 
