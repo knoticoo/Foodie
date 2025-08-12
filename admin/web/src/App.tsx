@@ -460,6 +460,9 @@ export function App() {
 
       <section style={{ marginTop: 24 }}>
         <h2>Admin: Monetization</h2>
+        <div style={{ background:'#fffbe6', border:'1px solid #ffe58f', color:'#613400', padding:8, margin:'8px 0 12px 0' }}>
+          Billing (Stripe) is deferred until all phases are complete. Stub endpoints are used; no API keys required here.
+        </div>
         <div style={{ border: '1px solid #ccc', padding: 12, marginBottom: 12 }}>
           <h3>Set Premium for User</h3>
           <input style={{ width: 340 }} placeholder="User ID" value={premiumUserId} onChange={e => setPremiumUserId(e.target.value)} />
