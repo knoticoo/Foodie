@@ -2,13 +2,13 @@
 
 - **Goal**: Fully working core app without advanced extras.
 - **Features**:
-  - [ ] Recipe browsing (search & filters)
-  - [ ] Step-by-step cooking instructions with images
-  - [ ] Ingredient list with unit conversion
-  - [ ] User accounts & favorites
-  - [ ] Basic grocery list generator
-  - [ ] Data from self-built recipe database (scraped + open source)
-  - [ ] Hosted entirely on VPS
+  - [x] Recipe browsing (search & filters) — list with q/diet/maxTime/maxCost filters
+  - [x] Step-by-step cooking instructions with images — fields exposed in API (`steps`, `images`)
+  - [x] Ingredient list with unit conversion — scaling + basic unit aggregation (g/ml/pcs)
+  - [x] User accounts & favorites — JWT auth (register/login) + favorites CRUD
+  - [x] Basic grocery list generator — per-recipe and multi-recipe endpoints
+  - [x] Data from self-built recipe database (scraped + open source) — initial schema + seed example
+  - [x] Hosted entirely on VPS — Docker Compose + service Dockerfiles ready
 
 ---
 
@@ -60,10 +60,11 @@
 ## Feature List by Category
 
 ### Recipes
-- [ ] Search by ingredient, diet, time, cost
-- [ ] Traditional Latvian + modern recipes
-- [ ] Portion scaling (2, 4, 6 servings)
-- [ ] Nutrition info per portion
+- [ ] Search by ingredient
+- [x] Search by diet, time, cost, text
+- [ ] Traditional Latvian + modern recipes (content expansion)
+- [x] Portion scaling (2, 4, 6 servings)
+- [x] Nutrition info per portion (schema ready)
 
 ### Meal Planning
 - [ ] Drag-and-drop meals to weekly calendar
@@ -76,7 +77,7 @@
 - [ ] Price history (track sales)
 
 ### Personalization
-- [ ] Save favorites
+- [x] Save favorites
 - [ ] Smart recommendations
 - [ ] Seasonal recipe highlights
 
@@ -111,6 +112,16 @@
 
 ---
 
+## Next Up (post-Phase 1)
+- Deployment smoke test on VPS with `docker compose up -d` and UFW rules
+- Harden CORS (restrict to admin domain) and add basic rate limiting
+- Ingredient search (by name) and pagination on recipes list
+- Improve unit conversion (cups/tbsp/tsp + density mapping)
+- Admin Web: CRUD for recipes, image upload to `nginx/static/images`
+- i18n scaffolding (RU/LV/EN) for Admin Web and API content
+
+---
+
 ## Changelog
 
 ### 2025-08-12
@@ -119,11 +130,13 @@
 - Config: Added `.env.example`, root `.gitignore`, `.dockerignore`, `README.md` (overview), and `setup.md` (Ubuntu guide).
 - Backend API:
   - TypeScript Express app, env loader, CORS, JSON body parsing, global error handler.
-  - Routes: `/api/health`, `/api/recipes` (placeholder list + detail).
+  - Routes: `/api/health`, `/api/recipes` (list/detail), `/api/recipes/:id/grocery-list`, `/api/recipes/:id/scale`, `POST /api/recipes/grocery-list`.
+  - Auth: JWT (`/api/auth/register`, `/api/auth/login`) and `requireAuth` middleware.
+  - Favorites: `/api/favorites` (GET, POST, DELETE) for save/remove/list.
+  - Grocery: scaling + basic unit conversions + aggregation.
   - Database: `pg` pool and connection check; Dockerfile; `tsconfig.json`.
-  - Auth groundwork: Added `bcryptjs`, `jsonwebtoken`, and `requireAuth` middleware (JWT) for future protected routes.
-- Database init: `pgcrypto` extension and initial schema for users, recipes, ingredients, favorites, stores, products, product_prices.
-- Scrapers: TS cron service with scheduled jobs placeholders for Rimi/Maxima/Barbora prices and open-source recipes; Dockerfile.
-- Static hosting: Nginx Dockerfile and `/nginx/static/` with placeholder `index.html`; `/images/` directory for uploads.
-- Admin Web: Vite + React TS scaffold with `vite.config.ts` binding to `0.0.0.0`; Dockerfile using vite preview.
-- Todo updates: Added Localization feature (Russian, Latvian, English).
+- Database init: `pgcrypto` extension and initial schema + Phase 1 columns; `ingredients` JSONB; seed recipe.
+- Scrapers: TS cron service placeholders for prices and recipes; Dockerfile.
+- Static hosting: Nginx Dockerfile and `/nginx/static/` with placeholder `index.html`; `/images/` directory.
+- Admin Web: Vite + React TS scaffold, minimal health/auth/recipes UI; built to static and served via Nginx.
+- Versions pinned; Dockerfiles use `npm ci`; `setup.md` includes versions matrix.
