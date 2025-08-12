@@ -4,6 +4,7 @@ WORKDIR /app
 COPY package*.json ./
 RUN if [ -f package-lock.json ]; then npm ci --no-audit --no-fund; else npm install --no-audit --no-fund; fi
 COPY tsconfig.json vite.config.ts index.html ./
+COPY postcss.config.js tailwind.config.js ./
 COPY src ./src
 RUN npm run build
 
