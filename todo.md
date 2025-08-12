@@ -89,6 +89,9 @@
 - [ ] Save recipes locally for offline cooking
 - [ ] Sync when back online
 
+### Localization
+- [ ] Multilanguage UI (Russian, Latvian, English)
+
 ---
 
 ## VPS-Based Architecture Overview
