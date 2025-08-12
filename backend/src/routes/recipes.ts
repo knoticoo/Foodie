@@ -30,3 +30,22 @@ recipesRouter.get('/:id/scale', async (req, res) => {
   const scaled = scaleIngredients(ingredients, recipe.servings ?? 2, newServings);
   res.json({ servings: newServings, ingredients: scaled });
 });
+
+// Aggregate grocery list for multiple recipes
+recipesRouter.post('/grocery-list', async (req, res) => {
+  const body = req.body as { recipes: { id: string; servings?: number }[] };
+  if (!body?.recipes || !Array.isArray(body.recipes) || body.recipes.length === 0) {
+    return res.status(400).json({ error: 'recipes array required' });
+  }
+  const all: any[] = [];
+  for (const item of body.recipes) {
+    const r = await getRecipeById(item.id);
+    if (!r) continue;
+    const baseServings = r.servings ?? 2;
+    const ing = (r as any).ingredients ?? [];
+    const scaled = item.servings ? scaleIngredients(ing, baseServings, item.servings) : ing;
+    all.push(...scaled);
+  }
+  const aggregated = aggregateGroceryList(all);
+  res.json({ items: aggregated });
+});

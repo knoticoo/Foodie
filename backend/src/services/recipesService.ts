@@ -45,7 +45,7 @@ export async function findRecipes(filters: RecipeListFilters, limit = 20, offset
 
 export async function getRecipeById(id: string) {
   const sql = `
-    SELECT id, title, description, steps, images, servings, total_time_minutes, nutrition
+    SELECT id, title, description, steps, images, servings, total_time_minutes, nutrition, ingredients
     FROM recipes WHERE id = $1
   `;
   const { rows } = await pgPool.query(sql, [id]);
