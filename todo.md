@@ -176,3 +176,13 @@
     - Recipes: grocery list cost estimation now premium-only.
     - Admin: endpoints to set user premium, recipe sponsorship, and affiliate templates.
   - Admin Web: Monetization section to grant/revoke premium, set sponsorship, and run price comparison.
+
+### 2025-08-18
+- Public Web:
+  - Added Admin link in navbar (visible only for `is_admin` users via `/api/auth/me`).
+  - Removed API health widget from Home page.
+  - Added reusable `Modal` and `AdsBanner` components (ads hidden for premium users based on token).
+- API:
+  - Added `GET /api/auth/me` returning `{ email, is_admin }` for the current user.
+- Notes:
+  - Follow-up: build full public UI for comments/ratings, recipe submit with image upload, planner, preferences, recommendations, price comparison, and subscription (Stripe Checkout + Portal) using existing backend endpoints.
