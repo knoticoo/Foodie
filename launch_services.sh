@@ -85,27 +85,46 @@ if [[ -z "${HOST_TO_ADVERTISE}" ]]; then
 fi
 HOST_TO_ADVERTISE="${HOST_TO_ADVERTISE:-0.0.0.0}"
 
-# Healthcheck should use a routable local address, not 0.0.0.0
-HEALTHCHECK_HOST="127.0.0.1"
-API_URL="http://${HEALTHCHECK_HOST}:3000/api/health"
+# Helper: wrap IPv6 addresses in brackets for URLs
+url_host() {
+  local h="$1"
+  if [[ "$h" == *:* && "$h" != \[*\] ]]; then
+    echo "[$h]"
+  else
+    echo "$h"
+  fi
+}
+
+# Healthcheck should try both IPv4 and IPv6 localhost, then advertised host
+HEALTH_URLS=(
+  "http://127.0.0.1:3000/api/health"
+  "http://[::1]:3000/api/health"
+)
+# Add advertised host (properly bracket if IPv6)
+FORMATTED_HOST=$(url_host "$HOST_TO_ADVERTISE")
+HEALTH_URLS+=("http://${FORMATTED_HOST}:3000/api/health")
+
 if command -v curl >/dev/null 2>&1; then
-  echo "[+] Checking API health at ${API_URL}"
+  echo "[+] Checking API health (IPv4/IPv6):"
   set +e
-  for i in {1..20}; do
-    STATUS=$(curl -s -m 2 "$API_URL" || true)
+  for url in "${HEALTH_URLS[@]}"; do
+    echo "    -> $url"
+    STATUS=$(curl -s -m 3 "$url" || true)
     if [[ -n "$STATUS" ]]; then
       echo "[OK] API responded: $STATUS"
       break
     fi
-    sleep 1
   done
   set -e
 fi
 
+API_HOST_PRINT=$(url_host "$HOST_TO_ADVERTISE")
+
 echo "[+] Services should now be up:"
-echo "    - Public Web:  http://${HOST_TO_ADVERTISE}/"
-echo "    - API:         http://${HOST_TO_ADVERTISE}:3000"
-echo "    - Admin Web:   http://${HOST_TO_ADVERTISE}:5173"
-echo "    - Static imgs: http://${HOST_TO_ADVERTISE}:8080/images/"
+echo "    - Public Web:  http://${API_HOST_PRINT}/"
+echo "    - API:         http://${API_HOST_PRINT}:3000"
+echo "    - Admin Web:   http://${API_HOST_PRINT}:5173"
+echo "    - Static imgs: http://${API_HOST_PRINT}:8080/images/"
+
 echo ""
 echo "Tip: adjust CORS_ORIGIN in .env to your admin domain(s)."
