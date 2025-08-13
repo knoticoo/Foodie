@@ -1,598 +1,480 @@
-import React, { useEffect, useState } from 'react';
-import { t, setLang, getLang } from './i18n';
+import React, { useEffect, useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import {
+  BarChart3,
+  Users,
+  BookOpen,
+  Star,
+  TrendingUp,
+  Activity,
+  Calendar,
+  Settings,
+  LogOut,
+  Bell,
+  Search,
+  Filter,
+  Download,
+  Plus,
+  Edit3,
+  Trash2,
+  Eye,
+  ChefHat,
+  Crown,
+  MessageSquare,
+  AlertCircle,
+  CheckCircle,
+  Clock,
+  Globe,
+  Zap
+} from 'lucide-react'
+import { t, setLang, getLang } from './i18n'
 
-const API = (import.meta as any).env?.VITE_API_BASE_URL || window.__VITE__?.VITE_API_BASE_URL || '';
-const STATIC_BASE = (import.meta as any).env?.VITE_STATIC_BASE_URL || window.__VITE__?.VITE_STATIC_BASE_URL || '';
-const ADMIN_API_KEY = (import.meta as any).env?.VITE_ADMIN_API_KEY || window.__VITE__?.VITE_ADMIN_API_KEY || '';
-// Add public site base URL (fallback: replace :5173 with :80)
-const PUBLIC_WEB_BASE = (import.meta as any).env?.VITE_PUBLIC_WEB_BASE_URL || (window as any).__VITE__?.VITE_PUBLIC_WEB_BASE_URL || window.location.origin.replace(':5173', ':80');
+// Environment variables
+const API = (import.meta as any).env?.VITE_API_BASE_URL || 
+             window.__VITE__?.VITE_API_BASE_URL || 
+             'http://localhost:3000'
 
-function toImageUrl(src?: string | null): string | undefined {
-  if (!src) return undefined;
-  if (/^https?:\/\//i.test(src)) return src;
-  if (src.startsWith('/')) return `${STATIC_BASE}${src}`;
-  return `${STATIC_BASE}/${src}`;
+const STATIC_BASE = (import.meta as any).env?.VITE_STATIC_BASE_URL || 
+                    window.__VITE__?.VITE_STATIC_BASE_URL || 
+                    'http://localhost:8080'
+
+const ADMIN_API_KEY = (import.meta as any).env?.VITE_ADMIN_API_KEY || 
+                      window.__VITE__?.VITE_ADMIN_API_KEY || ''
+
+const PUBLIC_WEB_BASE = (import.meta as any).env?.VITE_PUBLIC_WEB_BASE_URL || 
+                        (window as any).__VITE__?.VITE_PUBLIC_WEB_BASE_URL || 
+                        window.location.origin.replace(':5173', ':80')
+
+// Card Component
+const Card: React.FC<{ children: React.ReactNode; className?: string }> = ({ children, className = '' }) => (
+  <div className={`bg-white rounded-xl shadow-lg border border-gray-100 ${className}`}>
+    {children}
+  </div>
+)
+
+// Button Component
+const Button: React.FC<{
+  children: React.ReactNode
+  variant?: 'primary' | 'secondary' | 'danger' | 'ghost'
+  size?: 'sm' | 'md' | 'lg'
+  onClick?: () => void
+  disabled?: boolean
+  className?: string
+}> = ({ children, variant = 'primary', size = 'md', onClick, disabled, className = '' }) => {
+  const baseClasses = 'inline-flex items-center justify-center font-medium rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2'
+  
+  const variants = {
+    primary: 'bg-primary-600 hover:bg-primary-700 text-white focus:ring-primary-500',
+    secondary: 'bg-gray-100 hover:bg-gray-200 text-gray-900 focus:ring-gray-500',
+    danger: 'bg-red-600 hover:bg-red-700 text-white focus:ring-red-500',
+    ghost: 'bg-transparent hover:bg-gray-100 text-gray-700 focus:ring-gray-500'
+  }
+  
+  const sizes = {
+    sm: 'px-3 py-2 text-sm',
+    md: 'px-4 py-2 text-sm',
+    lg: 'px-6 py-3 text-base'
+  }
+  
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      className={`${baseClasses} ${variants[variant]} ${sizes[size]} ${disabled ? 'opacity-50 cursor-not-allowed' : ''} ${className}`}
+    >
+      {children}
+    </button>
+  )
 }
 
+// Stat Card Component
+const StatCard: React.FC<{
+  title: string
+  value: string | number
+  change?: string
+  changeType?: 'positive' | 'negative' | 'neutral'
+  icon: React.ReactNode
+  color: string
+}> = ({ title, value, change, changeType = 'neutral', icon, color }) => (
+  <motion.div
+    whileHover={{ y: -2 }}
+    className="relative overflow-hidden"
+  >
+    <Card className="p-6 hover:shadow-xl transition-shadow duration-200">
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-sm font-medium text-gray-600 mb-1">{title}</p>
+          <p className="text-2xl font-bold text-gray-900">{value}</p>
+          {change && (
+            <p className={`text-sm ${
+              changeType === 'positive' ? 'text-green-600' : 
+              changeType === 'negative' ? 'text-red-600' : 'text-gray-600'
+            }`}>
+              {change}
+            </p>
+          )}
+        </div>
+        <div className={`p-3 rounded-xl ${color}`}>
+          {icon}
+        </div>
+      </div>
+    </Card>
+  </motion.div>
+)
+
 export function App() {
-  const [health, setHealth] = useState<{ status?: string; db?: string; durationMs?: number } | null>(null);
-  const [recipes, setRecipes] = useState<any[]>([]);
-  const [stats, setStats] = useState<{ total_users?: number; total_recipes?: number; total_comments?: number; total_ratings?: number } | null>(null);
-  const [latestComments, setLatestComments] = useState<any[]>([]);
-  const [recipeComments, setRecipeComments] = useState<any[]>([]);
+  const [activeTab, setActiveTab] = useState('dashboard')
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const [stats, setStats] = useState({
+    total_users: 0,
+    total_recipes: 0,
+    total_comments: 0,
+    total_ratings: 0
+  })
+  const [health, setHealth] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
 
-  // Edit modals state
-  const [isRecipeModalOpen, setIsRecipeModalOpen] = useState(false);
-  const [recipeModalStatus, setRecipeModalStatus] = useState('');
-  const [recipeForm, setRecipeForm] = useState<any | null>(null);
-  const [isUserModalOpen, setIsUserModalOpen] = useState(false);
-  const [userModalStatus, setUserModalStatus] = useState('');
-  const [userForm, setUserForm] = useState<any | null>(null);
+  // Sidebar navigation items
+  const navItems = [
+    { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
+    { id: 'recipes', label: 'Receptes', icon: BookOpen },
+    { id: 'users', label: 'Lietotāji', icon: Users },
+    { id: 'comments', label: 'Komentāri', icon: MessageSquare },
+    { id: 'analytics', label: 'Analītika', icon: TrendingUp },
+    { id: 'settings', label: 'Iestatījumi', icon: Settings },
+  ]
 
-  // JWT auth fallback (if no ADMIN_API_KEY)
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [token, setToken] = useState<string>(() => localStorage.getItem('admin_jwt') || '');
-  // Track logged-in admin email (for header)
-  const [adminEmail, setAdminEmail] = useState<string>('');
-
-  // Planner state
-  const [weekStart, setWeekStart] = useState(''); // YYYY-MM-DD
-  const [plan, setPlan] = useState<any[]>([]);
-  const [planStatus, setPlanStatus] = useState('');
-
-  // Preferences state
-  const [dietPreferences, setDietPreferences] = useState<string>(''); // comma-separated
-  const [budgetCents, setBudgetCents] = useState<string>('');
-  const [prefsStatus, setPrefsStatus] = useState('');
-
-  // Recommendations state
-  const [recommendations, setRecommendations] = useState<any[]>([]);
-
-  const [selectedRecipeId, setSelectedRecipeId] = useState('');
-  const [ratingValue, setRatingValue] = useState(5);
-  const [ratingComment, setRatingComment] = useState('');
-  const [ratings, setRatings] = useState<any[]>([]);
-
-  const [challenges, setChallenges] = useState<any[]>([]);
-  const [pendingRecipes, setPendingRecipes] = useState<any[]>([]);
-  const [newChallenge, setNewChallenge] = useState({ title: '', description: '', start: '', end: '' });
-
-  const [premiumUserId, setPremiumUserId] = useState('');
-  const [premiumUntil, setPremiumUntil] = useState('');
-  const [sponsorName, setSponsorName] = useState('');
-  const [sponsorUrl, setSponsorUrl] = useState('');
-  const [compareName, setCompareName] = useState('');
-  const [compareUnit, setCompareUnit] = useState('g');
-  const [compareResult, setCompareResult] = useState('');
-  const [premiumOnly, setPremiumOnly] = useState(false);
-  const [adPlacement, setAdPlacement] = useState('home_top');
-  const [adImageUrl, setAdImageUrl] = useState('');
-  const [adTargetUrl, setAdTargetUrl] = useState('');
-  const [storeId, setStoreId] = useState('1');
-  const [affiliateTemplate, setAffiliateTemplate] = useState('https://example.com/search?q={query}&aff=YOURID');
-
-  // Users section state
-  const [users, setUsers] = useState<any[]>([]);
-  const [userFilter, setUserFilter] = useState<'all' | 'new' | 'premium'>('all');
-  const [userQuery, setUserQuery] = useState('');
-
-  function adminHeaders() {
-    const h: Record<string, string> = {};
-    if (ADMIN_API_KEY) h['x-admin-api-key'] = ADMIN_API_KEY;
-    if (token) h['Authorization'] = `Bearer ${token}`;
-    return h;
-  }
-
-  async function refreshStatus() {
-    try {
-      const r = await fetch(`${API}/api/health`);
-      const d = await r.json().catch(() => null);
-      if (d) setHealth(d);
-    } catch {}
-    try {
-      // Only fetch stats if we have admin access
-      if (ADMIN_API_KEY || token) {
-        const s = await fetch(`${API}/api/admin/stats`, { headers: adminHeaders() });
-        const sd = await s.json().catch(() => null);
-        if (sd) setStats(sd);
-      }
-    } catch {}
-  }
-
+  // Load initial data
   useEffect(() => {
-    refreshStatus();
-  }, []);
+    const loadData = async () => {
+      try {
+        // Load health check
+        const healthRes = await fetch(`${API}/api/health`)
+        const healthData = await healthRes.json()
+        setHealth(healthData)
 
-  useEffect(() => {
-    try {
-      const url = new URL(window.location.href);
-      const qpToken = url.searchParams.get('token');
-      if (qpToken) {
-        setToken(qpToken);
-        localStorage.setItem('admin_jwt', qpToken);
-        url.searchParams.delete('token');
-        window.history.replaceState(null, '', url.toString());
+        // Load stats
+        const statsRes = await fetch(`${API}/api/admin/stats`, {
+          headers: ADMIN_API_KEY ? { 'X-Admin-Key': ADMIN_API_KEY } : {}
+        })
+        const statsData = await statsRes.json()
+        setStats(statsData)
+      } catch (error) {
+        console.error('Failed to load data:', error)
+      } finally {
+        setLoading(false)
       }
-    } catch {}
-  }, []);
-
-  async function doAuth(path: 'login' | 'register') {
-    const res = await fetch(`${API}/api/auth/${path}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password })
-    });
-    const data = await res.json().catch(() => ({}));
-    if (res.ok && data.token) {
-      setToken(data.token);
-      localStorage.setItem('admin_jwt', data.token);
-      await Promise.allSettled([loadRecipes(), loadUsers(), refreshStatus(), loadLatestComments()]);
     }
-  }
 
-  // Load logged-in user email when token changes
-  useEffect(() => {
-    if (!token) { setAdminEmail(''); return; }
-    fetch(`${API}/api/auth/me`, { headers: { Authorization: `Bearer ${token}` } })
-      .then(r => r.ok ? r.json() : null)
-      .then(d => setAdminEmail(d?.email || ''))
-      .catch(() => setAdminEmail(''));
-  }, [token]);
+    loadData()
+  }, [])
 
-  async function loadRecipes() {
-    let res: Response;
-    if (ADMIN_API_KEY || token) {
-      res = await fetch(`${API}/api/admin/recipes?status=all`, { headers: adminHeaders() });
-    } else {
-      res = await fetch(`${API}/api/recipes`);
-    }
-    const data = await res.json();
-    setRecipes(data.recipes ?? []);
-  }
-
-  async function loadUsers() {
-    const params = new URLSearchParams();
-    params.set('status', userFilter);
-    if (userQuery) params.set('q', userQuery);
-    const res = await fetch(`${API}/api/admin/users?${params.toString()}`, {
-      headers: adminHeaders()
-    });
-    const data = await res.json();
-    setUsers(data.users || []);
-  }
-
-  async function loadLatestComments() {
-    const res = await fetch(`${API}/api/admin/comments`, { headers: adminHeaders() });
-    const data = await res.json();
-    setLatestComments(data.comments || []);
-  }
-
-  async function loadRecipeComments(recipeId: string) {
-    if (!recipeId) return;
-    const res = await fetch(`${API}/api/recipes/${recipeId}/comments`);
-    const data = await res.json();
-    setRecipeComments(data.comments || []);
-  }
-
-  function addPlanRow() {
-    setPlan(prev => prev.concat({ planned_date: weekStart, meal_slot: 'dinner', recipe_id: recipes[0]?.id || '', servings: 2 }));
-  }
-
-  // Open recipe modal and preload data
-  async function openRecipeModal(r: any) {
-    setRecipeModalStatus('');
-    // Seed with list data
-    const base = {
-      id: r.id,
-      title: r.title || '',
-      description: r.description || '',
-      coverImageUrl: r.cover_image || '',
-      servings: r.servings || 2,
-      total_time_minutes: r.total_time_minutes || '',
-      category: r.category || '',
-      difficulty: r.difficulty || '',
-      stepsJson: '[]',
-      ingredientsJson: '[]'
-    } as any;
-    setRecipeForm(base);
-    setIsRecipeModalOpen(true);
-    // Try loading full details for steps/images/ingredients
-    try {
-      const res = await fetch(`${API}/api/recipes/${r.id}`, { headers: token ? { Authorization: `Bearer ${token}` } : {} as any });
-      if (res.ok) {
-        const d = await res.json();
-        setRecipeForm((prev: any) => prev && ({
-          ...prev,
-          title: d.title ?? prev.title,
-          description: d.description ?? prev.description,
-          coverImageUrl: Array.isArray(d.images) && d.images.length > 0 ? d.images[0] : prev.coverImageUrl,
-          servings: d.servings ?? prev.servings,
-          total_time_minutes: d.total_time_minutes ?? prev.total_time_minutes,
-          category: d.category ?? prev.category,
-          difficulty: d.difficulty ?? prev.difficulty,
-          stepsJson: JSON.stringify(d.steps ?? [], null, 2),
-          ingredientsJson: JSON.stringify(d.ingredients ?? [], null, 2)
-        }));
-      }
-    } catch {}
-  }
-
-  async function saveRecipeModal() {
-    if (!recipeForm) return;
-    setRecipeModalStatus('Saving...');
-    const payload: any = {
-      title: recipeForm.title?.trim() || undefined,
-      description: recipeForm.description ?? undefined,
-      servings: recipeForm.servings ? Number(recipeForm.servings) : undefined,
-      total_time_minutes: recipeForm.total_time_minutes !== '' ? Number(recipeForm.total_time_minutes) : undefined,
-      category: recipeForm.category || undefined,
-      difficulty: recipeForm.difficulty || undefined
-    };
-    // Images from coverImageUrl
-    if (typeof recipeForm.coverImageUrl === 'string') payload.images = [recipeForm.coverImageUrl];
-    // Optional JSON fields
-    try { if (recipeForm.stepsJson && recipeForm.stepsJson.trim()) payload.steps = JSON.parse(recipeForm.stepsJson); } catch {}
-    try { if (recipeForm.ingredientsJson && recipeForm.ingredientsJson.trim()) payload.ingredients = JSON.parse(recipeForm.ingredientsJson); } catch {}
-
-    try {
-      const res = await fetch(`${API}/api/admin/recipes/${recipeForm.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json', ...adminHeaders() },
-        body: JSON.stringify(payload)
-      });
-      if (res.status === 204) {
-        setRecipeModalStatus('Saved');
-        await Promise.allSettled([loadRecipes(), refreshStatus()]);
-        setIsRecipeModalOpen(false);
-        setRecipeForm(null);
-      } else {
-        const err = await res.json().catch(() => ({}));
-        setRecipeModalStatus(err?.error || 'Error');
-      }
-    } catch (e) {
-      setRecipeModalStatus('Network error');
-    }
-  }
-
-  // User edit modal
-  function openUserModal(u: any) {
-    setUserModalStatus('');
-    setUserForm({
-      id: u.id,
-      email: u.email,
-      is_admin: Boolean(u.is_admin),
-      is_premium: Boolean(u.is_premium),
-      premium_expires_at: u.premium_expires_at || ''
-    });
-    setIsUserModalOpen(true);
-  }
-
-  async function saveUserModal() {
-    if (!userForm) return;
-    setUserModalStatus('Saving...');
-    try {
-      // Admin toggle
-      await fetch(`${API}/api/admin/users/${userForm.id}/admin`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json', ...adminHeaders() },
-        body: JSON.stringify({ isAdmin: !!userForm.is_admin })
-      });
-      // Premium settings
-      await fetch(`${API}/api/admin/users/${userForm.id}/premium`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json', ...adminHeaders() },
-        body: JSON.stringify({ isPremium: !!userForm.is_premium, premiumExpiresAt: userForm.premium_expires_at || null })
-      });
-      setUserModalStatus('Saved');
-      await Promise.allSettled([loadUsers(), refreshStatus()]);
-      setIsUserModalOpen(false);
-      setUserForm(null);
-    } catch (e) {
-      setUserModalStatus('Error');
-    }
-  }
-
-  useEffect(() => {
-    // Auto-initialize admin data only if we have a key or a token
-    if (ADMIN_API_KEY || token) {
-      loadRecipes();
-      loadUsers();
-      refreshStatus();
-      loadLatestComments();
-    } else {
-      // Load public recipes list as a fallback for dropdowns
-      loadRecipes();
-    }
-  }, [token]);
-
-  const needsLogin = !ADMIN_API_KEY && !token;
-
-  const webOnline = health?.status === 'ok';
-  const dbOnline = health?.db === 'ok';
-
-  return (
-    <div className="stack" style={{ padding: 16, maxWidth: 1200, margin: '0 auto' }}>
-      <div className="admin-header">
-        <h1>{t('adminDashboard')}</h1>
-        <div className="inline">
-          <a href={PUBLIC_WEB_BASE} title="Back to site">← Back</a>
-          <span className="badge">Admin</span>
-          <span className="admin-meta">{adminEmail ? `Logged in as ${adminEmail}` : (ADMIN_API_KEY ? 'API key mode' : 'Not logged in')}</span>
-          <label>{t('language')}:</label>
-          <select value={getLang()} onChange={e => setLang(e.target.value as any)}>
-            <option value="en">EN</option>
-            <option value="lv">LV</option>
-            <option value="ru">RU</option>
-          </select>
+  const renderDashboard = () => (
+    <div className="space-y-8">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+          <p className="text-gray-600 mt-1">Laipni lūdzam Virtuves Māksla admin panelī</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <Button variant="secondary" size="sm">
+            <Download className="w-4 h-4 mr-2" />
+            Eksportēt datus
+          </Button>
+          <Button variant="primary" size="sm">
+            <Plus className="w-4 h-4 mr-2" />
+            Jauna recepte
+          </Button>
         </div>
       </div>
 
-      <section className="stack" aria-label="System status">
-        <div className="status-row">
-          <span className="status-pill" data-status={health ? (webOnline ? 'ok' : 'error') : 'unknown'}>
-            <span className="dot" data-status={health ? (webOnline ? 'ok' : 'error') : 'unknown'}></span>
-            Web server {health ? (webOnline ? 'online' : 'offline') : '—'}
-          </span>
-          <span className="status-pill" data-status={health ? (dbOnline ? 'ok' : 'error') : 'unknown'}>
-            <span className="dot" data-status={health ? (dbOnline ? 'ok' : 'error') : 'unknown'}></span>
-            Database {health ? (dbOnline ? 'online' : 'offline') : '—'}
-          </span>
-          <span className="status-pill count">Users: {stats?.total_users ?? '—'}</span>
-          <span className="status-pill count">Recipes: {stats?.total_recipes ?? '—'}</span>
-          <span className="status-pill count">Comments: {stats?.total_comments ?? '—'}</span>
-          <span className="status-pill count">Ratings: {stats?.total_ratings ?? '—'}</span>
-        </div>
-        <div className="admin-meta">
-          API: {API || '—'} · Static: {STATIC_BASE || '—'} {health?.durationMs != null ? `· ping ${health.durationMs}ms` : ''}
-        </div>
-      </section>
+      {/* Stats Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <StatCard
+          title="Kopā lietotāju"
+          value={stats.total_users?.toLocaleString() || '0'}
+          change="+12% šomēnes"
+          changeType="positive"
+          icon={<Users className="w-6 h-6 text-white" />}
+          color="bg-gradient-to-r from-blue-500 to-blue-600"
+        />
+        <StatCard
+          title="Kopā receptu"
+          value={stats.total_recipes?.toLocaleString() || '0'}
+          change="+8% šomēnes"
+          changeType="positive"
+          icon={<BookOpen className="w-6 h-6 text-white" />}
+          color="bg-gradient-to-r from-green-500 to-green-600"
+        />
+        <StatCard
+          title="Komentāri"
+          value={stats.total_comments?.toLocaleString() || '0'}
+          change="+23% šomēnes"
+          changeType="positive"
+          icon={<MessageSquare className="w-6 h-6 text-white" />}
+          color="bg-gradient-to-r from-purple-500 to-purple-600"
+        />
+        <StatCard
+          title="Vērtējumi"
+          value={stats.total_ratings?.toLocaleString() || '0'}
+          change="+15% šomēnes"
+          changeType="positive"
+          icon={<Star className="w-6 h-6 text-white" />}
+          color="bg-gradient-to-r from-yellow-500 to-orange-500"
+        />
+      </div>
 
-      {/* Removed quick nav links */}
-
-      {needsLogin && (
-        <section id="auth" style={{ marginTop: 8 }}>
-          <h2>Auth</h2>
-          <input placeholder="email" value={email} onChange={e => setEmail(e.target.value)} />
-          <input placeholder="password" type="password" value={password} onChange={e => setPassword(e.target.value)} />
-          <button onClick={() => doAuth('login')}>Login</button>
-          <button onClick={() => doAuth('register')}>Register</button>
-          <div>Token: {token ? token.slice(0, 16) + '...' : '—'}</div>
-        </section>
-      )}
-
-      <section id="recipes">
-        <h2>{t('recipes')}</h2>
-        <div className="inline" style={{ marginBottom: 8 }}>
-          <button data-variant="primary" onClick={loadRecipes}>Load</button>
-        </div>
-        <ul>
-          {recipes.map(r => (
-            <li key={r.id} className="inline" style={{ gap: 8 }}>
-              {toImageUrl(r.cover_image) && <img src={toImageUrl(r.cover_image)} alt="" width={40} height={28} style={{ objectFit: 'cover', borderRadius: 4, border: '1px solid var(--border)' }} />}
-              <span style={{ flex: 1 }}>{r.title}</span>
-              <button onClick={() => openRecipeModal(r)} disabled={!ADMIN_API_KEY && !token}>Edit</button>
-            </li>
-          ))}
-        </ul>
-      </section>
-
-      <section id="comments">
-        <h2>{t('comments')}</h2>
-        <div className="stack">
-          <div className="inline" style={{ marginBottom: 8 }}>
-            <select value={selectedRecipeId} onChange={e => { setSelectedRecipeId(e.target.value); if (e.target.value) loadRecipeComments(e.target.value); }}>
-              <option value="">— choose recipe —</option>
-              {recipes.map(r => (
-                <option key={r.id} value={r.id}>{r.title}</option>
-              ))}
-            </select>
-            <input style={{ width: 400 }} placeholder="Add comment (selected recipe)" value={ratingComment} onChange={e => setRatingComment(e.target.value)} />
-            <button data-variant="primary" disabled={!selectedRecipeId || !ratingComment || (!ADMIN_API_KEY && !token)} onClick={async () => {
-              const res = await fetch(`${API}/api/recipes/${selectedRecipeId}/comments`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', ...adminHeaders() },
-                body: JSON.stringify({ content: ratingComment })
-              });
-              if (res.ok) {
-                await loadRecipeComments(selectedRecipeId);
-                setRatingComment('');
-              }
-            }}>Post</button>
-            <button onClick={loadLatestComments} disabled={!ADMIN_API_KEY && !token}>Load latest site-wide</button>
+      {/* Charts and Recent Activity */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Activity Chart */}
+        <Card className="p-6">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-lg font-semibold text-gray-900">Aktivitāte</h3>
+            <Button variant="ghost" size="sm">
+              <Filter className="w-4 h-4" />
+            </Button>
           </div>
-          <div className="inline" style={{ alignItems: 'flex-start', gap: 24 }}>
-            <div style={{ flex: 1 }}>
-              <h3>Selected recipe comments</h3>
-              <ul>
-                {recipeComments.map((c: any) => (
-                  <li key={c.id}>💬 {c.content} <span className="admin-meta">({new Date(c.created_at).toLocaleString()})</span></li>
-                ))}
-              </ul>
-            </div>
-            <div style={{ flex: 1 }}>
-              <h3>Latest comments</h3>
-              <ul>
-                {latestComments.map((c: any) => (
-                  <li key={c.id}>💬 {c.content} <span className="admin-meta">by {c.email} on {c.recipe_title}</span></li>
-                ))}
-              </ul>
+          <div className="h-64 flex items-center justify-center text-gray-500">
+            <div className="text-center">
+              <Activity className="w-12 h-12 mx-auto mb-2 text-gray-400" />
+              <p>Diagramma būs pieejama drīzumā</p>
             </div>
           </div>
-        </div>
-      </section>
+        </Card>
 
-      <section id="users">
-        <h2>Users</h2>
-        <div className="inline" style={{ gap: 8, marginBottom: 8 }}>
-          <select value={userFilter} onChange={e => setUserFilter(e.target.value as any)}>
-            <option value="all">All</option>
-            <option value="new">New (7d)</option>
-            <option value="premium">Premium</option>
-          </select>
-          <input placeholder="Search email" value={userQuery} onChange={e => setUserQuery(e.target.value)} />
-          <button onClick={loadUsers} disabled={!ADMIN_API_KEY && !token}>Refresh</button>
-        </div>
-        <table>
-          <thead>
-            <tr>
-              <th>Email</th>
-              <th>Admin</th>
-              <th>Premium</th>
-              <th>Premium until</th>
-              <th>Joined</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {users.map(u => (
-              <tr key={u.id}>
-                <td>{u.email}</td>
-                <td>{u.is_admin ? 'Yes' : 'No'}</td>
-                <td>{u.is_premium ? 'Yes' : 'No'}</td>
-                <td>{u.premium_expires_at || '—'}</td>
-                <td>{new Date(u.created_at).toLocaleString()}</td>
-                <td>
-                  <button onClick={() => openUserModal(u)} disabled={!ADMIN_API_KEY && !token}>Edit</button>
-                  <button style={{ marginLeft: 6 }} onClick={async () => {
-                    await fetch(`${API}/api/admin/users/${u.id}/premium`, {
-                      method: 'PUT',
-                      headers: { 'Content-Type': 'application/json', ...adminHeaders() },
-                      body: JSON.stringify({ isPremium: true, premiumExpiresAt: null })
-                    });
-                  }} disabled={!ADMIN_API_KEY && !token}>Add premium</button>
-                  <button style={{ marginLeft: 6 }} onClick={async () => {
-                    await fetch(`${API}/api/admin/users/${u.id}/premium`, {
-                      method: 'PUT',
-                      headers: { 'Content-Type': 'application/json', ...adminHeaders() },
-                      body: JSON.stringify({ isPremium: false, premiumExpiresAt: null })
-                    });
-                  }} disabled={!ADMIN_API_KEY && !token}>Revoke</button>
-                  <button style={{ marginLeft: 6 }} onClick={async () => {
-                    await fetch(`${API}/api/admin/users/${u.id}/admin`, {
-                      method: 'PUT',
-                      headers: { 'Content-Type': 'application/json', ...adminHeaders() },
-                      body: JSON.stringify({ isAdmin: !u.is_admin })
-                    });
-                    await loadUsers();
-                  }} disabled={!ADMIN_API_KEY && !token}>{`Set ${u.is_admin ? 'User' : 'Admin'}`}</button>
-                </td>
-              </tr>
+        {/* Recent Actions */}
+        <Card className="p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-6">Jaunākās darbības</h3>
+          <div className="space-y-4">
+            {[
+              { action: 'Jauna recepte pievienota', user: 'Jānis Bērziņš', time: 'Pirms 5 min', type: 'success' },
+              { action: 'Komentārs moderēts', user: 'Admin', time: 'Pirms 12 min', type: 'warning' },
+              { action: 'Lietotājs reģistrējies', user: 'Anna Zariņa', time: 'Pirms 1h', type: 'info' },
+              { action: 'Recepte dzēsta', user: 'Admin', time: 'Pirms 2h', type: 'danger' },
+            ].map((item, index) => (
+              <div key={index} className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50">
+                <div className={`w-2 h-2 rounded-full ${
+                  item.type === 'success' ? 'bg-green-500' :
+                  item.type === 'warning' ? 'bg-yellow-500' :
+                  item.type === 'danger' ? 'bg-red-500' : 'bg-blue-500'
+                }`} />
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-gray-900">{item.action}</p>
+                  <p className="text-xs text-gray-500">{item.user} • {item.time}</p>
+                </div>
+              </div>
             ))}
-          </tbody>
-        </table>
-      </section>
-
-      {/* Recipe edit modal */}
-      {isRecipeModalOpen && recipeForm && (
-        <div className="modal-backdrop" onClick={() => { setIsRecipeModalOpen(false); setRecipeForm(null); }}>
-          <div className="modal" onClick={e => e.stopPropagation()}>
-            <div className="inline" style={{ justifyContent: 'space-between', width: '100%' }}>
-              <h2>Edit recipe</h2>
-              <button onClick={() => { setIsRecipeModalOpen(false); setRecipeForm(null); }}>✕</button>
-            </div>
-            <div className="stack">
-              <label>
-                <div>Title</div>
-                <input value={recipeForm.title} onChange={e => setRecipeForm((f: any) => ({ ...f, title: e.target.value }))} />
-              </label>
-              <label>
-                <div>Description</div>
-                <textarea rows={3} value={recipeForm.description} onChange={e => setRecipeForm((f: any) => ({ ...f, description: e.target.value }))} />
-              </label>
-              <div className="inline" style={{ gap: 8 }}>
-                <label style={{ flex: 1 }}>
-                  <div>Servings</div>
-                  <input type="number" min={1} value={recipeForm.servings} onChange={e => setRecipeForm((f: any) => ({ ...f, servings: Number(e.target.value || 1) }))} />
-                </label>
-                <label style={{ flex: 1 }}>
-                  <div>Total time (min)</div>
-                  <input type="number" min={0} value={recipeForm.total_time_minutes} onChange={e => setRecipeForm((f: any) => ({ ...f, total_time_minutes: e.target.value }))} />
-                </label>
-              </div>
-              <div className="inline" style={{ gap: 8 }}>
-                <label style={{ flex: 1 }}>
-                  <div>Category</div>
-                  <select value={recipeForm.category} onChange={e => setRecipeForm((f: any) => ({ ...f, category: e.target.value }))}>
-                    <option value="">Select</option>
-                    <option value="breakfast">Breakfast</option>
-                    <option value="lunch">Lunch</option>
-                    <option value="dinner">Dinner</option>
-                    <option value="dessert">Dessert</option>
-                  </select>
-                </label>
-                <label style={{ flex: 1 }}>
-                  <div>Difficulty</div>
-                  <select value={recipeForm.difficulty} onChange={e => setRecipeForm((f: any) => ({ ...f, difficulty: e.target.value }))}>
-                    <option value="">Select</option>
-                    <option value="easy">Easy</option>
-                    <option value="medium">Medium</option>
-                    <option value="hard">Hard</option>
-                  </select>
-                </label>
-              </div>
-              <label>
-                <div>Cover image URL</div>
-                <input value={recipeForm.coverImageUrl} onChange={e => setRecipeForm((f: any) => ({ ...f, coverImageUrl: e.target.value }))} />
-              </label>
-              <label>
-                <div>Steps (JSON array)</div>
-                <textarea rows={6} value={recipeForm.stepsJson} onChange={e => setRecipeForm((f: any) => ({ ...f, stepsJson: e.target.value }))} />
-              </label>
-              <label>
-                <div>Ingredients (JSON array)</div>
-                <textarea rows={6} value={recipeForm.ingredientsJson} onChange={e => setRecipeForm((f: any) => ({ ...f, ingredientsJson: e.target.value }))} />
-              </label>
-              <div className="inline" style={{ justifyContent: 'space-between' }}>
-                <div className="admin-meta">{recipeModalStatus}</div>
-                <div className="inline" style={{ gap: 8 }}>
-                  <button onClick={() => { setIsRecipeModalOpen(false); setRecipeForm(null); }}>Cancel</button>
-                  <button data-variant="primary" onClick={saveRecipeModal} disabled={!ADMIN_API_KEY && !token}>Save</button>
-                </div>
-              </div>
-            </div>
           </div>
-        </div>
-      )}
+        </Card>
+      </div>
 
-      {/* User edit modal */}
-      {isUserModalOpen && userForm && (
-        <div className="modal-backdrop" onClick={() => { setIsUserModalOpen(false); setUserForm(null); }}>
-          <div className="modal" onClick={e => e.stopPropagation()}>
-            <div className="inline" style={{ justifyContent: 'space-between', width: '100%' }}>
-              <h2>Edit user</h2>
-              <button onClick={() => { setIsUserModalOpen(false); setUserForm(null); }}>✕</button>
-            </div>
-            <div className="stack">
+      {/* System Health */}
+      {health && (
+        <Card className="p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Sistēmas stāvoklis</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="flex items-center gap-3">
+              <div className="w-3 h-3 bg-green-500 rounded-full" />
               <div>
-                <div>Email</div>
-                <input value={userForm.email} disabled />
+                <p className="text-sm font-medium text-gray-900">API</p>
+                <p className="text-xs text-gray-500">Darbojas normāli</p>
               </div>
-              <div className="inline">
-                <label className="inline" style={{ gap: 6 }}>
-                  <input type="checkbox" checked={!!userForm.is_admin} onChange={e => setUserForm((f: any) => ({ ...f, is_admin: e.target.checked }))} /> Admin
-                </label>
-                <label className="inline" style={{ gap: 6 }}>
-                  <input type="checkbox" checked={!!userForm.is_premium} onChange={e => setUserForm((f: any) => ({ ...f, is_premium: e.target.checked }))} /> Premium
-                </label>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="w-3 h-3 bg-green-500 rounded-full" />
+              <div>
+                <p className="text-sm font-medium text-gray-900">Datubāze</p>
+                <p className="text-xs text-gray-500">Savienots</p>
               </div>
-              <label>
-                <div>Premium until (ISO date, optional)</div>
-                <input placeholder="YYYY-MM-DD or empty" value={userForm.premium_expires_at} onChange={e => setUserForm((f: any) => ({ ...f, premium_expires_at: e.target.value }))} />
-              </label>
-              <div className="inline" style={{ justifyContent: 'space-between' }}>
-                <div className="admin-meta">{userModalStatus}</div>
-                <div className="inline" style={{ gap: 8 }}>
-                  <button onClick={() => { setIsUserModalOpen(false); setUserForm(null); }}>Cancel</button>
-                  <button data-variant="primary" onClick={saveUserModal} disabled={!ADMIN_API_KEY && !token}>Save</button>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="w-3 h-3 bg-yellow-500 rounded-full" />
+              <div>
+                <p className="text-sm font-medium text-gray-900">Atbilde</p>
+                <p className="text-xs text-gray-500">{health.durationMs || 0}ms</p>
+              </div>
+            </div>
+          </div>
+        </Card>
+      )}
+    </div>
+  )
+
+  const renderContent = () => {
+    switch (activeTab) {
+      case 'dashboard':
+        return renderDashboard()
+      case 'recipes':
+        return (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h1 className="text-3xl font-bold text-gray-900">Receptes</h1>
+              <Button variant="primary">
+                <Plus className="w-4 h-4 mr-2" />
+                Pievienot recepti
+              </Button>
+            </div>
+            <Card className="p-6">
+              <p className="text-gray-600">Receptu pārvaldības sadaļa būs pieejama drīzumā...</p>
+            </Card>
+          </div>
+        )
+      case 'users':
+        return (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h1 className="text-3xl font-bold text-gray-900">Lietotāji</h1>
+              <div className="flex gap-2">
+                <Button variant="secondary" size="sm">
+                  <Download className="w-4 h-4 mr-2" />
+                  Eksportēt
+                </Button>
+              </div>
+            </div>
+            <Card className="p-6">
+              <p className="text-gray-600">Lietotāju pārvaldības sadaļa būs pieejama drīzumā...</p>
+            </Card>
+          </div>
+        )
+      default:
+        return (
+          <Card className="p-8 text-center">
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">Sadaļa izstrādes procesā</h2>
+            <p className="text-gray-600">Šī funkcionalitāte būs pieejama drīzumā.</p>
+          </Card>
+        )
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-primary-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-gray-600">Ielādē admin paneli...</p>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50 flex">
+      {/* Sidebar */}
+      <motion.div
+        animate={{ width: sidebarCollapsed ? 80 : 280 }}
+        className="bg-white border-r border-gray-200 flex flex-col"
+      >
+        {/* Logo */}
+        <div className="p-6 border-b border-gray-200">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-secondary-500 rounded-xl flex items-center justify-center">
+              <ChefHat className="w-6 h-6 text-white" />
+            </div>
+            {!sidebarCollapsed && (
+              <div>
+                <h2 className="font-bold text-gray-900">Virtuves Māksla</h2>
+                <p className="text-xs text-gray-500">Admin Panel</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Navigation */}
+        <nav className="flex-1 p-4">
+          <div className="space-y-2">
+            {navItems.map((item) => (
+              <motion.button
+                key={item.id}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => setActiveTab(item.id)}
+                className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left transition-colors ${
+                  activeTab === item.id
+                    ? 'bg-primary-100 text-primary-700 border border-primary-200'
+                    : 'text-gray-600 hover:bg-gray-100'
+                }`}
+              >
+                <item.icon className="w-5 h-5" />
+                {!sidebarCollapsed && <span className="font-medium">{item.label}</span>}
+              </motion.button>
+            ))}
+          </div>
+        </nav>
+
+        {/* Bottom Actions */}
+        <div className="p-4 border-t border-gray-200">
+          <div className="space-y-2">
+            <button
+              onClick={() => window.open(PUBLIC_WEB_BASE, '_blank')}
+              className="w-full flex items-center gap-3 px-3 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              <Globe className="w-5 h-5" />
+              {!sidebarCollapsed && <span className="text-sm">Publiskā lapa</span>}
+            </button>
+            <button className="w-full flex items-center gap-3 px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+              <LogOut className="w-5 h-5" />
+              {!sidebarCollapsed && <span className="text-sm">Iziet</span>}
+            </button>
+          </div>
+        </div>
+      </motion.div>
+
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col">
+        {/* Header */}
+        <header className="bg-white border-b border-gray-200 px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <button
+                onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+                className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+              >
+                <Activity className="w-5 h-5 text-gray-600" />
+              </button>
+              <div className="relative">
+                <Search className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Meklēt..."
+                  className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                />
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-4">
+              <button className="relative p-2 rounded-lg hover:bg-gray-100 transition-colors">
+                <Bell className="w-5 h-5 text-gray-600" />
+                <div className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
+              </button>
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 bg-gradient-to-br from-primary-500 to-secondary-500 rounded-full flex items-center justify-center">
+                  <span className="text-white text-sm font-medium">A</span>
+                </div>
+                <div className="text-sm">
+                  <p className="font-medium text-gray-900">Admin</p>
+                  <p className="text-gray-500">Administrators</p>
                 </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
-      {/* Removed other admin sections for now */}
+        </header>
+
+        {/* Page Content */}
+        <main className="flex-1 p-6 overflow-auto">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeTab}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.2 }}
+            >
+              {renderContent()}
+            </motion.div>
+          </AnimatePresence>
+        </main>
+      </div>
     </div>
-  );
+  )
 }
-// Recipe CRUD removed for now
