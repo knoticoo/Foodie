@@ -133,6 +133,11 @@ export function App() {
   })
   const [health, setHealth] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const [adminUser, setAdminUser] = useState<{name?: string, email?: string} | null>(null)
+  const [users, setUsers] = useState<any[]>([])
+  const [usersLoading, setUsersLoading] = useState(false)
+  const [usersSortBy, setUsersSortBy] = useState<'name' | 'email' | 'created_at' | 'status'>('created_at')
+  const [usersSortDirection, setUsersSortDirection] = useState<'asc' | 'desc'>('desc')
 
   // Sidebar navigation items
   const navItems = [
@@ -159,6 +164,26 @@ export function App() {
         })
         const statsData = await statsRes.json()
         setStats(statsData)
+
+        // Try to get user info from URL token parameter
+        const urlParams = new URLSearchParams(window.location.search)
+        const token = urlParams.get('token')
+        if (token) {
+          try {
+            const userRes = await fetch(`${API}/api/auth/me`, {
+              headers: { 'Authorization': `Bearer ${token}` }
+            })
+            if (userRes.ok) {
+              const userData = await userRes.json()
+              setAdminUser({
+                name: userData.name || userData.full_name,
+                email: userData.email
+              })
+            }
+          } catch (err) {
+            console.warn('Failed to load user info:', err)
+          }
+        }
       } catch (error) {
         console.error('Failed to load data:', error)
       } finally {
@@ -168,6 +193,70 @@ export function App() {
 
     loadData()
   }, [])
+
+  // Load users function
+  const loadUsers = async () => {
+    setUsersLoading(true)
+    try {
+      const response = await fetch(`${API}/api/admin/users`, {
+        headers: ADMIN_API_KEY ? { 'X-Admin-Key': ADMIN_API_KEY } : {}
+      })
+      if (response.ok) {
+        const data = await response.json()
+        setUsers(Array.isArray(data) ? data : data.users || [])
+      } else {
+        console.error('Failed to load users:', response.status)
+        setUsers([])
+      }
+    } catch (error) {
+      console.error('Error loading users:', error)
+      setUsers([])
+    } finally {
+      setUsersLoading(false)
+    }
+  }
+
+  // Sort users function
+  const sortUsers = (field: 'name' | 'email' | 'created_at' | 'status') => {
+    let direction: 'asc' | 'desc' = 'asc'
+    if (usersSortBy === field && usersSortDirection === 'asc') {
+      direction = 'desc'
+    }
+    setUsersSortBy(field)
+    setUsersSortDirection(direction)
+  }
+
+  // Get sorted users
+  const getSortedUsers = () => {
+    return [...users].sort((a, b) => {
+      let aValue = '', bValue = ''
+      
+      switch (usersSortBy) {
+        case 'name':
+          aValue = (a.name || a.full_name || '').toLowerCase()
+          bValue = (b.name || b.full_name || '').toLowerCase()
+          break
+        case 'email':
+          aValue = (a.email || '').toLowerCase()
+          bValue = (b.email || '').toLowerCase()
+          break
+        case 'created_at':
+          aValue = a.created_at || ''
+          bValue = b.created_at || ''
+          break
+        case 'status':
+          aValue = a.is_admin ? 'admin' : a.is_premium ? 'premium' : 'active'
+          bValue = b.is_admin ? 'admin' : b.is_premium ? 'premium' : 'active'
+          break
+      }
+      
+      if (usersSortDirection === 'asc') {
+        return aValue < bValue ? -1 : aValue > bValue ? 1 : 0
+      } else {
+        return aValue > bValue ? -1 : aValue < bValue ? 1 : 0
+      }
+    })
+  }
 
   const renderDashboard = () => (
     <div className="space-y-8">
@@ -310,13 +399,37 @@ export function App() {
           <div className="space-y-6">
             <div className="flex items-center justify-between">
               <h1 className="text-3xl font-bold text-gray-900">Receptes</h1>
-              <Button variant="primary">
-                <Plus className="w-4 h-4 mr-2" />
-                Pievienot recepti
-              </Button>
+              <div className="flex gap-2">
+                <Button variant="secondary" size="sm">
+                  <Filter className="w-4 h-4 mr-2" />
+                  Filtri
+                </Button>
+                <Button variant="primary">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Pievienot recepti
+                </Button>
+              </div>
             </div>
             <Card className="p-6">
-              <p className="text-gray-600">Receptu pārvaldības sadaļa būs pieejama drīzumā...</p>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-semibold text-gray-900">Receptu saraksts</h3>
+                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                    <span>Kārtot pēc:</span>
+                    <select className="border border-gray-300 rounded px-2 py-1">
+                      <option value="created_at">Pievienošanas datuma</option>
+                      <option value="title">Nosaukuma</option>
+                      <option value="rating">Vērtējuma</option>
+                      <option value="views">Skatījumu skaita</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="text-center py-8">
+                  <BookOpen className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                  <p className="text-gray-600 mb-4">Receptu pārvaldības sadaļa būs pieejama drīzumā</p>
+                  <p className="text-sm text-gray-500">Šeit varēsiet pārvaldīt visas receptes, to statusu un saturu</p>
+                </div>
+              </div>
             </Card>
           </div>
         )
@@ -326,6 +439,10 @@ export function App() {
             <div className="flex items-center justify-between">
               <h1 className="text-3xl font-bold text-gray-900">Lietotāji</h1>
               <div className="flex gap-2">
+                <Button variant="secondary" size="sm" onClick={loadUsers}>
+                  <Download className="w-4 h-4 mr-2" />
+                  Atjaunot
+                </Button>
                 <Button variant="secondary" size="sm">
                   <Download className="w-4 h-4 mr-2" />
                   Eksportēt
@@ -333,7 +450,114 @@ export function App() {
               </div>
             </div>
             <Card className="p-6">
-              <p className="text-gray-600">Lietotāju pārvaldības sadaļa būs pieejama drīzumā...</p>
+              <div className="space-y-4">
+                {usersLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <div className="w-6 h-6 border-2 border-primary-500 border-t-transparent rounded-full animate-spin mr-3" />
+                    <span className="text-gray-600">Ielādē lietotājus...</span>
+                  </div>
+                ) : users.length > 0 ? (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm text-left">
+                      <thead className="text-xs text-gray-700 uppercase bg-gray-50">
+                        <tr>
+                          <th scope="col" className="px-6 py-3">ID</th>
+                          <th 
+                            scope="col" 
+                            className="px-6 py-3 cursor-pointer hover:bg-gray-100 transition-colors"
+                            onClick={() => sortUsers('name')}
+                          >
+                            <div className="flex items-center gap-1">
+                              Vārds
+                              {usersSortBy === 'name' && (
+                                <span className="text-primary-600">
+                                  {usersSortDirection === 'asc' ? '↑' : '↓'}
+                                </span>
+                              )}
+                            </div>
+                          </th>
+                          <th 
+                            scope="col" 
+                            className="px-6 py-3 cursor-pointer hover:bg-gray-100 transition-colors"
+                            onClick={() => sortUsers('email')}
+                          >
+                            <div className="flex items-center gap-1">
+                              E-pasts
+                              {usersSortBy === 'email' && (
+                                <span className="text-primary-600">
+                                  {usersSortDirection === 'asc' ? '↑' : '↓'}
+                                </span>
+                              )}
+                            </div>
+                          </th>
+                          <th 
+                            scope="col" 
+                            className="px-6 py-3 cursor-pointer hover:bg-gray-100 transition-colors"
+                            onClick={() => sortUsers('created_at')}
+                          >
+                            <div className="flex items-center gap-1">
+                              Reģistrācijas datums
+                              {usersSortBy === 'created_at' && (
+                                <span className="text-primary-600">
+                                  {usersSortDirection === 'asc' ? '↑' : '↓'}
+                                </span>
+                              )}
+                            </div>
+                          </th>
+                          <th 
+                            scope="col" 
+                            className="px-6 py-3 cursor-pointer hover:bg-gray-100 transition-colors"
+                            onClick={() => sortUsers('status')}
+                          >
+                            <div className="flex items-center gap-1">
+                              Statuss
+                              {usersSortBy === 'status' && (
+                                <span className="text-primary-600">
+                                  {usersSortDirection === 'asc' ? '↑' : '↓'}
+                                </span>
+                              )}
+                            </div>
+                          </th>
+                          <th scope="col" className="px-6 py-3">Darbības</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {getSortedUsers().map((user, index) => (
+                          <tr key={user.id || index} className="bg-white border-b hover:bg-gray-50">
+                            <td className="px-6 py-4 font-medium text-gray-900">{user.id}</td>
+                            <td className="px-6 py-4">{user.name || user.full_name || 'Nav norādīts'}</td>
+                            <td className="px-6 py-4">{user.email}</td>
+                            <td className="px-6 py-4">{user.created_at ? new Date(user.created_at).toLocaleDateString('lv-LV') : 'Nav zināms'}</td>
+                            <td className="px-6 py-4">
+                              <span className={`px-2 py-1 text-xs rounded-full ${user.is_admin ? 'bg-red-100 text-red-800' : user.is_premium ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'}`}>
+                                {user.is_admin ? 'Admin' : user.is_premium ? 'Premium' : 'Aktīvs'}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4">
+                              <div className="flex gap-2">
+                                <Button variant="ghost" size="sm">
+                                  <Eye className="w-4 h-4" />
+                                </Button>
+                                <Button variant="ghost" size="sm">
+                                  <Edit3 className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <Users className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                    <p className="text-gray-600 mb-4">Nav atrasti lietotāji</p>
+                    <Button variant="primary" size="sm" onClick={loadUsers}>
+                      Ielādēt lietotājus
+                    </Button>
+                  </div>
+                )}
+              </div>
             </Card>
           </div>
         )
@@ -449,11 +673,13 @@ export function App() {
               </button>
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 bg-gradient-to-br from-primary-500 to-secondary-500 rounded-full flex items-center justify-center">
-                  <span className="text-white text-sm font-medium">A</span>
+                  <span className="text-white text-sm font-medium">
+                    {adminUser?.name ? adminUser.name.charAt(0).toUpperCase() : 'A'}
+                  </span>
                 </div>
                 <div className="text-sm">
-                  <p className="font-medium text-gray-900">Admin</p>
-                  <p className="text-gray-500">Administrators</p>
+                  <p className="font-medium text-gray-900">{adminUser?.name || 'Admin'}</p>
+                  <p className="text-gray-500">{adminUser?.email || 'Administrators'}</p>
                 </div>
               </div>
             </div>

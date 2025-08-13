@@ -22,26 +22,28 @@ export const App: React.FC = () => {
   return (
     <AuthProvider>
       <BrowserRouter>
-        <Header />
-        <main className="container py-6">
-          <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/register" element={<RegisterPage />} />
-            <Route path="/recipes" element={<RecipesPage />} />
-            <Route path="/recipes/:id" element={<RecipeDetailPage />} />
-            <Route path="/favorites" element={<FavoritesPage />} />
-            <Route path="/submit" element={<SubmitRecipePage />} />
-            <Route path="/preferences" element={<PreferencesPage />} />
-            <Route path="/planner" element={<PlannerPage />} />
-            <Route path="/recommendations" element={<RecommendationsPage />} />
-            <Route path="/prices" element={<PricesPage />} />
-            <Route path="/billing" element={<BillingPage />} />
-            <Route path="/challenges" element={<ChallengesPage />} />
-            <Route path="/profile" element={<ProfilePage />} />
-          </Routes>
-        </main>
-        <Footer />
+        <div className="min-h-screen flex flex-col">
+          <Header />
+          <main className="flex-1">
+            <Routes>
+              <Route path="/" element={<HomePage />} />
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/register" element={<RegisterPage />} />
+              <Route path="/recipes" element={<RecipesPage />} />
+              <Route path="/recipes/:id" element={<RecipeDetailPage />} />
+              <Route path="/favorites" element={<FavoritesPage />} />
+              <Route path="/submit" element={<SubmitRecipePage />} />
+              <Route path="/preferences" element={<PreferencesPage />} />
+              <Route path="/planner" element={<PlannerPage />} />
+              <Route path="/recommendations" element={<RecommendationsPage />} />
+              <Route path="/prices" element={<PricesPage />} />
+              <Route path="/billing" element={<BillingPage />} />
+              <Route path="/challenges" element={<ChallengesPage />} />
+              <Route path="/profile" element={<ProfilePage />} />
+            </Routes>
+          </main>
+          <Footer />
+        </div>
       </BrowserRouter>
     </AuthProvider>
   );
