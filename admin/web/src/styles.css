@@ -120,3 +120,28 @@ th, td {
   color: #3730a3;
   border: 1px solid #e0e7ff;
 }
+
+/* Sticky quick navigation */
+.admin-tabs {
+  position: sticky;
+  top: 0;
+  background: var(--bg);
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  z-index: 100;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 8px 0 16px 0;
+}
+.admin-tabs a {
+  text-decoration: none;
+  border: 1px solid var(--border);
+  background: #ffffff;
+  color: var(--text);
+  padding: 6px 10px;
+  border-radius: 8px;
+}
+.admin-tabs a:hover {
+  background: #f3f4f6;
+}
