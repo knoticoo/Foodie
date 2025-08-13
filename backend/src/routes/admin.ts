@@ -6,6 +6,7 @@ import { findRecipes } from '../services/recipesService.js';
 
 export const adminRouter = Router();
 
+// All admin routes require auth+admin
 adminRouter.use(requireAuth, requireAdmin);
 
 // List recipes for admin (supports status filter: all|pending|approved)

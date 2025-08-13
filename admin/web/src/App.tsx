@@ -72,7 +72,12 @@ export function App() {
   }, []);
 
   async function loadRecipes() {
-    const res = await fetch(`${API}/api/recipes`);
+    let res: Response;
+    if (token) {
+      res = await fetch(`${API}/api/admin/recipes?status=all`, { headers: { Authorization: `Bearer ${token}` } });
+    } else {
+      res = await fetch(`${API}/api/recipes`);
+    }
     const data = await res.json();
     setRecipes(data.recipes ?? []);
   }
