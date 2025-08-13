@@ -8,6 +8,14 @@ const defaultApiBase = typeof window !== 'undefined'
   : 'http://127.0.0.1:3000';
 
 const API_BASE_URL = (import.meta as any).env?.VITE_API_BASE_URL ?? defaultApiBase;
+const STATIC_BASE_URL = (import.meta as any).env?.VITE_STATIC_BASE_URL ?? (typeof window !== 'undefined' ? `http://${window.location.hostname}:8080` : 'http://127.0.0.1:8080');
+
+function toImageUrl(src?: string | null): string | undefined {
+  if (!src) return undefined;
+  if (/^https?:\/\//i.test(src)) return src;
+  if (src.startsWith('/')) return `${STATIC_BASE_URL}${src}`;
+  return `${STATIC_BASE_URL}/${src}`;
+}
 
 type Recipe = { id: string; title: string; description?: string; ingredients?: any[]; servings?: number; is_premium_only?: boolean; sponsor_name?: string; sponsor_url?: string };
 
@@ -132,7 +140,7 @@ export const RecipeDetailPage: React.FC = () => {
         <div className="space-y-2">
           <div className="aspect-[16/9] bg-gray-100 overflow-hidden rounded">
             <img
-              src={(recipe as any).images[0]}
+              src={toImageUrl((recipe as any).images[0])}
               alt={recipe.title}
               className="w-full h-full object-cover"
               onClick={() => setLightboxIdx(0)}
@@ -142,7 +150,7 @@ export const RecipeDetailPage: React.FC = () => {
             <div className="grid grid-cols-4 gap-2">
               {(recipe as any).images.slice(1, 5).map((src: string, i: number) => (
                 <button key={i} className="aspect-square rounded overflow-hidden bg-gray-100" onClick={() => setLightboxIdx(i + 1)}>
-                  <img src={src} alt="Thumb" className="w-full h-full object-cover" />
+                  <img src={toImageUrl(src)} alt="Thumb" className="w-full h-full object-cover" />
                 </button>
               ))}
             </div>
@@ -263,7 +271,7 @@ export const RecipeDetailPage: React.FC = () => {
       {/* Lightbox */}
       {lightboxIdx != null && Array.isArray((recipe as any).images) && (
         <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center animate-fadeIn" onClick={() => setLightboxIdx(null)}>
-          <img src={(recipe as any).images[lightboxIdx]} alt="Full" className="max-w-[90vw] max-h-[85vh] rounded shadow-lg animate-scaleIn" />
+          <img src={toImageUrl((recipe as any).images[lightboxIdx])} alt="Full" className="max-w-[90vw] max-h-[85vh] rounded shadow-lg animate-scaleIn" />
         </div>
       )}
     </div>

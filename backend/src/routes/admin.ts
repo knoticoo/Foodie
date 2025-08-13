@@ -2,10 +2,26 @@ import { Router } from 'express';
 import { requireAuth } from '../middleware/auth.js';
 import { requireAdmin } from '../middleware/admin.js';
 import { pgPool } from '../db/pool.js';
+import { findRecipes } from '../services/recipesService.js';
 
 export const adminRouter = Router();
 
 adminRouter.use(requireAuth, requireAdmin);
+
+// List recipes for admin (supports status filter: all|pending|approved)
+adminRouter.get('/recipes', async (req, res) => {
+  const status = String(req.query.status ?? 'all');
+  const q = typeof req.query.q === 'string' ? req.query.q : undefined;
+  const limit = typeof req.query.limit === 'string' ? Math.min(Number(req.query.limit), 200) : 50;
+  const offset = typeof req.query.offset === 'string' ? Math.max(Number(req.query.offset), 0) : 0;
+
+  const recipes = await findRecipes({ query: q }, limit, offset);
+  let filtered = recipes;
+  if (status === 'pending') filtered = recipes.filter((r: any) => r.is_approved === false);
+  if (status === 'approved') filtered = recipes.filter((r: any) => r.is_approved !== false);
+
+  res.json({ recipes: filtered, limit, offset });
+});
 
 // Create recipe (admin)
 adminRouter.post('/recipes', async (req, res) => {
@@ -138,6 +154,30 @@ adminRouter.put('/users/:id/premium', async (req, res) => {
   const expires = body.premiumExpiresAt ?? null;
   await pgPool.query('UPDATE users SET is_premium=$1, premium_expires_at=$2 WHERE id=$3', [isPremium, expires, id]);
   res.status(204).end();
+});
+
+// List users for admin (supports filter: all|new|premium)
+adminRouter.get('/users', async (req, res) => {
+  const status = String(req.query.status ?? 'all');
+  const q = typeof req.query.q === 'string' ? req.query.q : undefined;
+  const limit = typeof req.query.limit === 'string' ? Math.min(Number(req.query.limit), 500) : 100;
+  const offset = typeof req.query.offset === 'string' ? Math.max(Number(req.query.offset), 0) : 0;
+
+  const where: string[] = [];
+  const params: any[] = [];
+  if (q) { params.push(`%${q}%`); where.push(`email ILIKE $${params.length}`); }
+  if (status === 'new') { where.push(`created_at >= now() - interval '7 days'`); }
+  if (status === 'premium') { where.push(`is_premium = TRUE AND (premium_expires_at IS NULL OR premium_expires_at > now())`); }
+  const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
+  const sql = `
+    SELECT id, email, is_admin, is_premium, premium_expires_at, created_at
+    FROM users
+    ${whereSql}
+    ORDER BY created_at DESC
+    LIMIT ${limit} OFFSET ${offset}
+  `;
+  const { rows } = await pgPool.query(sql, params);
+  res.json({ users: rows, limit, offset });
 });
 
 // Update recipe sponsorship metadata and premium-only flag
