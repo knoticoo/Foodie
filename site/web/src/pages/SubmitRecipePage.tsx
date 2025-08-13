@@ -199,13 +199,13 @@ export const SubmitRecipePage: React.FC = () => {
           </div>
         </div>
 
-        <button className="px-4 py-2 rounded bg-gray-900 text-white">Submit</button>
+        <button className="btn btn-primary">Submit</button>
         <div className="text-sm text-gray-700">{status}</div>
       </form>
 
       <Modal isOpen={isIngModalOpen} title="Ingredients" onClose={() => setIngModalOpen(false)} footer={
         <>
-          <button className="px-3 py-1 rounded bg-gray-200" onClick={() => setIngModalOpen(false)}>Done</button>
+          <button className="btn btn-secondary" onClick={() => setIngModalOpen(false)}>Done</button>
         </>
       }>
         <div className="space-y-3">

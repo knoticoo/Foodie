@@ -37,7 +37,7 @@ export const LoginPage: React.FC = () => {
           <input type="password" className="w-full border rounded px-3 py-2" value={password} onChange={e => setPassword(e.target.value)} required />
         </div>
         {error && <div className="text-red-600 text-sm">{error}</div>}
-        <button disabled={loading} className="px-4 py-2 rounded bg-gray-900 text-white disabled:opacity-50">{loading ? 'Logging in…' : 'Login'}</button>
+        <button disabled={loading} className="btn btn-primary disabled:opacity-50">{loading ? 'Logging in…' : 'Login'}</button>
       </form>
     </div>
   );

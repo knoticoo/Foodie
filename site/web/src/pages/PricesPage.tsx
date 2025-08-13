@@ -37,15 +37,15 @@ export const PricesPage: React.FC = () => {
       <h1 className="text-xl font-semibold mb-2">Prices</h1>
       <p className="text-sm text-gray-700 mb-4">Search grocery prices. Premium users can compare across multiple stores.</p>
       <div className="flex gap-2 mb-4">
-        <input className="border rounded px-3 py-2" placeholder="ingredient name" value={name} onChange={e => setName(e.target.value)} />
-        <select className="border rounded px-3 py-2" value={unit} onChange={e => setUnit(e.target.value)}>
+        <input className="input" placeholder="ingredient name" value={name} onChange={e => setName(e.target.value)} />
+        <select className="input" value={unit} onChange={e => setUnit(e.target.value)}>
           <option value="g">g</option>
           <option value="ml">ml</option>
           <option value="pcs">pcs</option>
         </select>
-        <button onClick={doCheapest} className="px-3 py-2 rounded bg-gray-200">Cheapest</button>
+        <button onClick={doCheapest} className="btn btn-secondary">Cheapest</button>
         {token && isPremium && (
-          <button onClick={doCompare} className="px-3 py-2 rounded bg-gray-900 text-white">Compare</button>
+          <button onClick={doCompare} className="btn btn-primary">Compare</button>
         )}
       </div>
       {status && <div className="text-sm text-gray-700 mb-2">{status}</div>}

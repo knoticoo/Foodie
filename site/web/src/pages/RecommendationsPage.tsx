@@ -29,7 +29,7 @@ export const RecommendationsPage: React.FC = () => {
       <h1 className="text-xl font-semibold mb-4">Recommended for you</h1>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {recipes.map(r => (
-          <Link key={r.id} to={`/recipes/${r.id}`} className="block p-4 bg-white rounded border hover:shadow">
+          <Link key={r.id} to={`/recipes/${r.id}`} className="block p-4 bg-white rounded-xl border hover:shadow-card transition-shadow">
             <div className="font-medium">{r.title}</div>
             {r.description && <div className="text-sm text-gray-600 line-clamp-2">{r.description}</div>}
           </Link>
