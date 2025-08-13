@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
+import { RatingStars } from '../components/RatingStars';
 
 const defaultApiBase = typeof window !== 'undefined'
   ? `http://${window.location.hostname}:3000`
@@ -26,6 +27,7 @@ export const RecipeDetailPage: React.FC = () => {
   const [servings, setServings] = useState<number | null>(null);
   const [scaled, setScaled] = useState<any[] | null>(null);
   const [grocery, setGrocery] = useState<any | null>(null);
+  const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -54,6 +56,8 @@ export const RecipeDetailPage: React.FC = () => {
 
   if (premiumRequired) return <div className="space-y-2"><div>Premium recipe. Please upgrade to view.</div><a className="text-blue-600 underline" href="/billing">Go Premium</a></div>;
   if (!recipe) return <div>Loading…</div>;
+
+  const steps: any[] = Array.isArray((recipe as any).steps) ? (recipe as any).steps : [];
 
   const postComment = async () => {
     if (!token || !newComment.trim()) return;
@@ -117,7 +121,7 @@ export const RecipeDetailPage: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div>
+      <div className="space-y-3">
         <h1 className="text-2xl font-semibold">{recipe.title}</h1>
         {recipe.description && <p className="text-gray-700">{recipe.description}</p>}
         {(recipe.sponsor_name && recipe.sponsor_url) && (
@@ -125,9 +129,32 @@ export const RecipeDetailPage: React.FC = () => {
         )}
       </div>
 
-      <div className="flex items-center gap-2">
+      {/* Image gallery */}
+      {Array.isArray((recipe as any).images) && (recipe as any).images.length > 0 && (
+        <div className="space-y-2">
+          <div className="aspect-[16/9] bg-gray-100 overflow-hidden rounded">
+            <img
+              src={(recipe as any).images[0]}
+              alt={recipe.title}
+              className="w-full h-full object-cover"
+              onClick={() => setLightboxIdx(0)}
+            />
+          </div>
+          {(recipe as any).images.length > 1 && (
+            <div className="grid grid-cols-4 gap-2">
+              {(recipe as any).images.slice(1, 5).map((src: string, i: number) => (
+                <button key={i} className="aspect-square rounded overflow-hidden bg-gray-100" onClick={() => setLightboxIdx(i + 1)}>
+                  <img src={src} alt="Thumb" className="w-full h-full object-cover" />
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      <div className="flex items-center gap-3">
         {token && <button onClick={toggleFavorite} className="px-3 py-1 rounded bg-gray-200">{fav ? 'Remove favorite' : 'Save to favorites'}</button>}
-        <div className="text-sm text-gray-600">Average rating: {ratings.average ?? '—'}</div>
+        <RatingStars value={ratings.average} />
       </div>
 
       {Array.isArray(recipe.ingredients) && recipe.ingredients.length > 0 && (
@@ -138,6 +165,17 @@ export const RecipeDetailPage: React.FC = () => {
               <li key={idx}>{it.name ?? it.ingredient ?? 'Item'} — {it.quantity ?? it.amount ?? ''} {it.unit ?? ''}</li>
             ))}
           </ul>
+        </div>
+      )}
+
+      {steps.length > 0 && (
+        <div>
+          <h2 className="font-medium mb-2">Instructions</h2>
+          <ol className="list-decimal ml-6 space-y-2 text-gray-800">
+            {steps.map((s: any, i: number) => (
+              <li key={i} className="leading-relaxed">{typeof s === 'string' ? s : s?.text ?? ''}</li>
+            ))}
+          </ol>
         </div>
       )}
 
@@ -180,8 +218,17 @@ export const RecipeDetailPage: React.FC = () => {
         <div className="text-sm text-gray-600 mb-2">Average: {ratings.average ?? '—'}</div>
         {token && (
           <div className="flex items-center gap-2 mb-3">
-            <label>Rate</label>
-            <input type="number" min={1} max={5} value={newRating} onChange={e => setNewRating(Number(e.target.value || 5))} className="border rounded px-2 py-1 w-20" />
+            <label className="sr-only">Rate</label>
+            <div className="inline-flex">
+              {[1,2,3,4,5].map(star => (
+                <button
+                  key={star}
+                  className={`text-2xl ${newRating >= star ? 'text-yellow-500' : 'text-gray-300'}`}
+                  onClick={() => setNewRating(star)}
+                  aria-label={`Rate ${star}`}
+                >★</button>
+              ))}
+            </div>
             <input className="border rounded px-2 py-1 flex-1" placeholder="Comment (optional)" value={newRatingComment} onChange={e => setNewRatingComment(e.target.value)} />
             <button onClick={postRating} className="px-3 py-1 rounded bg-gray-900 text-white">Submit</button>
           </div>
@@ -207,6 +254,13 @@ export const RecipeDetailPage: React.FC = () => {
           {comments.length === 0 && <div className="text-gray-600 text-sm">No comments yet.</div>}
         </ul>
       </div>
+
+      {/* Lightbox */}
+      {lightboxIdx != null && Array.isArray((recipe as any).images) && (
+        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center animate-fadeIn" onClick={() => setLightboxIdx(null)}>
+          <img src={(recipe as any).images[lightboxIdx]} alt="Full" className="max-w-[90vw] max-h-[85vh] rounded shadow-lg animate-scaleIn" />
+        </div>
+      )}
     </div>
   );
 };

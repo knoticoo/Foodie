@@ -41,7 +41,24 @@ export async function findRecipes(filters: RecipeListFilters, limit = 20, offset
   const whereSql = where.length > 0 ? `WHERE ${where.join(' AND ')}` : '';
 
   const sql = `
-    SELECT id, title, description, servings, total_time_minutes, cost_cents, is_approved, is_sponsored, sponsor_name, sponsor_url, is_premium_only
+    SELECT 
+      id,
+      title,
+      description,
+      servings,
+      total_time_minutes,
+      cost_cents,
+      is_approved,
+      is_sponsored,
+      sponsor_name,
+      sponsor_url,
+      is_premium_only,
+      images->>0 AS cover_image,
+      (
+        SELECT AVG(rating)::numeric(10,2)
+        FROM recipe_ratings rr
+        WHERE rr.recipe_id = recipes.id
+      ) AS avg_rating
     FROM recipes
     ${whereSql}
     ORDER BY created_at DESC

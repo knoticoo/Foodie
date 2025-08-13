@@ -8,7 +8,7 @@ const defaultApiBase = typeof window !== 'undefined'
 
 const API_BASE_URL = (import.meta as any).env?.VITE_API_BASE_URL ?? defaultApiBase;
 
-type Recipe = { id: string; title: string; description?: string };
+type Recipe = { id: string; title: string; description?: string; cover_image?: string | null; avg_rating?: number | null };
 
 export const RecipesPage: React.FC = () => {
   const { token, authorizedFetch } = useAuth();
@@ -43,28 +43,44 @@ export const RecipesPage: React.FC = () => {
   const resetAndSearch = () => { setOffset(0); runSearch(); };
 
   return (
-    <div>
-      <h1 className="text-xl font-semibold mb-4">Browse recipes</h1>
-      <div className="grid grid-cols-1 md:grid-cols-6 gap-2 mb-4">
-        <input className="border rounded px-3 py-2 md:col-span-2" placeholder="Search text" value={q} onChange={e => setQ(e.target.value)} />
-        <input className="border rounded px-3 py-2" placeholder="Ingredient (pantry)" value={ingredient} onChange={e => setIngredient(e.target.value)} />
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h1 className="text-xl font-semibold">Browse recipes</h1>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-6 gap-2">
+        <input className="border rounded px-3 py-2 md:col-span-2" placeholder="Search recipes" value={q} onChange={e => setQ(e.target.value)} />
+        <input className="border rounded px-3 py-2" placeholder="Ingredient" value={ingredient} onChange={e => setIngredient(e.target.value)} />
         <input className="border rounded px-3 py-2" placeholder="Diet (comma-separated)" value={diet} onChange={e => setDiet(e.target.value)} />
         <input className="border rounded px-3 py-2" placeholder="Max time (min)" value={maxTime} onChange={e => setMaxTime(e.target.value)} />
         <input className="border rounded px-3 py-2" placeholder="Max cost (cents)" value={maxCost} onChange={e => setMaxCost(e.target.value)} />
         <button onClick={resetAndSearch} className="px-3 py-2 rounded bg-gray-900 text-white">Search</button>
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {recipes.map(r => (
-          <Link key={r.id} to={`/recipes/${r.id}`} className="block p-4 bg-white rounded border hover:shadow">
-            <div className="font-medium">{r.title}</div>
-            {r.description && <div className="text-sm text-gray-600 line-clamp-2">{r.description}</div>}
+          <Link key={r.id} to={`/recipes/${r.id}`} className="group block rounded overflow-hidden border bg-white hover:shadow transition-shadow">
+            <div className="aspect-[4/3] bg-gray-100 overflow-hidden">
+              {r.cover_image ? (
+                <img src={r.cover_image} alt={r.title} className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-gray-400 text-sm">No image</div>
+              )}
+            </div>
+            <div className="p-3 space-y-1">
+              <div className="font-medium line-clamp-1">{r.title}</div>
+              {r.avg_rating != null && (
+                <div className="text-sm text-yellow-600">{'★'.repeat(Math.round(Number(r.avg_rating)))}{'☆'.repeat(5 - Math.round(Number(r.avg_rating)))} <span className="text-gray-600 ml-1">{Number(r.avg_rating).toFixed(1)}</span></div>
+              )}
+              {r.description && <div className="text-sm text-gray-600 line-clamp-2">{r.description}</div>}
+            </div>
           </Link>
         ))}
         {recipes.length === 0 && (
           <div className="text-gray-600">No recipes found.</div>
         )}
       </div>
-      <div className="flex items-center gap-2 mt-4">
+
+      <div className="flex items-center gap-2 mt-2">
         <button disabled={offset === 0} onClick={() => setOffset(o => Math.max(o - limit, 0))} className="px-3 py-1 rounded bg-gray-200 disabled:opacity-50">Prev</button>
         <button onClick={() => setOffset(o => o + limit)} className="px-3 py-1 rounded bg-gray-200">Next</button>
         <select value={limit} onChange={e => setLimit(Number(e.target.value))} className="border rounded px-2 py-1">
