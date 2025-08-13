@@ -29,21 +29,25 @@ const allowedOrigins = (env.corsOrigin || '*')
   .split(',')
   .map(o => o.trim())
   .filter(Boolean);
-app.use(
-  cors({
-    origin: (origin, callback) => {
-      if (!origin) return callback(null, true); // allow non-browser (curl)
-      if (env.corsOrigin === '*' || allowedOrigins.includes(origin)) return callback(null, true);
-      return callback(new Error('Not allowed by CORS'));
-    },
-    credentials: false
-  })
-);
+const corsOptions: cors.CorsOptions = {
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true); // allow non-browser (curl)
+    if (env.corsOrigin === '*' || allowedOrigins.includes(origin)) return callback(null, true);
+    return callback(new Error('Not allowed by CORS'));
+  },
+  methods: ['GET','HEAD','PUT','PATCH','POST','DELETE','OPTIONS'],
+  allowedHeaders: ['Content-Type','Authorization','X-Admin-Api-Key'],
+  credentials: false,
+  preflightContinue: false,
+  optionsSuccessStatus: 204
+};
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
 
 // Stripe webhook requires raw body for signature verification
 app.post('/api/billing/webhook', express.raw({ type: 'application/json' }), billingWebhookHandler);
 
-app.use(express.json({ limit: '1mb' }));
+app.use(express.json({ limit: '5mb' }));
 
 // Attach locale info for downstream handlers
 app.use(i18nMiddleware);
