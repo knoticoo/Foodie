@@ -37,7 +37,7 @@
 
 @layer base {
   * {
-    @apply border-border;
+    @apply border-neutral-200 dark:border-neutral-700;
   }
   
   html {
