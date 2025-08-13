@@ -42,7 +42,7 @@ function NavBar() {
             </div>
             <Link to="/billing" className="hover:underline">Premium{isPremium ? ' ✓' : ''}</Link>
             {isAdmin && (
-              <a href={ADMIN_WEB_URL} className="hover:underline" target="_blank" rel="noreferrer">Admin</a>
+              <a href={`${ADMIN_WEB_URL}${token ? `?token=${encodeURIComponent(token)}` : ''}`} className="hover:underline" target="_blank" rel="noreferrer">Admin</a>
             )}
           </nav>
         </div>
@@ -92,7 +92,7 @@ function NavBar() {
               </div>
             )}
             {isAdmin && (
-              <a href={ADMIN_WEB_URL} target="_blank" rel="noreferrer" onClick={() => setOpen(false)}>Admin</a>
+              <a href={`${ADMIN_WEB_URL}${token ? `?token=${encodeURIComponent(token)}` : ''}`} target="_blank" rel="noreferrer" onClick={() => setOpen(false)}>Admin</a>
             )}
             {!token && (
               <>
