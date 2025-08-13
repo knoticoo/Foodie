@@ -9,7 +9,6 @@ import { FavoritesPage } from './pages/FavoritesPage';
 import { AuthProvider } from './auth/AuthContext';
 import { SubmitRecipePage } from './pages/SubmitRecipePage';
 import { PreferencesPage } from './pages/PreferencesPage';
-import { PlannerPage } from './pages/PlannerPage';
 import { RecommendationsPage } from './pages/RecommendationsPage';
 import { PricesPage } from './pages/PricesPage';
 import { BillingPage } from './pages/BillingPage';
@@ -34,7 +33,6 @@ export const App: React.FC = () => {
               <Route path="/favorites" element={<FavoritesPage />} />
               <Route path="/submit" element={<SubmitRecipePage />} />
               <Route path="/preferences" element={<PreferencesPage />} />
-              <Route path="/planner" element={<PlannerPage />} />
               <Route path="/recommendations" element={<RecommendationsPage />} />
               <Route path="/prices" element={<PricesPage />} />
               <Route path="/billing" element={<BillingPage />} />

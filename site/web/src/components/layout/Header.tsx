@@ -97,8 +97,8 @@ export const Header: React.FC = () => {
 
   const navLinks = [
     { href: "/recipes", label: "Receptes", icon: BookOpen },
+    { href: "/prices", label: "Cenas", icon: ShoppingCart },
     { href: "/challenges", label: "Izaicinājumi", icon: Award },
-    { href: "/planner", label: "Plānotājs", icon: Calendar },
   ]
 
   const accountLinks = [
