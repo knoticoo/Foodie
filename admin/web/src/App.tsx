@@ -331,4 +331,15 @@ export function App() {
                       body: JSON.stringify({ isAdmin: !u.is_admin })
                     });
                     await loadUsers();
-                  }} disabled={!ADMIN_API_KEY && !token}>{`
+                  }} disabled={!ADMIN_API_KEY && !token}>{`Set ${u.is_admin ? 'User' : 'Admin'}`}</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </section>
+      {/* Removed other admin sections for now */}
+    </div>
+  );
+}
+// Recipe CRUD removed for now
