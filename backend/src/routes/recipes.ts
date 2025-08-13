@@ -41,14 +41,18 @@ recipesRouter.use('/:id/comments', commentsRouter);
 // Submit a recipe (user-submitted, requires approval)
 recipesRouter.post('/submit', requireAuth, async (req, res) => {
   const user = (req as any).user;
-  const body = req.body as { title?: string; description?: string; steps?: any[]; images?: string[] };
+  const body = req.body as { title?: string; description?: string; steps?: any[]; images?: string[]; category?: string; difficulty?: string; total_time_minutes?: number | null; ingredients?: any[] };
   const title = (body?.title || '').trim();
   if (title.length < 3) return res.status(400).json({ error: 'title is required (min 3 chars)' });
   const created = await createSubmittedRecipe(user.id, {
     title,
     description: body?.description || '',
     steps: Array.isArray(body?.steps) ? body!.steps : [],
-    images: Array.isArray(body?.images) ? body!.images : []
+    images: Array.isArray(body?.images) ? body!.images : [],
+    category: typeof body?.category === 'string' ? body.category : undefined,
+    difficulty: typeof body?.difficulty === 'string' ? body.difficulty : undefined,
+    total_time_minutes: typeof body?.total_time_minutes === 'number' ? body.total_time_minutes : undefined,
+    ingredients: Array.isArray(body?.ingredients) ? body.ingredients : undefined
   });
   return res.status(201).json({ id: created.id, shareToken: created.share_token });
 });
