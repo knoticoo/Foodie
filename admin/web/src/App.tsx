@@ -350,17 +350,50 @@ export function App() {
       try {
         // Load health check
         const healthRes = await fetch(`${API}/api/health`)
-        const healthData = await healthRes.json()
-        setHealth(healthData)
+        if (healthRes.ok) {
+          const healthData = await healthRes.json()
+          setHealth(healthData)
+        } else {
+          console.warn('Health check failed:', healthRes.status)
+          setHealth(null)
+        }
 
-        // Load stats
-        const statsRes = await fetch(`${API}/api/admin/stats`, {
-          headers: ADMIN_API_KEY ? { 'X-Admin-Api-Key': ADMIN_API_KEY } : {}
-        })
-        const statsData = await statsRes.json()
-        setStats(statsData)
+        // Load stats (might fail if admin key is not configured)
+        try {
+          const statsRes = await fetch(`${API}/api/admin/stats`, {
+            headers: ADMIN_API_KEY ? { 'X-Admin-Api-Key': ADMIN_API_KEY } : {}
+          })
+          if (statsRes.ok) {
+            const statsData = await statsRes.json()
+            setStats(statsData)
+          } else {
+            console.warn('Stats failed:', statsRes.status, 'Admin key configured:', !!ADMIN_API_KEY)
+            // Use default stats if admin endpoint fails
+            setStats({
+              total_users: 0,
+              total_recipes: 0,
+              total_comments: 0,
+              total_ratings: 0
+            })
+          }
+        } catch (statsError) {
+          console.warn('Stats endpoint error:', statsError)
+          setStats({
+            total_users: 0,
+            total_recipes: 0,
+            total_comments: 0,
+            total_ratings: 0
+          })
+        }
       } catch (error) {
         console.error('Failed to load data:', error)
+        setHealth(null)
+        setStats({
+          total_users: 0,
+          total_recipes: 0,
+          total_comments: 0,
+          total_ratings: 0
+        })
       } finally {
         setLoading(false)
       }
