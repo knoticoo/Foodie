@@ -77,11 +77,31 @@ export function App() {
   const [userFilter, setUserFilter] = useState<'all' | 'new' | 'premium'>('all');
   const [userQuery, setUserQuery] = useState('');
 
+  function adminHeaders() {
+    const h: Record<string, string> = {};
+    if (ADMIN_API_KEY) h['x-admin-api-key'] = ADMIN_API_KEY;
+    if (token) h['Authorization'] = `Bearer ${token}`;
+    return h;
+  }
+
+  async function refreshStatus() {
+    try {
+      const r = await fetch(`${API}/api/health`);
+      const d = await r.json().catch(() => null);
+      if (d) setHealth(d);
+    } catch {}
+    try {
+      // Only fetch stats if we have admin access
+      if (ADMIN_API_KEY || token) {
+        const s = await fetch(`${API}/api/admin/stats`, { headers: adminHeaders() });
+        const sd = await s.json().catch(() => null);
+        if (sd) setStats(sd);
+      }
+    } catch {}
+  }
+
   useEffect(() => {
-    fetch(`${API}/api/health`)
-      .then(r => r.json())
-      .then(d => setHealth(d))
-      .catch(() => setHealth(null));
+    refreshStatus();
   }, []);
 
   useEffect(() => {
@@ -97,13 +117,6 @@ export function App() {
     } catch {}
   }, []);
 
-  function adminHeaders() {
-    const h: Record<string, string> = {};
-    if (ADMIN_API_KEY) h['x-admin-api-key'] = ADMIN_API_KEY;
-    if (token) h['Authorization'] = `Bearer ${token}`;
-    return h;
-  }
-
   async function doAuth(path: 'login' | 'register') {
     const res = await fetch(`${API}/api/auth/${path}`, {
       method: 'POST',
@@ -114,7 +127,7 @@ export function App() {
     if (res.ok && data.token) {
       setToken(data.token);
       localStorage.setItem('admin_jwt', data.token);
-      await Promise.allSettled([loadRecipes(), loadUsers(), loadStats(), loadLatestComments()]);
+      await Promise.allSettled([loadRecipes(), loadUsers(), refreshStatus(), loadLatestComments()]);
     }
   }
 
@@ -147,12 +160,6 @@ export function App() {
     });
     const data = await res.json();
     setUsers(data.users || []);
-  }
-
-  async function loadStats() {
-    const res = await fetch(`${API}/api/admin/stats`, { headers: adminHeaders() });
-    const data = await res.json();
-    setStats(data || null);
   }
 
   async function loadLatestComments() {
@@ -202,6 +209,8 @@ export function App() {
           coverImageUrl: Array.isArray(d.images) && d.images.length > 0 ? d.images[0] : prev.coverImageUrl,
           servings: d.servings ?? prev.servings,
           total_time_minutes: d.total_time_minutes ?? prev.total_time_minutes,
+          category: d.category ?? prev.category,
+          difficulty: d.difficulty ?? prev.difficulty,
           stepsJson: JSON.stringify(d.steps ?? [], null, 2),
           ingredientsJson: JSON.stringify(d.ingredients ?? [], null, 2)
         }));
@@ -226,19 +235,23 @@ export function App() {
     try { if (recipeForm.stepsJson && recipeForm.stepsJson.trim()) payload.steps = JSON.parse(recipeForm.stepsJson); } catch {}
     try { if (recipeForm.ingredientsJson && recipeForm.ingredientsJson.trim()) payload.ingredients = JSON.parse(recipeForm.ingredientsJson); } catch {}
 
-    const res = await fetch(`${API}/api/admin/recipes/${recipeForm.id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json', ...adminHeaders() },
-      body: JSON.stringify(payload)
-    });
-    if (res.status === 204) {
-      setRecipeModalStatus('Saved');
-      await loadRecipes();
-      setIsRecipeModalOpen(false);
-      setRecipeForm(null);
-    } else {
-      const err = await res.json().catch(() => ({}));
-      setRecipeModalStatus(err?.error || 'Error');
+    try {
+      const res = await fetch(`${API}/api/admin/recipes/${recipeForm.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', ...adminHeaders() },
+        body: JSON.stringify(payload)
+      });
+      if (res.status === 204) {
+        setRecipeModalStatus('Saved');
+        await Promise.allSettled([loadRecipes(), refreshStatus()]);
+        setIsRecipeModalOpen(false);
+        setRecipeForm(null);
+      } else {
+        const err = await res.json().catch(() => ({}));
+        setRecipeModalStatus(err?.error || 'Error');
+      }
+    } catch (e) {
+      setRecipeModalStatus('Network error');
     }
   }
 
@@ -272,7 +285,7 @@ export function App() {
         body: JSON.stringify({ isPremium: !!userForm.is_premium, premiumExpiresAt: userForm.premium_expires_at || null })
       });
       setUserModalStatus('Saved');
-      await loadUsers();
+      await Promise.allSettled([loadUsers(), refreshStatus()]);
       setIsUserModalOpen(false);
       setUserForm(null);
     } catch (e) {
@@ -285,7 +298,7 @@ export function App() {
     if (ADMIN_API_KEY || token) {
       loadRecipes();
       loadUsers();
-      loadStats();
+      refreshStatus();
       loadLatestComments();
     } else {
       // Load public recipes list as a fallback for dropdowns
