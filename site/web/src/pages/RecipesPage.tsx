@@ -66,7 +66,7 @@ export const RecipesPage: React.FC = () => {
           <option value="top">Trending</option>
           <option value="new">Newest</option>
         </select>
-        <button onClick={resetAndSearch} className="px-3 py-2 rounded bg-gray-900 text-white">Search</button>
+        <button onClick={resetAndSearch} className="btn btn-primary">Search</button>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">

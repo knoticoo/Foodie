@@ -48,7 +48,7 @@ export const PreferencesPage: React.FC = () => {
           <label className="block text-sm mb-1">Budget (cents)</label>
           <input className="w-full border rounded px-3 py-2" value={budgetCents} onChange={e => setBudgetCents(e.target.value)} />
         </div>
-        <button onClick={onSave} className="px-4 py-2 rounded bg-gray-900 text-white">Save</button>
+        <button onClick={onSave} className="btn btn-primary">Save</button>
         <div className="text-sm text-gray-700">{status}</div>
       </div>
     </div>

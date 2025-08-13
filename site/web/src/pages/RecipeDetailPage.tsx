@@ -165,7 +165,7 @@ export const RecipeDetailPage: React.FC = () => {
       )}
 
       <div className="flex items-center gap-3">
-        {token && <button onClick={toggleFavorite} className="px-3 py-1 rounded bg-gray-200">{fav ? 'Remove favorite' : 'Save to favorites'}</button>}
+        {token && <button onClick={toggleFavorite} className="btn btn-secondary">{fav ? 'Remove favorite' : 'Save to favorites'}</button>}
         <RatingStars value={ratings.average} />
       </div>
 
@@ -194,8 +194,8 @@ export const RecipeDetailPage: React.FC = () => {
       <div className="flex items-center gap-2">
         <label className="text-sm">Servings</label>
         <input type="number" min={1} value={servings ?? 2} onChange={e => setServings(Number(e.target.value || 1))} className="border rounded px-2 py-1 w-20" />
-        <button onClick={loadScaled} className="px-3 py-1 rounded bg-gray-200">Scale</button>
-        <button onClick={loadGrocery} className="px-3 py-1 rounded bg-gray-200">Grocery list</button>
+        <button onClick={loadScaled} className="btn btn-secondary">Scale</button>
+        <button onClick={loadGrocery} className="btn btn-secondary">Grocery list</button>
       </div>
 
       {scaled && (
@@ -258,7 +258,7 @@ export const RecipeDetailPage: React.FC = () => {
               onKeyDown={e => { if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); postComment(); } }}
             />
             <div className="flex justify-end mt-2">
-              <button onClick={postComment} className="px-3 py-1 rounded bg-gray-900 text-white">Post</button>
+              <button onClick={postComment} className="btn btn-primary">Post</button>
             </div>
           </div>
         )}

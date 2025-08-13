@@ -40,8 +40,8 @@ export const HomePage: React.FC = () => {
         <h1 className="text-3xl font-bold mb-2">Discover Latvian recipes</h1>
         <p className="text-gray-700 mb-4">Cook seasonal favorites, save what you love, and plan your week.</p>
         <div className="flex gap-3">
-          <Link to="/recipes" className="px-4 py-2 rounded bg-gray-900 text-white">Browse recipes</Link>
-          <Link to="/profile" className="px-4 py-2 rounded border">Your profile</Link>
+          <Link to="/recipes" className="btn btn-primary">Browse recipes</Link>
+          <Link to="/profile" className="btn btn-secondary">Your profile</Link>
         </div>
       </section>
 

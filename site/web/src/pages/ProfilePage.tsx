@@ -25,8 +25,8 @@ export const ProfilePage: React.FC = () => {
         </div>
       </section>
       <div className="flex gap-2">
-        <a href="/planner" className="px-3 py-2 rounded bg-gray-200">Open planner</a>
-        <a href="/billing" className="px-3 py-2 rounded bg-gray-200">Manage premium</a>
+        <a href="/planner" className="btn btn-secondary">Open planner</a>
+        <a href="/billing" className="btn btn-secondary">Manage premium</a>
       </div>
     </div>
   );

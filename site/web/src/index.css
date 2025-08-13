@@ -29,15 +29,18 @@
   html, body {
     @apply bg-stone-50 text-slate-900;
   }
+  a { @apply transition-colors; }
   h1 { @apply text-2xl font-semibold; }
   h2 { @apply text-xl font-semibold; }
   h3 { @apply text-lg font-semibold; }
 }
 
 @layer components {
-  .container { @apply max-w-5xl mx-auto px-4; }
+  .container { @apply max-w-6xl mx-auto px-4; }
   .card { @apply rounded-xl border bg-white shadow-card; }
-  .btn { @apply inline-flex items-center justify-center rounded-md border border-slate-200 bg-slate-900 text-white px-3 py-2 hover:bg-slate-800 disabled:opacity-60 disabled:cursor-not-allowed; }
+  .btn { @apply inline-flex items-center justify-center rounded-md border border-slate-200 bg-slate-900 text-white px-3 py-2 hover:bg-slate-800 disabled:opacity-60 disabled:cursor-not-allowed transition-colors; }
+  .btn-primary { @apply inline-flex items-center justify-center rounded-md border border-slate-900 bg-slate-900 text-white px-3 py-2 hover:bg-black disabled:opacity-60 disabled:cursor-not-allowed transition-colors; }
+  .btn-ghost { @apply inline-flex items-center justify-center rounded-md border border-transparent bg-transparent text-slate-700 px-3 py-2 hover:bg-slate-100; }
   .btn-secondary { @apply inline-flex items-center justify-center rounded-md border border-slate-200 bg-white text-slate-900 px-3 py-2 hover:bg-slate-50; }
   .input { @apply w-full rounded-md border border-slate-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500; }
   .badge { @apply inline-flex items-center rounded-full border border-slate-200 bg-white px-2 py-0.5 text-xs text-slate-700; }

@@ -84,12 +84,12 @@ export const PlannerPage: React.FC = () => {
     <div>
       <h1 className="text-xl font-semibold mb-4">Weekly Planner</h1>
       <div className="flex items-center gap-2 mb-4">
-        <input type="date" value={weekStart} onChange={e => setWeekStart(e.target.value)} className="border rounded px-3 py-2" />
-        <button onClick={loadPlan} className="px-3 py-2 rounded bg-gray-200">Load</button>
-        <button onClick={savePlan} className="px-3 py-2 rounded bg-gray-900 text-white">Save</button>
-        <button onClick={addRow} className="px-3 py-2 rounded bg-gray-200">Add row</button>
-        <button onClick={loadGrocery} className="px-3 py-2 rounded bg-gray-200">Grocery list</button>
-        <button onClick={populateMockWeek} className="px-3 py-2 rounded bg-gray-200">Add mock week</button>
+        <input type="date" value={weekStart} onChange={e => setWeekStart(e.target.value)} className="input" />
+        <button onClick={loadPlan} className="btn btn-secondary">Load</button>
+        <button onClick={savePlan} className="btn btn-primary">Save</button>
+        <button onClick={addRow} className="btn btn-secondary">Add row</button>
+        <button onClick={loadGrocery} className="btn btn-secondary">Grocery list</button>
+        <button onClick={populateMockWeek} className="btn btn-secondary">Add mock week</button>
         <span className="text-sm text-gray-600">{status}</span>
       </div>
       <table className="w-full text-sm">
