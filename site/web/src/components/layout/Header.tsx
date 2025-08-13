@@ -65,7 +65,7 @@ const mobileMenuVariants = {
 }
 
 export const Header: React.FC = () => {
-  const { token, isAdmin, isPremium, logout } = useAuth()
+  const { token, isAdmin, isPremium, userName, userEmail, logout } = useAuth()
   const [mobileOpen, setMobileOpen] = React.useState(false)
   const [accountOpen, setAccountOpen] = React.useState(false)
   const [discoverOpen, setDiscoverOpen] = React.useState(false)
@@ -214,8 +214,8 @@ export const Header: React.FC = () => {
                             <User className="w-5 h-5 text-white" />
                           </div>
                           <div>
-                            <p className="font-semibold text-neutral-900">Mans Konts</p>
-                            <p className="text-sm text-neutral-600">Pārvaldīt profilu</p>
+                            <p className="font-semibold text-neutral-900">{userName || 'Mans Konts'}</p>
+                            <p className="text-sm text-neutral-600">{userEmail || 'Pārvaldīt profilu'}</p>
                           </div>
                         </div>
                       </div>

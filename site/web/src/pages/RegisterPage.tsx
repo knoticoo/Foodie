@@ -159,7 +159,7 @@ export const RegisterPage: React.FC = () => {
                     type="text"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    placeholder="Jānis Bērziņš"
+                    placeholder=""
                     icon={<User className="w-5 h-5" />}
                     required
                     animated
@@ -170,7 +170,7 @@ export const RegisterPage: React.FC = () => {
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="jusu.epasts@example.com"
+                    placeholder=""
                     icon={<Mail className="w-5 h-5" />}
                     required
                     animated

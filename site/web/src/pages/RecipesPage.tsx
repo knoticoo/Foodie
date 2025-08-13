@@ -118,10 +118,24 @@ export const RecipesPage: React.FC = () => {
       params.set('sortBy', sortBy)
       
       const url = `${API_BASE_URL}/api/recipes?${params.toString()}`
+      console.log('Fetching recipes from:', url) // Debug log
       const res = await (token ? authorizedFetch(url) : fetch(url))
-      const data = await res.json().catch(() => ({}))
-      setRecipes(Array.isArray(data?.recipes) ? data.recipes : [])
+      
+      if (!res.ok) {
+        console.error('API response not ok:', res.status, res.statusText)
+        setRecipes([])
+        return
+      }
+      
+      const data = await res.json().catch((err) => {
+        console.error('Failed to parse JSON:', err)
+        return {}
+      })
+      
+      console.log('Received data:', data) // Debug log
+      setRecipes(Array.isArray(data?.recipes) ? data.recipes : Array.isArray(data) ? data : [])
     } catch (error) {
+      console.error('Error in runSearch:', error)
       setRecipes([])
     } finally {
       setLoading(false)
@@ -131,6 +145,11 @@ export const RecipesPage: React.FC = () => {
   useEffect(() => {
     runSearch()
   }, [offset, limit, sortBy])
+
+  // Initial load when component mounts
+  useEffect(() => {
+    runSearch()
+  }, [])
 
   const resetAndSearch = () => {
     setOffset(0)
