@@ -19,6 +19,11 @@ export function App() {
   const [latestComments, setLatestComments] = useState<any[]>([]);
   const [recipeComments, setRecipeComments] = useState<any[]>([]);
 
+  // JWT auth fallback (if no ADMIN_API_KEY)
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [token, setToken] = useState<string>(() => localStorage.getItem('admin_jwt') || '');
+
   // Planner state
   const [weekStart, setWeekStart] = useState(''); // YYYY-MM-DD
   const [plan, setPlan] = useState<any[]>([]);
@@ -67,12 +72,27 @@ export function App() {
   function adminHeaders() {
     const h: Record<string, string> = {};
     if (ADMIN_API_KEY) h['x-admin-api-key'] = ADMIN_API_KEY;
+    if (token) h['Authorization'] = `Bearer ${token}`;
     return h;
+  }
+
+  async function doAuth(path: 'login' | 'register') {
+    const res = await fetch(`${API}/api/auth/${path}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
+    });
+    const data = await res.json().catch(() => ({}));
+    if (res.ok && data.token) {
+      setToken(data.token);
+      localStorage.setItem('admin_jwt', data.token);
+      await Promise.allSettled([loadRecipes(), loadUsers(), loadStats(), loadLatestComments()]);
+    }
   }
 
   async function loadRecipes() {
     let res: Response;
-    if (ADMIN_API_KEY) {
+    if (ADMIN_API_KEY || token) {
       res = await fetch(`${API}/api/admin/recipes?status=all`, { headers: adminHeaders() });
     } else {
       res = await fetch(`${API}/api/recipes`);
@@ -116,12 +136,19 @@ export function App() {
   }
 
   useEffect(() => {
-    // Auto-initialize admin data
-    loadRecipes();
-    loadUsers();
-    loadStats();
-    loadLatestComments();
-  }, []);
+    // Auto-initialize admin data only if we have a key or a token
+    if (ADMIN_API_KEY || token) {
+      loadRecipes();
+      loadUsers();
+      loadStats();
+      loadLatestComments();
+    } else {
+      // Load public recipes list as a fallback for dropdowns
+      loadRecipes();
+    }
+  }, [token]);
+
+  const needsLogin = !ADMIN_API_KEY && !token;
 
   return (
     <div className="stack" style={{ padding: 16, maxWidth: 1200, margin: '0 auto' }}>
@@ -138,6 +165,7 @@ export function App() {
         </div>
       </div>
       <nav className="admin-tabs">
+        {needsLogin && <a href="#auth">Auth</a>}
         <a href="#users">Users</a>
         <a href="#comments">Comments</a>
         <a href="#recipes">Recipes</a>
@@ -151,6 +179,17 @@ export function App() {
           </>
         )}
       </div>
+
+      {needsLogin && (
+        <section id="auth" style={{ marginTop: 24 }}>
+          <h2>Auth</h2>
+          <input placeholder="email" value={email} onChange={e => setEmail(e.target.value)} />
+          <input placeholder="password" type="password" value={password} onChange={e => setPassword(e.target.value)} />
+          <button onClick={() => doAuth('login')}>Login</button>
+          <button onClick={() => doAuth('register')}>Register</button>
+          <div>Token: {token ? token.slice(0, 16) + '...' : '—'}</div>
+        </section>
+      )}
 
       <section id="recipes">
         <h2>{t('recipes')}</h2>
@@ -178,7 +217,7 @@ export function App() {
               ))}
             </select>
             <input style={{ width: 400 }} placeholder="Add comment (selected recipe)" value={ratingComment} onChange={e => setRatingComment(e.target.value)} />
-            <button data-variant="primary" disabled={!selectedRecipeId || !ratingComment} onClick={async () => {
+            <button data-variant="primary" disabled={!selectedRecipeId || !ratingComment || (!ADMIN_API_KEY && !token)} onClick={async () => {
               const res = await fetch(`${API}/api/recipes/${selectedRecipeId}/comments`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', ...adminHeaders() },
@@ -189,7 +228,7 @@ export function App() {
                 setRatingComment('');
               }
             }}>Post</button>
-            <button onClick={loadLatestComments}>Load latest site-wide</button>
+            <button onClick={loadLatestComments} disabled={!ADMIN_API_KEY && !token}>Load latest site-wide</button>
           </div>
           <div className="inline" style={{ alignItems: 'flex-start', gap: 24 }}>
             <div style={{ flex: 1 }}>
@@ -221,7 +260,7 @@ export function App() {
             <option value="premium">Premium</option>
           </select>
           <input placeholder="Search email" value={userQuery} onChange={e => setUserQuery(e.target.value)} />
-          <button onClick={loadUsers}>Refresh</button>
+          <button onClick={loadUsers} disabled={!ADMIN_API_KEY && !token}>Refresh</button>
         </div>
         <table>
           <thead>
@@ -249,14 +288,14 @@ export function App() {
                       headers: { 'Content-Type': 'application/json', ...adminHeaders() },
                       body: JSON.stringify({ isPremium: true, premiumExpiresAt: null })
                     });
-                  }}>Add premium</button>
+                  }} disabled={!ADMIN_API_KEY && !token}>Add premium</button>
                   <button style={{ marginLeft: 6 }} onClick={async () => {
                     await fetch(`${API}/api/admin/users/${u.id}/premium`, {
                       method: 'PUT',
                       headers: { 'Content-Type': 'application/json', ...adminHeaders() },
                       body: JSON.stringify({ isPremium: false, premiumExpiresAt: null })
                     });
-                  }}>Revoke</button>
+                  }} disabled={!ADMIN_API_KEY && !token}>Revoke</button>
                   <button style={{ marginLeft: 6 }} onClick={async () => {
                     await fetch(`${API}/api/admin/users/${u.id}/admin`, {
                       method: 'PUT',
@@ -264,7 +303,7 @@ export function App() {
                       body: JSON.stringify({ isAdmin: !u.is_admin })
                     });
                     await loadUsers();
-                  }}>{`Set ${u.is_admin ? 'User' : 'Admin'}`}</button>
+                  }} disabled={!ADMIN_API_KEY && !token}>{`Set ${u.is_admin ? 'User' : 'Admin'}`}</button>
                 </td>
               </tr>
             ))}
