@@ -16,7 +16,7 @@ function toImageUrl(src?: string | null): string | undefined {
   return `${STATIC_BASE_URL}/${src}`;
 }
 
-type Recipe = { id: string; title: string; description?: string; cover_image?: string | null; avg_rating?: number | null };
+type Recipe = { id: string; title: string; description?: string; cover_image?: string | null; avg_rating?: number | null; is_premium_only?: boolean | null };
 
 export const RecipesPage: React.FC = () => {
   const { token, authorizedFetch } = useAuth();
@@ -25,6 +25,7 @@ export const RecipesPage: React.FC = () => {
   const [limit, setLimit] = useState(20);
   const [offset, setOffset] = useState(0);
   const [category, setCategory] = useState<string>('');
+  const [sortBy, setSortBy] = useState<'top' | 'new'>('top');
 
   const runSearch = async () => {
     const params = new URLSearchParams();
@@ -32,6 +33,7 @@ export const RecipesPage: React.FC = () => {
     // category is UI-only for now; backend has no category filter yet
     params.set('limit', String(limit));
     params.set('offset', String(offset));
+    params.set('sortBy', sortBy);
     const url = `${API_BASE_URL}/api/recipes?${params.toString()}`;
     const res = await (token ? authorizedFetch(url) : fetch(url));
     const data = await res.json().catch(() => ({}));
@@ -40,7 +42,7 @@ export const RecipesPage: React.FC = () => {
 
   useEffect(() => {
     runSearch().catch(() => setRecipes([]));
-  }, [offset, limit]);
+  }, [offset, limit, sortBy]);
 
   const resetAndSearch = () => { setOffset(0); runSearch(); };
 
@@ -49,7 +51,7 @@ export const RecipesPage: React.FC = () => {
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold">Browse recipes</h1>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-2">
         <input className="border rounded px-3 py-2 md:col-span-2" placeholder="Search by name" value={q} onChange={e => setQ(e.target.value)} />
         <select className="border rounded px-3 py-2" value={category} onChange={e => setCategory(e.target.value)}>
           <option value="">All categories</option>
@@ -57,6 +59,10 @@ export const RecipesPage: React.FC = () => {
           <option value="lunch">Lunch</option>
           <option value="dinner">Dinner</option>
           <option value="dessert">Dessert</option>
+        </select>
+        <select className="border rounded px-3 py-2" value={sortBy} onChange={e => setSortBy(e.target.value as 'top' | 'new')}>
+          <option value="top">Trending</option>
+          <option value="new">Newest</option>
         </select>
         <button onClick={resetAndSearch} className="px-3 py-2 rounded bg-gray-900 text-white">Search</button>
       </div>
@@ -72,7 +78,10 @@ export const RecipesPage: React.FC = () => {
               )}
             </div>
             <div className="p-3 space-y-1">
-              <div className="font-medium line-clamp-1">{r.title}</div>
+              <div className="font-medium line-clamp-1 flex items-center gap-2">
+                <span>{r.title}</span>
+                {r.is_premium_only && <span className="text-xs px-2 py-0.5 rounded bg-yellow-100 text-yellow-800 border">Premium</span>}
+              </div>
               {r.avg_rating != null && (
                 <div className="text-sm text-yellow-600">{'★'.repeat(Math.round(Number(r.avg_rating)))}{'☆'.repeat(5 - Math.round(Number(r.avg_rating)))} <span className="text-gray-600 ml-1">{Number(r.avg_rating).toFixed(1)}</span></div>
               )}
