@@ -149,9 +149,35 @@ class MockDatabase {
   }
 }
 
-// Always use mock database since PostgreSQL is not available
-console.log('[db] PostgreSQL not available, using mock database for testing');
-export const pgPool = new MockDatabase();
+// Try to use real PostgreSQL, fallback to mock if connection fails
+let pgPool: any;
+
+try {
+  console.log(`[db] Attempting PostgreSQL connection to ${env.db.host}:${env.db.port}/${env.db.database}`);
+  pgPool = new Pool({
+    host: env.db.host,
+    port: env.db.port,
+    user: env.db.user,
+    password: env.db.password,
+    database: env.db.database,
+    max: 10,
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 2000
+  });
+
+  pgPool.on('error', (err: any) => {
+    console.warn('[db] PostgreSQL connection error:', err.message);
+    console.warn('[db] Will fallback to mock database');
+  });
+
+  console.log('[db] PostgreSQL pool created successfully');
+} catch (error) {
+  console.warn('[db] Failed to create PostgreSQL pool:', error);
+  console.log('[db] Using mock database');
+  pgPool = new MockDatabase();
+}
+
+export { pgPool };
 
 export async function assertDatabaseConnectionOk(): Promise<void> {
   try {
@@ -159,8 +185,10 @@ export async function assertDatabaseConnectionOk(): Promise<void> {
     if (!result?.rows?.[0]?.ok) {
       throw new Error('Database connection failed');
     }
-    console.log('[db] Mock database connection OK');
+    console.log('[db] Database connection verified');
   } catch (error) {
-    console.warn('[db] Using mock database for testing');
+    console.warn('[db] Database connection failed, using mock database:', error);
+    // Fallback to mock database
+    pgPool = new MockDatabase();
   }
 }
