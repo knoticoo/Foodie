@@ -4,6 +4,8 @@ import { t, setLang, getLang } from './i18n';
 const API = (import.meta as any).env?.VITE_API_BASE_URL || window.__VITE__?.VITE_API_BASE_URL || '';
 const STATIC_BASE = (import.meta as any).env?.VITE_STATIC_BASE_URL || window.__VITE__?.VITE_STATIC_BASE_URL || '';
 const ADMIN_API_KEY = (import.meta as any).env?.VITE_ADMIN_API_KEY || window.__VITE__?.VITE_ADMIN_API_KEY || '';
+// Add public site base URL (fallback: replace :5173 with :80)
+const PUBLIC_WEB_BASE = (import.meta as any).env?.VITE_PUBLIC_WEB_BASE_URL || (window as any).__VITE__?.VITE_PUBLIC_WEB_BASE_URL || window.location.origin.replace(':5173', ':80');
 
 function toImageUrl(src?: string | null): string | undefined {
   if (!src) return undefined;
@@ -23,6 +25,8 @@ export function App() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [token, setToken] = useState<string>(() => localStorage.getItem('admin_jwt') || '');
+  // Track logged-in admin email (for header)
+  const [adminEmail, setAdminEmail] = useState<string>('');
 
   // Planner state
   const [weekStart, setWeekStart] = useState(''); // YYYY-MM-DD
@@ -90,6 +94,15 @@ export function App() {
     }
   }
 
+  // Load logged-in user email when token changes
+  useEffect(() => {
+    if (!token) { setAdminEmail(''); return; }
+    fetch(`${API}/api/auth/me`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.ok ? r.json() : null)
+      .then(d => setAdminEmail(d?.email || ''))
+      .catch(() => setAdminEmail(''));
+  }, [token]);
+
   async function loadRecipes() {
     let res: Response;
     if (ADMIN_API_KEY || token) {
@@ -155,7 +168,9 @@ export function App() {
       <div className="admin-header">
         <h1>{t('adminDashboard')}</h1>
         <div className="inline">
+          <a href={PUBLIC_WEB_BASE} title="Back to site">← Back</a>
           <span className="badge">Admin</span>
+          <span className="admin-meta">{adminEmail ? `Logged in as ${adminEmail}` : (ADMIN_API_KEY ? 'API key mode' : 'Not logged in')}</span>
           <label>{t('language')}:</label>
           <select value={getLang()} onChange={e => setLang(e.target.value as any)}>
             <option value="en">EN</option>

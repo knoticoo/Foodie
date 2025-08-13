@@ -16,6 +16,9 @@ import { BillingPage } from './pages/BillingPage';
 import { ChallengesPage } from './pages/ChallengesPage';
 import { ProfilePage } from './pages/ProfilePage';
 
+// Configurable admin web URL (fallback: host:5173)
+const ADMIN_WEB_URL = (import.meta as any).env?.VITE_ADMIN_WEB_URL || (window as any).__VITE__?.VITE_ADMIN_WEB_URL || `http://${window.location.hostname}:5173/`;
+
 function NavBar() {
   const { token, isAdmin, isPremium, logout } = useAuth();
   const [open, setOpen] = React.useState(false);
@@ -31,7 +34,7 @@ function NavBar() {
             <div className="relative" onMouseLeave={() => setOpenDiscover(false)}>
               <button className="hover:underline" onClick={() => setOpenDiscover(v => !v)}>Discover ▾</button>
               {openDiscover && (
-                <div className="absolute z-20 mt-2 bg-white border rounded shadow-md p-2 min-w-[160px]">
+                <div className="absolute z-20 mt-2 bg-white border rounded shadow-md p-2 min-w-[160px] animate-scaleIn">
                   <Link to="/challenges" className="block px-3 py-1 hover:bg-gray-50" onClick={() => setOpenDiscover(false)}>Challenges</Link>
                   <Link to="/prices" className="block px-3 py-1 hover:bg-gray-50" onClick={() => setOpenDiscover(false)}>Prices</Link>
                 </div>
@@ -39,7 +42,7 @@ function NavBar() {
             </div>
             <Link to="/billing" className="hover:underline">Premium{isPremium ? ' ✓' : ''}</Link>
             {isAdmin && (
-              <a href={`http://${window.location.hostname}:5173/`} className="hover:underline" target="_blank" rel="noreferrer">Admin</a>
+              <a href={ADMIN_WEB_URL} className="hover:underline" target="_blank" rel="noreferrer">Admin</a>
             )}
           </nav>
         </div>
@@ -48,7 +51,7 @@ function NavBar() {
             <div className="relative" onMouseLeave={() => setOpenUser(false)}>
               <button className="px-3 py-1 rounded border" onClick={() => setOpenUser(v => !v)}>Account ▾</button>
               {openUser && (
-                <div className="absolute right-0 z-20 mt-2 bg-white border rounded shadow-md p-2 min-w-[180px]">
+                <div className="absolute right-0 z-20 mt-2 bg-white border rounded shadow-md p-2 min-w-[180px] animate-scaleIn">
                   <Link to="/profile" className="block px-3 py-1 hover:bg-gray-50" onClick={() => setOpenUser(false)}>Profile</Link>
                   <Link to="/planner" className="block px-3 py-1 hover:bg-gray-50" onClick={() => setOpenUser(false)}>Planner</Link>
                   <Link to="/recommendations" className="block px-3 py-1 hover:bg-gray-50" onClick={() => setOpenUser(false)}>For you</Link>
@@ -69,7 +72,7 @@ function NavBar() {
         </button>
       </div>
       {open && (
-        <div className="md:hidden border-t">
+        <div className="md:hidden border-t animate-fadeIn">
           <nav className="px-4 py-3 flex flex-col gap-3 text-sm">
             <Link to="/recipes" onClick={() => setOpen(false)}>Browse</Link>
             <div className="border rounded">
@@ -89,7 +92,7 @@ function NavBar() {
               </div>
             )}
             {isAdmin && (
-              <a href={`http://${window.location.hostname}:5173/`} target="_blank" rel="noreferrer" onClick={() => setOpen(false)}>Admin</a>
+              <a href={ADMIN_WEB_URL} target="_blank" rel="noreferrer" onClick={() => setOpen(false)}>Admin</a>
             )}
             {!token && (
               <>
