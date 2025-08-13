@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
+import { AdsBanner } from '../components/AdsBanner';
 
 const defaultApiBase = typeof window !== 'undefined'
   ? `http://${window.location.hostname}:3000`
@@ -48,6 +49,7 @@ export const RecipesPage: React.FC = () => {
 
   return (
     <div className="space-y-4">
+      <AdsBanner placement="recipes_top" />
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold">Browse recipes</h1>
       </div>

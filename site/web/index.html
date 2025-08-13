@@ -8,6 +8,8 @@
       window.__VITE__ = window.__VITE__ || {};
       window.__VITE__.VITE_API_BASE_URL = window.__VITE__.VITE_API_BASE_URL || (location.origin.replace(':80', ':3000'));
       window.__VITE__.VITE_STATIC_BASE_URL = window.__VITE__.VITE_STATIC_BASE_URL || (location.origin.replace(':80', ':8080'));
+      // Admin URL: set to your admin subdomain in production
+      window.__VITE__.VITE_ADMIN_WEB_URL = window.__VITE__.VITE_ADMIN_WEB_URL || (location.origin.replace(':80', ':5173/'));
     </script>
   </head>
   <body>

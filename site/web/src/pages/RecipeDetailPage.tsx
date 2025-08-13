@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import { RatingStars } from '../components/RatingStars';
+import { AdsBanner } from '../components/AdsBanner';
 
 const defaultApiBase = typeof window !== 'undefined'
   ? `http://${window.location.hostname}:3000`
@@ -137,6 +138,8 @@ export const RecipeDetailPage: React.FC = () => {
           <a className="text-sm text-blue-600 underline" href={recipe.sponsor_url} target="_blank" rel="noreferrer">Sponsored by {recipe.sponsor_name}</a>
         )}
       </div>
+
+      <AdsBanner placement="recipe_detail_inline" />
 
       {/* Image gallery */}
       {Array.isArray((recipe as any).images) && (recipe as any).images.length > 0 && (
