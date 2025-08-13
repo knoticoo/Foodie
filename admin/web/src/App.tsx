@@ -15,7 +15,7 @@ function toImageUrl(src?: string | null): string | undefined {
 }
 
 export function App() {
-  const [health, setHealth] = useState<string>('');
+  const [health, setHealth] = useState<{ status?: string; db?: string; durationMs?: number } | null>(null);
   const [recipes, setRecipes] = useState<any[]>([]);
   const [stats, setStats] = useState<{ total_users?: number; total_recipes?: number; total_comments?: number; total_ratings?: number } | null>(null);
   const [latestComments, setLatestComments] = useState<any[]>([]);
@@ -70,7 +70,10 @@ export function App() {
   const [userQuery, setUserQuery] = useState('');
 
   useEffect(() => {
-    fetch(`${API}/api/health`).then(r => r.json()).then(d => setHealth(JSON.stringify(d))).catch(() => setHealth('error'));
+    fetch(`${API}/api/health`)
+      .then(r => r.json())
+      .then(d => setHealth(d))
+      .catch(() => setHealth(null));
   }, []);
 
   useEffect(() => {
@@ -176,6 +179,9 @@ export function App() {
 
   const needsLogin = !ADMIN_API_KEY && !token;
 
+  const webOnline = health?.status === 'ok';
+  const dbOnline = health?.db === 'ok';
+
   return (
     <div className="stack" style={{ padding: 16, maxWidth: 1200, margin: '0 auto' }}>
       <div className="admin-header">
@@ -192,24 +198,31 @@ export function App() {
           </select>
         </div>
       </div>
-      <nav className="admin-tabs">
-        {needsLogin && <a href="#auth">Auth</a>}
-        <a href="#users">Users</a>
-        <a href="#comments">Comments</a>
-        <a href="#recipes">Recipes</a>
-      </nav>
 
-      <div className="admin-meta">
-        <span>API: {API}</span> · <span>Static: {STATIC_BASE || '—'}</span> · <span>Health: {health || '—'}</span>
-        {stats && (
-          <>
-            {' '}· Users: {stats.total_users} · Recipes: {stats.total_recipes} · Comments: {stats.total_comments} · Ratings: {stats.total_ratings}
-          </>
-        )}
-      </div>
+      <section className="stack" aria-label="System status">
+        <div className="status-row">
+          <span className="status-pill" data-status={webOnline ? 'ok' : 'error'}>
+            <span className="dot" data-status={webOnline ? 'ok' : 'error'}></span>
+            Web server {webOnline ? 'online' : 'offline'}
+          </span>
+          <span className="status-pill" data-status={dbOnline ? 'ok' : 'error'}>
+            <span className="dot" data-status={dbOnline ? 'ok' : 'error'}></span>
+            Database {dbOnline ? 'online' : 'offline'}
+          </span>
+          <span className="status-pill count">Users: {stats?.total_users ?? '—'}</span>
+          <span className="status-pill count">Recipes: {stats?.total_recipes ?? '—'}</span>
+          <span className="status-pill count">Comments: {stats?.total_comments ?? '—'}</span>
+          <span className="status-pill count">Ratings: {stats?.total_ratings ?? '—'}</span>
+        </div>
+        <div className="admin-meta">
+          API: {API || '—'} · Static: {STATIC_BASE || '—'} {health?.durationMs != null ? `· ping ${health.durationMs}ms` : ''}
+        </div>
+      </section>
+
+      {/* Removed quick nav links */}
 
       {needsLogin && (
-        <section id="auth" style={{ marginTop: 24 }}>
+        <section id="auth" style={{ marginTop: 8 }}>
           <h2>Auth</h2>
           <input placeholder="email" value={email} onChange={e => setEmail(e.target.value)} />
           <input placeholder="password" type="password" value={password} onChange={e => setPassword(e.target.value)} />
