@@ -68,7 +68,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password })
     });
-    if (!res.ok) throw new Error('Login failed');
+    
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({ error: 'Nezināma kļūda' }));
+      throw new Error(errorData.error || 'Neizdevās ieiet sistēmā');
+    }
+    
     const data = await res.json();
     localStorage.setItem('token', data.token);
     setToken(data.token);
@@ -80,7 +85,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password, name })
     });
-    if (!res.ok) throw new Error('Registration failed');
+    
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({ error: 'Nezināma kļūda' }));
+      throw new Error(errorData.error || 'Neizdevās reģistrēties');
+    }
+    
     const data = await res.json();
     localStorage.setItem('token', data.token);
     setToken(data.token);
