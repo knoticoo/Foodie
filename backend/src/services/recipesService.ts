@@ -89,7 +89,7 @@ export async function getRecipeByShareToken(token: string) {
   return rows[0] ?? null;
 }
 
-export async function createSubmittedRecipe(userId: string, payload: { title: string; description?: string; steps?: any[]; images?: string[] }) {
+export async function createSubmittedRecipe(userId: string, payload: { title: string; description?: string; steps?: any[]; images?: string[]; category?: string; difficulty?: string; total_time_minutes?: number; ingredients?: any[] }) {
   const sql = `
     INSERT INTO recipes (title, description, steps, images, servings, total_time_minutes, nutrition, ingredients, author_user_id, is_approved)
     VALUES ($1, $2, $3::jsonb, $4::jsonb, $5, $6, $7::jsonb, $8::jsonb, $9, FALSE)
@@ -101,9 +101,9 @@ export async function createSubmittedRecipe(userId: string, payload: { title: st
     JSON.stringify(payload.steps ?? []),
     JSON.stringify(payload.images ?? []),
     2, // default servings
-    null, // total_time_minutes
+    payload.total_time_minutes ?? null,
     JSON.stringify({}),
-    JSON.stringify([]),
+    JSON.stringify(payload.ingredients ?? []),
     userId
   ];
   const { rows } = await pgPool.query(sql, params);

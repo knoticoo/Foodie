@@ -13,6 +13,7 @@ import { challengesRouter } from './challenges.js';
 import { adminRouter } from './admin.js';
 import { adsRouter } from './ads.js';
 import { billingRouter } from './billing.js';
+import { profileRouter } from './profile.js';
  
 export const router = Router();
  
@@ -30,3 +31,4 @@ router.use('/challenges', challengesRouter);
 router.use('/ads', adsRouter);
 router.use('/billing', billingRouter);
 router.use('/admin', adminRouter);
+router.use('/profile', profileRouter);

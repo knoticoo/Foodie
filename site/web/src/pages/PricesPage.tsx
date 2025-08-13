@@ -34,7 +34,8 @@ export const PricesPage: React.FC = () => {
 
   return (
     <div className="max-w-xl">
-      <h1 className="text-xl font-semibold mb-4">Prices</h1>
+      <h1 className="text-xl font-semibold mb-2">Prices</h1>
+      <p className="text-sm text-gray-700 mb-4">Search grocery prices. Premium users can compare across multiple stores.</p>
       <div className="flex gap-2 mb-4">
         <input className="border rounded px-3 py-2" placeholder="ingredient name" value={name} onChange={e => setName(e.target.value)} />
         <select className="border rounded px-3 py-2" value={unit} onChange={e => setUnit(e.target.value)}>
@@ -63,11 +64,23 @@ export const PricesPage: React.FC = () => {
                 {opt.storeName}: {opt.productName} — <a className="text-blue-600 underline" href={opt.affiliateUrl} target="_blank" rel="noreferrer">Buy</a>
               </li>
             ))}
+            {compare.length === 0 && <li className="text-gray-600">No options found.</li>}
           </ul>
         </div>
       )}
+      {!token && (
+        <div className="text-sm text-gray-600 mt-4">Login to compare prices and manage premium in your account.</div>
+      )}
       {!isPremium && token && (
-        <div className="text-sm text-gray-600 mt-2">Upgrade to premium to compare prices across stores.</div>
+        <div className="text-sm text-gray-600 mt-4 p-3 border rounded">
+          Premium gives you:
+          <ul className="list-disc ml-6 mt-1">
+            <li>Store-to-store price comparison</li>
+            <li>Planner grocery cost estimation</li>
+            <li>Premium-only recipes</li>
+          </ul>
+          <a className="text-blue-600 underline block mt-2" href="/billing">See pricing and upgrade</a>
+        </div>
       )}
     </div>
   );

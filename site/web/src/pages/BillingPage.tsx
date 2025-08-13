@@ -43,8 +43,17 @@ export const BillingPage: React.FC = () => {
 
   return (
     <div className="max-w-xl">
-      <h1 className="text-xl font-semibold mb-4">Premium</h1>
+      <h1 className="text-xl font-semibold mb-2">Premium</h1>
+      <div className="text-sm text-gray-700 mb-4">
+        Unlock premium features: price comparisons, grocery cost estimation, and access to premium-only recipes.
+      </div>
       <div className="mb-2">Status: {isPremium ? 'Active' : 'Free'}</div>
+      {!isPremium && (
+        <div className="mb-4 p-3 border rounded">
+          <div className="font-medium">€3.99/month</div>
+          <div className="text-sm text-gray-600">Cancel anytime.</div>
+        </div>
+      )}
       <div className="flex gap-2">
         {!isPremium && <button onClick={startCheckout} className="px-4 py-2 rounded bg-gray-900 text-white">Go Premium</button>}
         {isPremium && <button onClick={openPortal} className="px-4 py-2 rounded bg-gray-200">Manage subscription</button>}

@@ -14,6 +14,7 @@ import { RecommendationsPage } from './pages/RecommendationsPage';
 import { PricesPage } from './pages/PricesPage';
 import { BillingPage } from './pages/BillingPage';
 import { ChallengesPage } from './pages/ChallengesPage';
+import { ProfilePage } from './pages/ProfilePage';
 
 function NavBar() {
   const { token, isAdmin, logout } = useAuth();
@@ -23,20 +24,19 @@ function NavBar() {
         <Link to="/" className="font-semibold">Latvian Recipes</Link>
         <nav className="flex items-center gap-4 text-sm">
           <Link to="/recipes" className="hover:underline">Browse</Link>
-          <Link to="/favorites" className="hover:underline">Favorites</Link>
           <Link to="/challenges" className="hover:underline">Challenges</Link>
           {token && (
             <>
               <Link to="/submit" className="hover:underline">Submit</Link>
               <Link to="/planner" className="hover:underline">Planner</Link>
-              <Link to="/preferences" className="hover:underline">Preferences</Link>
+              <Link to="/profile" className="hover:underline">Profile</Link>
               <Link to="/recommendations" className="hover:underline">For you</Link>
               <Link to="/prices" className="hover:underline">Prices</Link>
               <Link to="/billing" className="hover:underline">Premium</Link>
             </>
           )}
           {isAdmin && (
-            <a href={`http://${window.location.hostname}:5173`} className="hover:underline" target="_blank" rel="noreferrer">Admin</a>
+            <a href={`http://${window.location.hostname}:5173/`} className="hover:underline" target="_blank" rel="noreferrer">Admin</a>
           )}
           {token ? (
             <button onClick={logout} className="px-3 py-1 rounded bg-gray-900 text-white text-sm">Logout</button>
@@ -72,6 +72,7 @@ export const App: React.FC = () => {
             <Route path="/prices" element={<PricesPage />} />
             <Route path="/billing" element={<BillingPage />} />
             <Route path="/challenges" element={<ChallengesPage />} />
+            <Route path="/profile" element={<ProfilePage />} />
           </Routes>
         </main>
       </BrowserRouter>
