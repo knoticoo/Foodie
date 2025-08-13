@@ -16,6 +16,9 @@ export function createRateLimiter(capacity = 100, refillPerMinute = 100) {
   const refillPerMs = refillPerMinute / 60000; // tokens per ms
 
   return function rateLimiter(req: Request, res: Response, next: NextFunction) {
+    // Never rate-limit CORS preflight
+    if (req.method === 'OPTIONS') return next();
+
     const ip = (req.headers['x-forwarded-for']?.toString().split(',')[0] || req.socket.remoteAddress || 'unknown').trim();
     const now = Date.now();
     const bucket = ipToBucket.get(ip) || { tokens: capacity, lastRefillMs: now };
