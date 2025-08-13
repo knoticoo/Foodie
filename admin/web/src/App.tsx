@@ -2,6 +2,14 @@ import React, { useEffect, useState } from 'react';
 import { t, setLang, getLang } from './i18n';
 
 const API = (import.meta as any).env?.VITE_API_BASE_URL || window.__VITE__?.VITE_API_BASE_URL || '';
+const STATIC_BASE = (import.meta as any).env?.VITE_STATIC_BASE_URL || window.__VITE__?.VITE_STATIC_BASE_URL || '';
+
+function toImageUrl(src?: string | null): string | undefined {
+  if (!src) return undefined;
+  if (/^https?:\/\//i.test(src)) return src;
+  if (src.startsWith('/')) return `${STATIC_BASE}${src}`;
+  return `${STATIC_BASE}/${src}`;
+}
 
 export function App() {
   const [health, setHealth] = useState<string>('');
@@ -54,12 +62,22 @@ export function App() {
   const [storeId, setStoreId] = useState('1');
   const [affiliateTemplate, setAffiliateTemplate] = useState('https://example.com/search?q={query}&aff=YOURID');
 
+  // Users section state
+  const [users, setUsers] = useState<any[]>([]);
+  const [userFilter, setUserFilter] = useState<'all' | 'new' | 'premium'>('all');
+  const [userQuery, setUserQuery] = useState('');
+
   useEffect(() => {
     fetch(`${API}/api/health`).then(r => r.json()).then(d => setHealth(JSON.stringify(d))).catch(() => setHealth('error'));
   }, []);
 
   async function loadRecipes() {
-    const res = await fetch(`${API}/api/recipes`);
+    let res: Response;
+    if (token) {
+      res = await fetch(`${API}/api/admin/recipes?status=all`, { headers: { Authorization: `Bearer ${token}` } });
+    } else {
+      res = await fetch(`${API}/api/recipes`);
+    }
     const data = await res.json();
     setRecipes(data.recipes ?? []);
   }
@@ -152,7 +170,7 @@ export function App() {
   }
 
   return (
-    <div className="stack" style={{ padding: 16, maxWidth: 1000, margin: '0 auto' }}>
+    <div className="stack" style={{ padding: 16, maxWidth: 1200, margin: '0 auto' }}>
       <div className="admin-header">
         <h1>{t('adminDashboard')}</h1>
         <div className="inline">
@@ -165,7 +183,7 @@ export function App() {
           </select>
         </div>
       </div>
-      <div className="admin-meta">API: {API} · Health: {health || '—'}</div>
+      <div className="admin-meta">API: {API} · Static: {STATIC_BASE || '—'} · Health: {health || '—'}</div>
 
       <section style={{ marginTop: 24 }}>
         <h2>Auth</h2>
@@ -183,7 +201,10 @@ export function App() {
         </div>
         <ul>
           {recipes.map(r => (
-            <li key={r.id}>{r.title}</li>
+            <li key={r.id} className="inline" style={{ gap: 8 }}>
+              {toImageUrl(r.cover_image) && <img src={toImageUrl(r.cover_image)} alt="" width={40} height={28} style={{ objectFit: 'cover', borderRadius: 4, border: '1px solid var(--border)' }} />}
+              <span>{r.title}</span>
+            </li>
           ))}
         </ul>
       </section>
@@ -420,15 +441,16 @@ export function App() {
         <div className="inline" style={{ marginBottom: 8 }}>
           <button onClick={async () => {
             if (!token) return;
-            const res = await fetch(`${API}/api/recipes`);
+            const res = await fetch(`${API}/api/admin/recipes?status=pending`, { headers: { Authorization: `Bearer ${token}` } });
             const data = await res.json();
-            setPendingRecipes((data.recipes || []).filter((r: any) => r.is_approved === false));
+            setPendingRecipes(data.recipes || []);
           }}>Load Pending</button>
         </div>
         <ul>
           {pendingRecipes.map((r: any) => (
-            <li key={r.id}>
-              {r.title}
+            <li key={r.id} className="inline" style={{ gap: 8 }}>
+              {toImageUrl(r.cover_image) && <img src={toImageUrl(r.cover_image)} alt="" width={40} height={28} style={{ objectFit: 'cover', borderRadius: 4, border: '1px solid var(--border)' }} />}
+              <span>{r.title}</span>
               <button data-variant="primary" style={{ marginLeft: 8 }} disabled={!token} onClick={async () => {
                 await fetch(`${API}/api/admin/recipes/${r.id}/approval`, {
                   method: 'PUT',
@@ -439,6 +461,68 @@ export function App() {
             </li>
           ))}
         </ul>
+      </section>
+
+      <section>
+        <h2>Users</h2>
+        <div className="inline" style={{ gap: 8, marginBottom: 8 }}>
+          <select value={userFilter} onChange={e => setUserFilter(e.target.value as any)}>
+            <option value="all">All</option>
+            <option value="new">New (7d)</option>
+            <option value="premium">Premium</option>
+          </select>
+          <input placeholder="Search email" value={userQuery} onChange={e => setUserQuery(e.target.value)} />
+          <button onClick={async () => {
+            if (!token) return;
+            const params = new URLSearchParams();
+            params.set('status', userFilter);
+            if (userQuery) params.set('q', userQuery);
+            const res = await fetch(`${API}/api/admin/users?${params.toString()}`, {
+              headers: { Authorization: `Bearer ${token}` }
+            });
+            const data = await res.json();
+            setUsers(data.users || []);
+          }}>Load</button>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Email</th>
+              <th>Admin</th>
+              <th>Premium</th>
+              <th>Premium until</th>
+              <th>Joined</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {users.map(u => (
+              <tr key={u.id}>
+                <td>{u.email}</td>
+                <td>{u.is_admin ? 'Yes' : 'No'}</td>
+                <td>{u.is_premium ? 'Yes' : 'No'}</td>
+                <td>{u.premium_expires_at || '—'}</td>
+                <td>{new Date(u.created_at).toLocaleString()}</td>
+                <td>
+                  <button disabled={!token} onClick={async () => {
+                    await fetch(`${API}/api/admin/users/${u.id}/premium`, {
+                      method: 'PUT',
+                      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                      body: JSON.stringify({ isPremium: true, premiumExpiresAt: null })
+                    });
+                  }}>Grant Premium</button>
+                  <button style={{ marginLeft: 6 }} disabled={!token} onClick={async () => {
+                    await fetch(`${API}/api/admin/users/${u.id}/premium`, {
+                      method: 'PUT',
+                      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                      body: JSON.stringify({ isPremium: false, premiumExpiresAt: null })
+                    });
+                  }}>Revoke</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </section>
 
       <section style={{ marginTop: 24 }}>

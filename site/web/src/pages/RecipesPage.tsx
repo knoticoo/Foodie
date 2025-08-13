@@ -7,6 +7,14 @@ const defaultApiBase = typeof window !== 'undefined'
   : 'http://127.0.0.1:3000';
 
 const API_BASE_URL = (import.meta as any).env?.VITE_API_BASE_URL ?? defaultApiBase;
+const STATIC_BASE_URL = (import.meta as any).env?.VITE_STATIC_BASE_URL ?? (typeof window !== 'undefined' ? `http://${window.location.hostname}:8080` : 'http://127.0.0.1:8080');
+
+function toImageUrl(src?: string | null): string | undefined {
+  if (!src) return undefined;
+  if (/^https?:\/\//i.test(src)) return src;
+  if (src.startsWith('/')) return `${STATIC_BASE_URL}${src}`;
+  return `${STATIC_BASE_URL}/${src}`;
+}
 
 type Recipe = { id: string; title: string; description?: string; cover_image?: string | null; avg_rating?: number | null };
 
@@ -57,8 +65,8 @@ export const RecipesPage: React.FC = () => {
         {recipes.map(r => (
           <Link key={r.id} to={`/recipes/${r.id}`} className="group block rounded overflow-hidden border bg-white hover:shadow transition-shadow">
             <div className="aspect-[4/3] bg-gray-100 overflow-hidden">
-              {r.cover_image ? (
-                <img src={r.cover_image} alt={r.title} className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform" />
+              {toImageUrl(r.cover_image) ? (
+                <img src={toImageUrl(r.cover_image)} alt={r.title} className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform" />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-gray-400 text-sm">No image</div>
               )}
