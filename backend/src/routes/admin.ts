@@ -227,3 +227,14 @@ adminRouter.get('/comments', async (_req, res) => {
   );
   res.json({ comments: rows });
 });
+
+adminRouter.get('/stats', async (_req, res) => {
+  const { rows } = await pgPool.query(
+    `SELECT 
+       (SELECT COUNT(*)::int FROM users) AS total_users,
+       (SELECT COUNT(*)::int FROM recipes) AS total_recipes,
+       (SELECT COUNT(*)::int FROM recipe_comments) AS total_comments,
+       (SELECT COUNT(*)::int FROM recipe_ratings) AS total_ratings`
+  );
+  res.json(rows[0] || { total_users: 0, total_recipes: 0, total_comments: 0, total_ratings: 0 });
+});
