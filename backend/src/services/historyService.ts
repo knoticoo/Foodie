@@ -20,5 +20,5 @@ export async function getRecentCookedRecipeIds(userId: string, days: number): Pr
      WHERE user_id=$1 AND cooked_at >= now() - ($2::text || ' days')::interval`,
     [userId, String(days)]
   );
-  return rows.map(r => r.recipe_id as string);
+  return rows.map((r: any) => r.recipe_id as string);
 }

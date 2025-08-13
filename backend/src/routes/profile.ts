@@ -13,6 +13,6 @@ profileRouter.get('/', async (req, res) => {
   res.json({
     userId: user.id,
     preferences: prefsRes.rows[0] || { dietPreferences: [], budgetCents: null },
-    favorites: favsRes.rows.map(r => r.recipe_id)
+    favorites: favsRes.rows.map((r: any) => r.recipe_id)
   });
 });
