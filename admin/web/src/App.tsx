@@ -317,13 +317,13 @@ export function App() {
 
       <section className="stack" aria-label="System status">
         <div className="status-row">
-          <span className="status-pill" data-status={webOnline ? 'ok' : 'error'}>
-            <span className="dot" data-status={webOnline ? 'ok' : 'error'}></span>
-            Web server {webOnline ? 'online' : 'offline'}
+          <span className="status-pill" data-status={health ? (webOnline ? 'ok' : 'error') : 'unknown'}>
+            <span className="dot" data-status={health ? (webOnline ? 'ok' : 'error') : 'unknown'}></span>
+            Web server {health ? (webOnline ? 'online' : 'offline') : '—'}
           </span>
-          <span className="status-pill" data-status={dbOnline ? 'ok' : 'error'}>
-            <span className="dot" data-status={dbOnline ? 'ok' : 'error'}></span>
-            Database {dbOnline ? 'online' : 'offline'}
+          <span className="status-pill" data-status={health ? (dbOnline ? 'ok' : 'error') : 'unknown'}>
+            <span className="dot" data-status={health ? (dbOnline ? 'ok' : 'error') : 'unknown'}></span>
+            Database {health ? (dbOnline ? 'online' : 'offline') : '—'}
           </span>
           <span className="status-pill count">Users: {stats?.total_users ?? '—'}</span>
           <span className="status-pill count">Recipes: {stats?.total_recipes ?? '—'}</span>
@@ -500,11 +500,22 @@ export function App() {
               <div className="inline" style={{ gap: 8 }}>
                 <label style={{ flex: 1 }}>
                   <div>Category</div>
-                  <input value={recipeForm.category} onChange={e => setRecipeForm((f: any) => ({ ...f, category: e.target.value }))} />
+                  <select value={recipeForm.category} onChange={e => setRecipeForm((f: any) => ({ ...f, category: e.target.value }))}>
+                    <option value="">Select</option>
+                    <option value="breakfast">Breakfast</option>
+                    <option value="lunch">Lunch</option>
+                    <option value="dinner">Dinner</option>
+                    <option value="dessert">Dessert</option>
+                  </select>
                 </label>
                 <label style={{ flex: 1 }}>
                   <div>Difficulty</div>
-                  <input value={recipeForm.difficulty} onChange={e => setRecipeForm((f: any) => ({ ...f, difficulty: e.target.value }))} />
+                  <select value={recipeForm.difficulty} onChange={e => setRecipeForm((f: any) => ({ ...f, difficulty: e.target.value }))}>
+                    <option value="">Select</option>
+                    <option value="easy">Easy</option>
+                    <option value="medium">Medium</option>
+                    <option value="hard">Hard</option>
+                  </select>
                 </label>
               </div>
               <label>
