@@ -6,8 +6,8 @@ export const env = {
   bcryptRounds: Number(process.env.BCRYPT_ROUNDS ?? 10),
   adminApiKey: String(process.env.ADMIN_API_KEY || ''),
   db: {
-    host: String(process.env.POSTGRES_HOST ?? 'db'),
-    port: Number(process.env.POSTGRES_PORT ?? 5432),
+    host: String(process.env.DB_HOST ?? process.env.POSTGRES_HOST ?? 'db'),
+    port: Number(process.env.DB_PORT ?? process.env.POSTGRES_PORT ?? 5432),
     user: String(process.env.POSTGRES_USER ?? 'recipes'),
     password: String(process.env.POSTGRES_PASSWORD ?? 'recipes_password_change_me'),
     database: String(process.env.POSTGRES_DB ?? 'recipes')
