@@ -37,6 +37,9 @@ section {
   padding: 16px;
 }
 
+/* Elevation for sections */
+section { box-shadow: 0 1px 2px rgba(16,24,40,0.04), 0 1px 3px rgba(16,24,40,0.08); }
+
 /* Controls */
 input, select, textarea {
   border: 1px solid var(--border);
@@ -93,6 +96,11 @@ th, td {
   text-align: left;
 }
 
+/* Table header + hover */
+thead th { background: #f9fafb; font-weight: 600; }
+tbody tr:hover { background: #f9fafb; }
+tbody tr:last-child td { border-bottom: none; }
+
 /* Header row */
 .admin-header {
   display: flex;
@@ -105,6 +113,9 @@ th, td {
   color: var(--muted);
   font-size: 0.875rem;
 }
+
+/* Sticky admin header polish */
+.admin-header { position: sticky; top: 0; background: var(--bg); padding-top: 8px; z-index: 101; border-bottom: 1px solid var(--border); margin-bottom: 8px; }
 
 /* Stacks */
 .stack { display: grid; gap: 16px; }
@@ -119,4 +130,32 @@ th, td {
   background: #eef2ff;
   color: #3730a3;
   border: 1px solid #e0e7ff;
+}
+
+/* Slightly smaller control sizing for density */
+input, select, textarea, button { font-size: 14px; }
+
+/* Sticky quick navigation */
+.admin-tabs {
+  position: sticky;
+  top: 0;
+  background: var(--bg);
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  z-index: 100;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 8px 0 16px 0;
+}
+.admin-tabs a {
+  text-decoration: none;
+  border: 1px solid var(--border);
+  background: #ffffff;
+  color: var(--text);
+  padding: 6px 10px;
+  border-radius: 8px;
+}
+.admin-tabs a:hover {
+  background: #f3f4f6;
 }

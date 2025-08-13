@@ -89,7 +89,12 @@ export function App() {
       body: JSON.stringify({ email, password })
     });
     const data = await res.json();
-    if (res.ok && data.token) setToken(data.token);
+    if (res.ok && data.token) {
+      setToken(data.token);
+      try { await loadRecipes(); } catch {}
+      try { await loadRecommendations(); } catch {}
+      try { await loadUsers(); } catch {}
+    }
   }
 
   async function loadWeekPlan() {
@@ -165,6 +170,18 @@ export function App() {
     setRecommendations(data.recipes || []);
   }
 
+  async function loadUsers() {
+    if (!token) return;
+    const params = new URLSearchParams();
+    params.set('status', userFilter);
+    if (userQuery) params.set('q', userQuery);
+    const res = await fetch(`${API}/api/admin/users?${params.toString()}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    const data = await res.json();
+    setUsers(data.users || []);
+  }
+
   function addPlanRow() {
     setPlan(prev => prev.concat({ planned_date: weekStart, meal_slot: 'dinner', recipe_id: recipes[0]?.id || '', servings: 2 }));
   }
@@ -184,8 +201,16 @@ export function App() {
         </div>
       </div>
       <div className="admin-meta">API: {API} · Static: {STATIC_BASE || '—'} · Health: {health || '—'}</div>
+      <nav className="admin-tabs">
+        <a href="#auth">Auth</a>
+        <a href="#users">Users</a>
+        <a href="#monetization">Monetization</a>
+        <a href="#recipes">Recipes</a>
+        <a href="#planner">Planner</a>
+        <a href="#recipe-crud">Recipe CRUD</a>
+      </nav>
 
-      <section style={{ marginTop: 24 }}>
+      <section id="auth" style={{ marginTop: 24 }}>
         <h2>Auth</h2>
         <input placeholder="email" value={email} onChange={e => setEmail(e.target.value)} />
         <input placeholder="password" type="password" value={password} onChange={e => setPassword(e.target.value)} />
@@ -194,7 +219,7 @@ export function App() {
         <div>Token: {token ? token.slice(0, 16) + '...' : '—'}</div>
       </section>
 
-      <section>
+      <section id="recipes">
         <h2>{t('recipes')}</h2>
         <div className="inline" style={{ marginBottom: 8 }}>
           <button data-variant="primary" onClick={loadRecipes}>Load</button>
@@ -209,7 +234,7 @@ export function App() {
         </ul>
       </section>
 
-      <section>
+      <section id="planner">
         <h2>{t('weeklyPlanner')}</h2>
         <div className="inline" style={{ marginBottom: 8 }}>
           <input type="date" placeholder="Week start (YYYY-MM-DD)" value={weekStart} onChange={e => setWeekStart(e.target.value)} />
@@ -463,7 +488,7 @@ export function App() {
         </ul>
       </section>
 
-      <section>
+      <section id="users">
         <h2>Users</h2>
         <div className="inline" style={{ gap: 8, marginBottom: 8 }}>
           <select value={userFilter} onChange={e => setUserFilter(e.target.value as any)}>
@@ -472,17 +497,7 @@ export function App() {
             <option value="premium">Premium</option>
           </select>
           <input placeholder="Search email" value={userQuery} onChange={e => setUserQuery(e.target.value)} />
-          <button onClick={async () => {
-            if (!token) return;
-            const params = new URLSearchParams();
-            params.set('status', userFilter);
-            if (userQuery) params.set('q', userQuery);
-            const res = await fetch(`${API}/api/admin/users?${params.toString()}`, {
-              headers: { Authorization: `Bearer ${token}` }
-            });
-            const data = await res.json();
-            setUsers(data.users || []);
-          }}>Load</button>
+          <button onClick={loadUsers}>Refresh</button>
         </div>
         <table>
           <thead>
@@ -510,7 +525,7 @@ export function App() {
                       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
                       body: JSON.stringify({ isPremium: true, premiumExpiresAt: null })
                     });
-                  }}>Grant Premium</button>
+                  }}>Add premium</button>
                   <button style={{ marginLeft: 6 }} disabled={!token} onClick={async () => {
                     await fetch(`${API}/api/admin/users/${u.id}/premium`, {
                       method: 'PUT',
@@ -541,7 +556,7 @@ export function App() {
         </div>
       </section>
 
-      <section>
+      <section id="monetization">
         <h2>{t('monetization')}</h2>
         <div style={{ background:'#fffbe6', border:'1px solid #ffe58f', color:'#613400', padding:8, margin:'8px 0 12px 0', borderRadius: 8 }}>
           Billing (Stripe) is deferred until all phases are complete. Stub endpoints are used; no API keys required here.
@@ -556,14 +571,14 @@ export function App() {
               headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
               body: JSON.stringify({ isPremium: true, premiumExpiresAt: premiumUntil || null })
             });
-          }}>Grant Premium</button>
+          }}>Add premium</button>
           <button style={{ marginLeft: 8 }} disabled={!token || !premiumUserId} onClick={async () => {
             await fetch(`${API}/api/admin/users/${premiumUserId}/premium`, {
               method: 'PUT',
               headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
               body: JSON.stringify({ isPremium: false, premiumExpiresAt: null })
             });
-          }}>Revoke Premium</button>
+          }}>Remove premium</button>
         </div>
 
         <div style={{ border: '1px solid var(--border)', padding: 12, marginBottom: 12, borderRadius: 8 }}>
@@ -649,7 +664,7 @@ export function App() {
         </div>
       </section>
 
-      <section>
+      <section id="recipe-crud">
         <h2>{t('recipeCrud')}</h2>
         <div style={{ border: '1px solid var(--border)', padding: 12, borderRadius: 8 }}>
           <RecipeCrud API={API} token={token} onChange={loadRecipes} recipes={recipes} />

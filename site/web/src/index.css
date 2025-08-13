@@ -18,3 +18,27 @@
   .animate-fadeIn { animation: fadeIn 150ms ease-out; }
   .animate-scaleIn { animation: scaleIn 180ms ease-out; }
 }
+
+/* Design tokens for site */
+:root {
+  --site-bg: #f7f7fb;
+  --site-text: #0f172a;
+}
+
+@layer base {
+  html, body {
+    @apply bg-stone-50 text-slate-900;
+  }
+  h1 { @apply text-2xl font-semibold; }
+  h2 { @apply text-xl font-semibold; }
+  h3 { @apply text-lg font-semibold; }
+}
+
+@layer components {
+  .container { @apply max-w-5xl mx-auto px-4; }
+  .card { @apply rounded-xl border bg-white shadow-card; }
+  .btn { @apply inline-flex items-center justify-center rounded-md border border-slate-200 bg-slate-900 text-white px-3 py-2 hover:bg-slate-800 disabled:opacity-60 disabled:cursor-not-allowed; }
+  .btn-secondary { @apply inline-flex items-center justify-center rounded-md border border-slate-200 bg-white text-slate-900 px-3 py-2 hover:bg-slate-50; }
+  .input { @apply w-full rounded-md border border-slate-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500; }
+  .badge { @apply inline-flex items-center rounded-full border border-slate-200 bg-white px-2 py-0.5 text-xs text-slate-700; }
+}
