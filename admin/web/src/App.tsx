@@ -73,6 +73,19 @@ export function App() {
     fetch(`${API}/api/health`).then(r => r.json()).then(d => setHealth(JSON.stringify(d))).catch(() => setHealth('error'));
   }, []);
 
+  useEffect(() => {
+    try {
+      const url = new URL(window.location.href);
+      const qpToken = url.searchParams.get('token');
+      if (qpToken) {
+        setToken(qpToken);
+        localStorage.setItem('admin_jwt', qpToken);
+        url.searchParams.delete('token');
+        window.history.replaceState(null, '', url.toString());
+      }
+    } catch {}
+  }, []);
+
   function adminHeaders() {
     const h: Record<string, string> = {};
     if (ADMIN_API_KEY) h['x-admin-api-key'] = ADMIN_API_KEY;
