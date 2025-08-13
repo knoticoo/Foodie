@@ -87,7 +87,7 @@ const ModuleCard: React.FC<{
 
 // Button Component
 const Button: React.FC<{
-  children: React.ReactNode
+  children?: React.ReactNode
   variant?: 'primary' | 'secondary' | 'danger' | 'ghost' | 'success'
   size?: 'sm' | 'md' | 'lg'
   onClick?: () => void
@@ -96,7 +96,7 @@ const Button: React.FC<{
   icon?: React.ReactNode
   className?: string
 }> = ({ 
-  children, 
+  children = '', 
   variant = 'primary', 
   size = 'md', 
   onClick, 
@@ -386,7 +386,7 @@ export function App() {
             onClick={() => setActiveTab('users')}
             actions={
               <div className="flex gap-2">
-                <Button variant="ghost" size="sm" icon={<RefreshCw className="w-4 h-4" />} onClick={(e) => { e.stopPropagation(); loadUsers(); }} />
+                <Button variant="ghost" size="sm" icon={<RefreshCw className="w-4 h-4" />} onClick={() => { loadUsers(); }} />
                 <Button variant="ghost" size="sm" icon={<Plus className="w-4 h-4" />} />
               </div>
             }
