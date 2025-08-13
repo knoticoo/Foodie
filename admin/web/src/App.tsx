@@ -5,34 +5,26 @@ import {
   Users,
   BookOpen,
   Star,
-  TrendingUp,
   Activity,
-  Calendar,
   Settings,
   LogOut,
-  Bell,
   Search,
-  Filter,
-  Download,
   Plus,
   Edit3,
   Trash2,
   Eye,
   ChefHat,
-  Crown,
   MessageSquare,
-  AlertCircle,
-  CheckCircle,
-  Clock,
-  Globe,
-  Zap,
-  PieChart,
   RefreshCw,
   Menu,
   X,
-  Lock
+  Globe,
+  Database,
+  Server,
+  CheckCircle,
+  AlertCircle,
+  Clock
 } from 'lucide-react'
-import { t, setLang, getLang } from './i18n'
 
 // Environment variables
 const API = (import.meta as any).env?.VITE_API_BASE_URL || 
@@ -49,41 +41,6 @@ const ADMIN_API_KEY = (import.meta as any).env?.VITE_ADMIN_API_KEY ||
 const PUBLIC_WEB_BASE = (import.meta as any).env?.VITE_PUBLIC_WEB_BASE_URL || 
                         (window as any).__VITE__?.VITE_PUBLIC_WEB_BASE_URL || 
                         window.location.origin.replace(':5173', ':80')
-
-// Module Components
-const ModuleCard: React.FC<{
-  title: string
-  description: string
-  icon: React.ReactNode
-  color: string
-  onClick?: () => void
-  actions?: React.ReactNode
-}> = ({ title, description, icon, color, onClick, actions }) => (
-  <motion.div
-    whileHover={{ y: -4, scale: 1.02 }}
-    whileTap={{ scale: 0.98 }}
-    className="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden cursor-pointer group"
-    onClick={onClick}
-  >
-    <div className={`h-2 ${color}`} />
-    <div className="p-6">
-      <div className="flex items-center justify-between mb-4">
-        <div className={`p-3 rounded-xl ${color.replace('bg-', 'bg-').replace('-500', '-100')} group-hover:scale-110 transition-transform`}>
-          <div className={color.replace('bg-', 'text-')}>
-            {icon}
-          </div>
-        </div>
-        {actions && (
-          <div onClick={(e) => e.stopPropagation()}>
-            {actions}
-          </div>
-        )}
-      </div>
-      <h3 className="text-lg font-semibold text-gray-900 mb-2">{title}</h3>
-      <p className="text-gray-600 text-sm">{description}</p>
-    </div>
-  </motion.div>
-)
 
 // Button Component
 const Button: React.FC<{
@@ -137,85 +94,241 @@ const Button: React.FC<{
   )
 }
 
-// Stat Card Component
-const StatCard: React.FC<{
-  title: string
-  value: string | number
-  change?: string
-  changeType?: 'positive' | 'negative' | 'neutral'
-  icon: React.ReactNode
-  color: string
-  trend?: number[]
-}> = ({ title, value, change, changeType = 'neutral', icon, color, trend }) => (
-  <motion.div
-    whileHover={{ y: -2, scale: 1.02 }}
-    className="relative overflow-hidden"
-  >
-    <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-all duration-300">
-      <div className="flex items-center justify-between">
+// Server Status Component
+const ServerStatus: React.FC<{ health: any }> = ({ health }) => (
+  <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6 mb-6">
+    <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+      <Server className="w-5 h-5" />
+      Server Status
+    </h2>
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="flex items-center gap-3">
+        <div className={`w-3 h-3 rounded-full animate-pulse ${health ? 'bg-green-500' : 'bg-red-500'}`} />
         <div>
-          <p className="text-sm font-medium text-gray-600 mb-1">{title}</p>
-          <p className="text-3xl font-bold text-gray-900 mb-1">{value}</p>
-          {change && (
-            <p className={`text-sm font-medium ${
-              changeType === 'positive' ? 'text-green-600' : 
-              changeType === 'negative' ? 'text-red-600' : 'text-gray-600'
-            }`}>
-              {change}
-            </p>
-          )}
-        </div>
-        <div className={`p-4 rounded-xl ${color} shadow-lg`}>
-          <div className="text-white w-6 h-6">
-            {icon}
-          </div>
+          <p className="text-sm font-medium text-gray-900">API Server</p>
+          <p className="text-xs text-gray-500">{health ? 'Online' : 'Offline'}</p>
         </div>
       </div>
-      {trend && (
-        <div className="mt-4 h-12 flex items-end gap-1">
-          {trend.map((value, index) => (
-            <div
-              key={index}
-              className={`w-2 ${color.replace('bg-gradient-to-r from-', 'bg-').replace(' to-blue-600', '')} rounded-t opacity-60`}
-              style={{ height: `${(value / Math.max(...trend)) * 100}%` }}
-            />
-          ))}
+      <div className="flex items-center gap-3">
+        <Database className="w-4 h-4 text-blue-500" />
+        <div>
+          <p className="text-sm font-medium text-gray-900">Database</p>
+          <p className="text-xs text-gray-500">{health ? 'Connected' : 'Disconnected'}</p>
         </div>
-      )}
+      </div>
+      <div className="flex items-center gap-3">
+        <Clock className="w-4 h-4 text-yellow-500" />
+        <div>
+          <p className="text-sm font-medium text-gray-900">Response Time</p>
+          <p className="text-xs text-gray-500">{health?.durationMs || 0}ms</p>
+        </div>
+      </div>
     </div>
-  </motion.div>
+  </div>
 )
 
-// Quick Action Card
-const QuickActionCard: React.FC<{
-  title: string
-  description: string
-  icon: React.ReactNode
-  color: string
-  onClick: () => void
-}> = ({ title, description, icon, color, onClick }) => (
-  <motion.button
-    whileHover={{ scale: 1.05 }}
-    whileTap={{ scale: 0.95 }}
-    onClick={onClick}
-    className="w-full text-left bg-white rounded-xl shadow-lg border border-gray-100 p-4 hover:shadow-xl transition-all duration-300"
-  >
-    <div className="flex items-center gap-3">
-      <div className={`p-3 rounded-lg ${color}`}>
-        <div className="text-white w-5 h-5">
-          {icon}
+// Statistics Component
+const Statistics: React.FC<{ stats: any }> = ({ stats }) => (
+  <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6 mb-6">
+    <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+      <BarChart3 className="w-5 h-5" />
+      Statistics
+    </h2>
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="text-center">
+        <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-2">
+          <Users className="w-6 h-6 text-blue-600" />
         </div>
+        <p className="text-2xl font-bold text-gray-900">{stats.total_users || 0}</p>
+        <p className="text-sm text-gray-600">Total Users</p>
       </div>
-      <div>
-        <h4 className="font-semibold text-gray-900">{title}</h4>
-        <p className="text-sm text-gray-600">{description}</p>
+      <div className="text-center">
+        <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mx-auto mb-2">
+          <BookOpen className="w-6 h-6 text-green-600" />
+        </div>
+        <p className="text-2xl font-bold text-gray-900">{stats.total_recipes || 0}</p>
+        <p className="text-sm text-gray-600">Total Recipes</p>
+      </div>
+      <div className="text-center">
+        <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mx-auto mb-2">
+          <MessageSquare className="w-6 h-6 text-purple-600" />
+        </div>
+        <p className="text-2xl font-bold text-gray-900">{stats.total_comments || 0}</p>
+        <p className="text-sm text-gray-600">Total Comments</p>
       </div>
     </div>
-  </motion.button>
+  </div>
+)
+
+// Recipes Module
+const RecipesModule: React.FC<{ recipes: any[], loading: boolean, onLoadRecipes: () => void }> = ({ recipes, loading, onLoadRecipes }) => (
+  <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6 mb-6">
+    <div className="flex items-center justify-between mb-4">
+      <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+        <BookOpen className="w-5 h-5" />
+        Recipes Management
+      </h2>
+      <div className="flex gap-2">
+        <Button 
+          variant="secondary" 
+          icon={<RefreshCw className="w-4 h-4" />}
+          onClick={onLoadRecipes}
+          loading={loading}
+        >
+          Refresh
+        </Button>
+        <Button 
+          variant="primary" 
+          icon={<Plus className="w-4 h-4" />}
+        >
+          Add Recipe
+        </Button>
+      </div>
+    </div>
+    
+    {loading ? (
+      <div className="flex items-center justify-center py-8">
+        <RefreshCw className="w-6 h-6 text-blue-500 animate-spin" />
+        <span className="ml-2 text-gray-600">Loading recipes...</span>
+      </div>
+    ) : recipes.length > 0 ? (
+      <div className="overflow-x-auto">
+        <table className="w-full">
+          <thead>
+            <tr className="border-b border-gray-200">
+              <th className="text-left py-3 px-4 font-semibold text-gray-900">Title</th>
+              <th className="text-left py-3 px-4 font-semibold text-gray-900">Author</th>
+              <th className="text-left py-3 px-4 font-semibold text-gray-900">Created</th>
+              <th className="text-left py-3 px-4 font-semibold text-gray-900">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {recipes.map((recipe, index) => (
+              <tr key={recipe.id || index} className="border-b border-gray-100 hover:bg-gray-50">
+                <td className="py-4 px-4 font-medium text-gray-900">{recipe.title || 'Untitled'}</td>
+                <td className="py-4 px-4 text-gray-600">{recipe.author || 'Unknown'}</td>
+                <td className="py-4 px-4 text-gray-600 text-sm">
+                  {recipe.created_at ? new Date(recipe.created_at).toLocaleDateString() : 'Unknown'}
+                </td>
+                <td className="py-4 px-4">
+                  <div className="flex gap-2">
+                    <Button variant="ghost" size="sm" icon={<Eye className="w-4 h-4" />} />
+                    <Button variant="ghost" size="sm" icon={<Edit3 className="w-4 h-4" />} />
+                    <Button variant="ghost" size="sm" icon={<Trash2 className="w-4 h-4" />} />
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    ) : (
+      <div className="text-center py-8">
+        <BookOpen className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+        <h3 className="text-lg font-semibold text-gray-700 mb-2">No recipes found</h3>
+        <p className="text-gray-500 mb-4">Start by loading recipes from the database</p>
+        <Button variant="primary" onClick={onLoadRecipes} icon={<RefreshCw className="w-4 h-4" />}>
+          Load Recipes
+        </Button>
+      </div>
+    )}
+  </div>
+)
+
+// Users Module
+const UsersModule: React.FC<{ users: any[], loading: boolean, onLoadUsers: () => void }> = ({ users, loading, onLoadUsers }) => (
+  <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
+    <div className="flex items-center justify-between mb-4">
+      <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+        <Users className="w-5 h-5" />
+        Users Management
+      </h2>
+      <div className="flex gap-2">
+        <Button 
+          variant="secondary" 
+          icon={<RefreshCw className="w-4 h-4" />}
+          onClick={onLoadUsers}
+          loading={loading}
+        >
+          Refresh
+        </Button>
+        <Button 
+          variant="primary" 
+          icon={<Plus className="w-4 h-4" />}
+        >
+          Add User
+        </Button>
+      </div>
+    </div>
+    
+    {loading ? (
+      <div className="flex items-center justify-center py-8">
+        <RefreshCw className="w-6 h-6 text-blue-500 animate-spin" />
+        <span className="ml-2 text-gray-600">Loading users...</span>
+      </div>
+    ) : users.length > 0 ? (
+      <div className="overflow-x-auto">
+        <table className="w-full">
+          <thead>
+            <tr className="border-b border-gray-200">
+              <th className="text-left py-3 px-4 font-semibold text-gray-900">User</th>
+              <th className="text-left py-3 px-4 font-semibold text-gray-900">Email</th>
+              <th className="text-left py-3 px-4 font-semibold text-gray-900">Status</th>
+              <th className="text-left py-3 px-4 font-semibold text-gray-900">Created</th>
+              <th className="text-left py-3 px-4 font-semibold text-gray-900">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {users.map((user, index) => (
+              <tr key={user.id || index} className="border-b border-gray-100 hover:bg-gray-50">
+                <td className="py-4 px-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-sm font-medium">
+                      {(user.name || user.full_name || user.email || 'U').charAt(0).toUpperCase()}
+                    </div>
+                    <span className="font-medium text-gray-900">
+                      {user.name || user.full_name || 'No name'}
+                    </span>
+                  </div>
+                </td>
+                <td className="py-4 px-4 text-gray-600">{user.email}</td>
+                <td className="py-4 px-4">
+                  <span className={`inline-flex items-center px-2 py-1 text-xs font-medium rounded-full ${
+                    user.is_admin ? 'bg-red-100 text-red-800' : 
+                    user.is_premium ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'
+                  }`}>
+                    {user.is_admin ? 'Admin' : user.is_premium ? 'Premium' : 'Active'}
+                  </span>
+                </td>
+                <td className="py-4 px-4 text-gray-600 text-sm">
+                  {user.created_at ? new Date(user.created_at).toLocaleDateString() : 'Unknown'}
+                </td>
+                <td className="py-4 px-4">
+                  <div className="flex gap-2">
+                    <Button variant="ghost" size="sm" icon={<Eye className="w-4 h-4" />} />
+                    <Button variant="ghost" size="sm" icon={<Edit3 className="w-4 h-4" />} />
+                    <Button variant="ghost" size="sm" icon={<Trash2 className="w-4 h-4" />} />
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    ) : (
+      <div className="text-center py-8">
+        <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+        <h3 className="text-lg font-semibold text-gray-700 mb-2">No users found</h3>
+        <p className="text-gray-500 mb-4">Start by loading users from the database</p>
+        <Button variant="primary" onClick={onLoadUsers} icon={<RefreshCw className="w-4 h-4" />}>
+          Load Users
+        </Button>
+      </div>
+    )}
+  </div>
 )
 
 export function App() {
-  const [activeTab, setActiveTab] = useState('dashboard')
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [stats, setStats] = useState({
@@ -226,19 +339,10 @@ export function App() {
   })
   const [health, setHealth] = useState<any>(null)
   const [loading, setLoading] = useState(true)
-  const [adminUser, setAdminUser] = useState<{name?: string, email?: string} | null>(null)
   const [users, setUsers] = useState<any[]>([])
+  const [recipes, setRecipes] = useState<any[]>([])
   const [usersLoading, setUsersLoading] = useState(false)
-
-  // Navigation items
-  const navItems = [
-    { id: 'dashboard', label: 'Pārvaldes panelis', icon: BarChart3, color: 'bg-blue-500' },
-    { id: 'recipes', label: 'Receptes', icon: BookOpen, color: 'bg-green-500' },
-    { id: 'users', label: 'Lietotāji', icon: Users, color: 'bg-purple-500' },
-    { id: 'comments', label: 'Komentāri', icon: MessageSquare, color: 'bg-yellow-500' },
-    { id: 'analytics', label: 'Analītika', icon: PieChart, color: 'bg-pink-500' },
-    { id: 'settings', label: 'Iestatījumi', icon: Settings, color: 'bg-gray-500' },
-  ]
+  const [recipesLoading, setRecipesLoading] = useState(false)
 
   // Load initial data
   useEffect(() => {
@@ -251,30 +355,10 @@ export function App() {
 
         // Load stats
         const statsRes = await fetch(`${API}/api/admin/stats`, {
-          headers: ADMIN_API_KEY ? { 'X-Admin-Key': ADMIN_API_KEY } : {}
+          headers: ADMIN_API_KEY ? { 'X-Admin-Api-Key': ADMIN_API_KEY } : {}
         })
         const statsData = await statsRes.json()
         setStats(statsData)
-
-        // Try to get user info from URL token parameter
-        const urlParams = new URLSearchParams(window.location.search)
-        const token = urlParams.get('token')
-        if (token) {
-          try {
-            const userRes = await fetch(`${API}/api/auth/me`, {
-              headers: { 'Authorization': `Bearer ${token}` }
-            })
-            if (userRes.ok) {
-              const userData = await userRes.json()
-              setAdminUser({
-                name: userData.name || userData.full_name,
-                email: userData.email
-              })
-            }
-          } catch (err) {
-            console.warn('Failed to load user info:', err)
-          }
-        }
       } catch (error) {
         console.error('Failed to load data:', error)
       } finally {
@@ -290,7 +374,7 @@ export function App() {
     setUsersLoading(true)
     try {
       const response = await fetch(`${API}/api/admin/users`, {
-        headers: ADMIN_API_KEY ? { 'X-Admin-Key': ADMIN_API_KEY } : {}
+        headers: ADMIN_API_KEY ? { 'X-Admin-Api-Key': ADMIN_API_KEY } : {}
       })
       if (response.ok) {
         const data = await response.json()
@@ -303,336 +387,21 @@ export function App() {
     }
   }
 
-  const renderDashboard = () => (
-    <div className="space-y-8">
-      {/* Header */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-4xl font-bold text-gray-900">Pārvaldes Panelis</h1>
-          <p className="text-gray-600 mt-2">Laipni lūdzam Virtuves Māksla admin panelī</p>
-        </div>
-        <div className="flex flex-wrap gap-3">
-          <Button variant="secondary" size="md" icon={<Download className="w-4 h-4" />}>
-            Eksportēt datus
-          </Button>
-          <Button variant="primary" size="md" icon={<Plus className="w-4 h-4" />}>
-            Jauna recepte
-          </Button>
-        </div>
-      </div>
-
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
-        <StatCard
-          title="Kopā lietotāju"
-          value={stats.total_users?.toLocaleString() || '0'}
-          change="+12% šomēnes"
-          changeType="positive"
-          icon={<Users className="w-6 h-6" />}
-          color="bg-gradient-to-r from-blue-500 to-blue-600"
-          trend={[65, 72, 68, 85, 91, 88, 95]}
-        />
-        <StatCard
-          title="Kopā receptu"
-          value={stats.total_recipes?.toLocaleString() || '0'}
-          change="+8% šomēnes"
-          changeType="positive"
-          icon={<BookOpen className="w-6 h-6" />}
-          color="bg-gradient-to-r from-green-500 to-green-600"
-          trend={[45, 52, 48, 65, 71, 68, 75]}
-        />
-        <StatCard
-          title="Komentāri"
-          value={stats.total_comments?.toLocaleString() || '0'}
-          change="+23% šomēnes"
-          changeType="positive"
-          icon={<MessageSquare className="w-6 h-6" />}
-          color="bg-gradient-to-r from-purple-500 to-purple-600"
-          trend={[25, 32, 28, 45, 51, 48, 55]}
-        />
-        <StatCard
-          title="Vērtējumi"
-          value={stats.total_ratings?.toLocaleString() || '0'}
-          change="+15% šomēnes"
-          changeType="positive"
-          icon={<Star className="w-6 h-6" />}
-          color="bg-gradient-to-r from-yellow-500 to-orange-500"
-          trend={[35, 42, 38, 55, 61, 58, 65]}
-        />
-      </div>
-
-      {/* Modules Grid */}
-      <div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-6">Sistēmas moduļi</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <ModuleCard
-            title="Receptu pārvaldība"
-            description="Pārvaldiet receptes, to statusu un saturu"
-            icon={<BookOpen className="w-6 h-6" />}
-            color="bg-green-500"
-            onClick={() => setActiveTab('recipes')}
-            actions={
-              <div className="flex gap-2">
-                <Button variant="ghost" size="sm" icon={<Eye className="w-4 h-4" />} />
-                <Button variant="ghost" size="sm" icon={<Edit3 className="w-4 h-4" />} />
-              </div>
-            }
-          />
-          <ModuleCard
-            title="Lietotāju pārvaldība"
-            description="Pārvaldiet lietotāju kontus un tiesības"
-            icon={<Users className="w-6 h-6" />}
-            color="bg-purple-500"
-            onClick={() => setActiveTab('users')}
-            actions={
-              <div className="flex gap-2">
-                <Button variant="ghost" size="sm" icon={<RefreshCw className="w-4 h-4" />} onClick={() => { loadUsers(); }} />
-                <Button variant="ghost" size="sm" icon={<Plus className="w-4 h-4" />} />
-              </div>
-            }
-          />
-          <ModuleCard
-            title="Komentāru moderācija"
-            description="Moderējiet un pārvaldiet lietotāju komentārus"
-            icon={<MessageSquare className="w-6 h-6" />}
-            color="bg-yellow-500"
-            onClick={() => setActiveTab('comments')}
-            actions={
-              <div className="flex gap-2">
-                <Button variant="ghost" size="sm" icon={<AlertCircle className="w-4 h-4" />} />
-                <Button variant="ghost" size="sm" icon={<CheckCircle className="w-4 h-4" />} />
-              </div>
-            }
-          />
-          <ModuleCard
-            title="Analītika un atskaites"
-            description="Skatiet detalizētu analītiku un ģenerējiet atskaites"
-            icon={<PieChart className="w-6 h-6" />}
-            color="bg-pink-500"
-            onClick={() => setActiveTab('analytics')}
-            actions={
-              <div className="flex gap-2">
-                <Button variant="ghost" size="sm" icon={<Download className="w-4 h-4" />} />
-                <Button variant="ghost" size="sm" icon={<TrendingUp className="w-4 h-4" />} />
-              </div>
-            }
-          />
-          <ModuleCard
-            title="Sistēmas iestatījumi"
-            description="Konfigurējiet sistēmas parametrus un iestatījumus"
-            icon={<Settings className="w-6 h-6" />}
-            color="bg-gray-500"
-            onClick={() => setActiveTab('settings')}
-            actions={
-              <div className="flex gap-2">
-                <Button variant="ghost" size="sm" icon={<Zap className="w-4 h-4" />} />
-                <Button variant="ghost" size="sm" icon={<Lock className="w-4 h-4" />} />
-              </div>
-            }
-          />
-          <ModuleCard
-            title="Sistēmas stāvoklis"
-            description="Monitorējiet sistēmas veiktspēju un stāvokli"
-            icon={<Activity className="w-6 h-6" />}
-            color="bg-indigo-500"
-            onClick={() => {}}
-            actions={
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                <span className="text-xs text-green-600 font-medium">Aktīvs</span>
-              </div>
-            }
-          />
-        </div>
-      </div>
-
-      {/* Quick Actions */}
-      <div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-6">Ātrās darbības</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <QuickActionCard
-            title="Pievienot recepti"
-            description="Izveidojiet jaunu recepti"
-            icon={<Plus className="w-5 h-5" />}
-            color="bg-green-500"
-            onClick={() => {}}
-          />
-          <QuickActionCard
-            title="Eksportēt datus"
-            description="Lejupielādējiet sistēmas datus"
-            icon={<Download className="w-5 h-5" />}
-            color="bg-blue-500"
-            onClick={() => {}}
-          />
-          <QuickActionCard
-            title="Sistēmas atskaite"
-            description="Ģenerējiet ikmēneša atskaiti"
-            icon={<BarChart3 className="w-5 h-5" />}
-            color="bg-purple-500"
-            onClick={() => {}}
-          />
-          <QuickActionCard
-            title="Rezerves kopija"
-            description="Izveidojiet datu rezerves kopiju"
-            icon={<Crown className="w-5 h-5" />}
-            color="bg-yellow-500"
-            onClick={() => {}}
-          />
-        </div>
-      </div>
-
-      {/* System Health */}
-      {health && (
-        <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <Activity className="w-5 h-5" />
-            Sistēmas stāvoklis
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="flex items-center gap-3">
-              <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse" />
-              <div>
-                <p className="text-sm font-medium text-gray-900">API Serveris</p>
-                <p className="text-xs text-gray-500">Darbojas normāli</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse" />
-              <div>
-                <p className="text-sm font-medium text-gray-900">Datubāze</p>
-                <p className="text-xs text-gray-500">Savienots</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="w-3 h-3 bg-yellow-500 rounded-full animate-pulse" />
-              <div>
-                <p className="text-sm font-medium text-gray-900">Atbilnes laiks</p>
-                <p className="text-xs text-gray-500">{health.durationMs || 0}ms</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  )
-
-  const renderContent = () => {
-    switch (activeTab) {
-      case 'dashboard':
-        return renderDashboard()
-      case 'users':
-        return (
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h1 className="text-3xl font-bold text-gray-900">Lietotāji</h1>
-              <div className="flex gap-3">
-                <Button 
-                  variant="secondary" 
-                  icon={<RefreshCw className="w-4 h-4" />}
-                  onClick={loadUsers}
-                  loading={usersLoading}
-                >
-                  Atjaunot
-                </Button>
-                <Button 
-                  variant="secondary" 
-                  icon={<Download className="w-4 h-4" />}
-                >
-                  Eksportēt
-                </Button>
-                <Button 
-                  variant="primary" 
-                  icon={<Plus className="w-4 h-4" />}
-                >
-                  Pievienot lietotāju
-                </Button>
-              </div>
-            </div>
-            
-            <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
-              {usersLoading ? (
-                <div className="flex items-center justify-center py-12">
-                  <div className="text-center">
-                    <RefreshCw className="w-8 h-8 text-blue-500 animate-spin mx-auto mb-4" />
-                    <p className="text-gray-600">Ielādē lietotājus...</p>
-                  </div>
-                </div>
-              ) : users.length > 0 ? (
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b border-gray-200">
-                        <th className="text-left py-3 px-4 font-semibold text-gray-900">Lietotājs</th>
-                        <th className="text-left py-3 px-4 font-semibold text-gray-900">E-pasts</th>
-                        <th className="text-left py-3 px-4 font-semibold text-gray-900">Statuss</th>
-                        <th className="text-left py-3 px-4 font-semibold text-gray-900">Reģistrācija</th>
-                        <th className="text-left py-3 px-4 font-semibold text-gray-900">Darbības</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {users.map((user, index) => (
-                        <tr key={user.id || index} className="border-b border-gray-100 hover:bg-gray-50">
-                          <td className="py-4 px-4">
-                            <div className="flex items-center gap-3">
-                              <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-sm font-medium">
-                                {(user.name || user.full_name || user.email || 'U').charAt(0).toUpperCase()}
-                              </div>
-                              <span className="font-medium text-gray-900">
-                                {user.name || user.full_name || 'Nav norādīts'}
-                              </span>
-                            </div>
-                          </td>
-                          <td className="py-4 px-4 text-gray-600">{user.email}</td>
-                          <td className="py-4 px-4">
-                            <span className={`inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full ${
-                              user.is_admin ? 'bg-red-100 text-red-800' : 
-                              user.is_premium ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'
-                            }`}>
-                              {user.is_admin && <Crown className="w-3 h-3" />}
-                              {user.is_admin ? 'Admin' : user.is_premium ? 'Premium' : 'Aktīvs'}
-                            </span>
-                          </td>
-                          <td className="py-4 px-4 text-gray-600 text-sm">
-                            {user.created_at ? new Date(user.created_at).toLocaleDateString('lv-LV') : 'Nav zināms'}
-                          </td>
-                          <td className="py-4 px-4">
-                            <div className="flex gap-2">
-                              <Button variant="ghost" size="sm" icon={<Eye className="w-4 h-4" />} />
-                              <Button variant="ghost" size="sm" icon={<Edit3 className="w-4 h-4" />} />
-                              <Button variant="ghost" size="sm" icon={<Trash2 className="w-4 h-4" />} />
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              ) : (
-                <div className="text-center py-12">
-                  <Users className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold text-gray-700 mb-2">Nav atrasti lietotāji</h3>
-                  <p className="text-gray-500 mb-6">Uzsāciet, ielādējot lietotāju sarakstu</p>
-                  <Button variant="primary" onClick={loadUsers} icon={<RefreshCw className="w-4 h-4" />}>
-                    Ielādēt lietotājus
-                  </Button>
-                </div>
-              )}
-            </div>
-          </div>
-        )
-      default:
-        return (
-          <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-12 text-center">
-            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Settings className="w-8 h-8 text-gray-400" />
-            </div>
-            <h2 className="text-2xl font-semibold text-gray-900 mb-2">Sadaļa izstrādes procesā</h2>
-            <p className="text-gray-600 mb-6">Šī funkcionalitāte būs pieejama drīzumā</p>
-            <Button variant="primary" onClick={() => setActiveTab('dashboard')}>
-              Atgriezties uz pārvaldes paneli
-            </Button>
-          </div>
-        )
+  // Load recipes function
+  const loadRecipes = async () => {
+    setRecipesLoading(true)
+    try {
+      const response = await fetch(`${API}/api/admin/recipes`, {
+        headers: ADMIN_API_KEY ? { 'X-Admin-Api-Key': ADMIN_API_KEY } : {}
+      })
+      if (response.ok) {
+        const data = await response.json()
+        setRecipes(Array.isArray(data) ? data : data.recipes || [])
+      }
+    } catch (error) {
+      console.error('Error loading recipes:', error)
+    } finally {
+      setRecipesLoading(false)
     }
   }
 
@@ -641,8 +410,8 @@ export function App() {
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-6" />
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Ielādē admin paneli...</h2>
-          <p className="text-gray-600">Lūdzu uzgaidiet</p>
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">Loading admin panel...</h2>
+          <p className="text-gray-600">Please wait</p>
         </div>
       </div>
     )
@@ -691,26 +460,16 @@ export function App() {
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 p-4 space-y-2">
-          {navItems.map((item) => (
-            <motion.button
-              key={item.id}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => {
-                setActiveTab(item.id)
-                setMobileMenuOpen(false)
-              }}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all duration-200 ${
-                activeTab === item.id
-                  ? `${item.color} text-white shadow-lg`
-                  : 'text-gray-600 hover:bg-gray-100'
-              }`}
-            >
-              <item.icon className="w-5 h-5 flex-shrink-0" />
-              {!sidebarCollapsed && <span className="font-medium">{item.label}</span>}
-            </motion.button>
-          ))}
+        <nav className="flex-1 p-4">
+          <div className="space-y-2">
+            <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider px-4 py-2">
+              {!sidebarCollapsed && 'Main'}
+            </div>
+            <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left bg-blue-500 text-white shadow-lg">
+              <BarChart3 className="w-5 h-5 flex-shrink-0" />
+              {!sidebarCollapsed && <span className="font-medium">Dashboard</span>}
+            </button>
+          </div>
         </nav>
 
         {/* Bottom Actions */}
@@ -720,11 +479,11 @@ export function App() {
             className="w-full flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-100 rounded-xl transition-colors"
           >
             <Globe className="w-5 h-5 flex-shrink-0" />
-            {!sidebarCollapsed && <span className="text-sm">Publiskā lapa</span>}
+            {!sidebarCollapsed && <span className="text-sm">Public Site</span>}
           </button>
           <button className="w-full flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-red-50 rounded-xl transition-colors">
             <LogOut className="w-5 h-5 flex-shrink-0" />
-            {!sidebarCollapsed && <span className="text-sm">Iziet</span>}
+            {!sidebarCollapsed && <span className="text-sm">Logout</span>}
           </button>
         </div>
       </motion.div>
@@ -747,49 +506,34 @@ export function App() {
               >
                 <Menu className="w-5 h-5 text-gray-600" />
               </button>
-              <div className="relative hidden md:block">
-                <Search className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Meklēt..."
-                  className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-64"
-                />
-              </div>
-            </div>
-            
-            <div className="flex items-center gap-4">
-              <button className="relative p-2 rounded-lg hover:bg-gray-100 transition-colors">
-                <Bell className="w-5 h-5 text-gray-600" />
-                <div className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse" />
-              </button>
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-                  <span className="text-white text-sm font-medium">
-                    {adminUser?.name ? adminUser.name.charAt(0).toUpperCase() : 'A'}
-                  </span>
-                </div>
-                <div className="text-sm hidden md:block">
-                  <p className="font-medium text-gray-900">{adminUser?.name || 'Admin'}</p>
-                  <p className="text-gray-500">{adminUser?.email || 'admin@virtuves-maksla.lv'}</p>
-                </div>
-              </div>
+              <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
             </div>
           </div>
         </header>
 
         {/* Page Content */}
         <main className="flex-1 p-6 overflow-auto">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={activeTab}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.3 }}
-            >
-              {renderContent()}
-            </motion.div>
-          </AnimatePresence>
+          <div className="max-w-7xl mx-auto space-y-6">
+            {/* Server Status Module */}
+            <ServerStatus health={health} />
+            
+            {/* Statistics Module */}
+            <Statistics stats={stats} />
+            
+            {/* Recipes Module */}
+            <RecipesModule 
+              recipes={recipes} 
+              loading={recipesLoading} 
+              onLoadRecipes={loadRecipes} 
+            />
+            
+            {/* Users Module */}
+            <UsersModule 
+              users={users} 
+              loading={usersLoading} 
+              onLoadUsers={loadUsers} 
+            />
+          </div>
         </main>
       </div>
     </div>
