@@ -9,11 +9,21 @@ type ModalProps = {
 };
 
 export const Modal: React.FC<ModalProps> = ({ isOpen, title, onClose, children, footer }) => {
+  React.useEffect(() => {
+    if (!isOpen) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [isOpen, onClose]);
   if (!isOpen) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="absolute inset-0 bg-black/40" onClick={onClose} />
-      <div className="relative z-10 w-full max-w-lg mx-4 rounded bg-white shadow-lg">
+      <div className="absolute inset-0 bg-black/40 animate-fadeIn" onClick={onClose} />
+      <div
+        className="relative z-10 w-full max-w-lg mx-4 rounded bg-white shadow-lg animate-scaleIn"
+        role="dialog"
+        aria-modal="true"
+      >
         <div className="flex items-center justify-between border-b px-4 py-3">
           <h3 className="font-semibold text-lg">{title || 'Dialog'}</h3>
           <button className="text-gray-500 hover:text-gray-700" onClick={onClose}>✕</button>
