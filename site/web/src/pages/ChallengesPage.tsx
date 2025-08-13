@@ -17,7 +17,8 @@ export const ChallengesPage: React.FC = () => {
 
   return (
     <div>
-      <h1 className="text-xl font-semibold mb-4">Challenges</h1>
+      <h1 className="text-xl font-semibold mb-1">Challenges</h1>
+      <p className="text-sm text-gray-700 mb-4">Join themed cooking challenges, submit your best, and explore winners.</p>
       <ul className="space-y-3">
         {items.map(c => (
           <li key={c.id} className="bg-white border rounded p-3">

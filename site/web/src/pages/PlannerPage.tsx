@@ -69,6 +69,17 @@ export const PlannerPage: React.FC = () => {
 
   const addRow = () => setPlan(p => p.concat({ planned_date: weekStart, meal_slot: 'dinner', recipe_id: '', servings: 2 }));
 
+  const populateMockWeek = () => {
+    if (!weekStart) return;
+    const seed: PlanRow[] = [
+      { planned_date: weekStart, meal_slot: 'breakfast', recipe_id: 'TEST-EGGS', servings: 2 },
+      { planned_date: weekStart, meal_slot: 'lunch', recipe_id: 'TEST-SOUP', servings: 2 },
+      { planned_date: weekStart, meal_slot: 'dinner', recipe_id: 'TEST-PASTA', servings: 2 }
+    ];
+    setPlan(seed);
+    setStatus('Mock data added — save to persist');
+  };
+
   return (
     <div>
       <h1 className="text-xl font-semibold mb-4">Weekly Planner</h1>
@@ -78,6 +89,7 @@ export const PlannerPage: React.FC = () => {
         <button onClick={savePlan} className="px-3 py-2 rounded bg-gray-900 text-white">Save</button>
         <button onClick={addRow} className="px-3 py-2 rounded bg-gray-200">Add row</button>
         <button onClick={loadGrocery} className="px-3 py-2 rounded bg-gray-200">Grocery list</button>
+        <button onClick={populateMockWeek} className="px-3 py-2 rounded bg-gray-200">Add mock week</button>
         <span className="text-sm text-gray-600">{status}</span>
       </div>
       <table className="w-full text-sm">

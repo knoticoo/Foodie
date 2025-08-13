@@ -21,8 +21,6 @@ export const RecipeDetailPage: React.FC = () => {
   const [comments, setComments] = useState<Comment[]>([]);
   const [ratings, setRatings] = useState<any>({ average: null, ratings: [] });
   const [newComment, setNewComment] = useState('');
-  const [newRating, setNewRating] = useState(5);
-  const [newRatingComment, setNewRatingComment] = useState('');
   const [fav, setFav] = useState<boolean | null>(null);
   const [servings, setServings] = useState<number | null>(null);
   const [scaled, setScaled] = useState<any[] | null>(null);
@@ -64,7 +62,7 @@ export const RecipeDetailPage: React.FC = () => {
     const res = await authorizedFetch(`${API_BASE_URL}/api/recipes/${id}/comments`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ content: newComment })
+      body: JSON.stringify({ content: newComment.trim() })
     });
     if (res.ok) {
       setNewComment('');
@@ -75,21 +73,21 @@ export const RecipeDetailPage: React.FC = () => {
 
   const deleteComment = async (commentId: string) => {
     if (!token) return;
+    if (!window.confirm('Delete this comment?')) return;
     const res = await authorizedFetch(`${API_BASE_URL}/api/recipes/${id}/comments/${commentId}`, { method: 'DELETE' });
     if (res.status === 204) setComments(prev => prev.filter(c => c.id !== commentId));
   };
 
-  const postRating = async () => {
+  const submitRating = async (star: number) => {
     if (!token) return;
     const res = await authorizedFetch(`${API_BASE_URL}/api/recipes/${id}/ratings`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ rating: newRating, comment: newRatingComment || null })
+      body: JSON.stringify({ rating: star, comment: null })
     });
     if (res.status === 204) {
       const d = await (await fetch(`${API_BASE_URL}/api/recipes/${id}/ratings`)).json();
       setRatings(d || { average: null, ratings: [] });
-      setNewRating(5); setNewRatingComment('');
     }
   };
 
@@ -214,40 +212,47 @@ export const RecipeDetailPage: React.FC = () => {
       )}
 
       <div>
-        <h2 className="font-medium mb-2">Ratings</h2>
+        <h2 className="font-medium mb-2">Rate this recipe</h2>
         <div className="text-sm text-gray-600 mb-2">Average: {ratings.average ?? '—'}</div>
-        {token && (
-          <div className="flex items-center gap-2 mb-3">
-            <label className="sr-only">Rate</label>
-            <div className="inline-flex">
-              {[1,2,3,4,5].map(star => (
-                <button
-                  key={star}
-                  className={`text-2xl ${newRating >= star ? 'text-yellow-500' : 'text-gray-300'}`}
-                  onClick={() => setNewRating(star)}
-                  aria-label={`Rate ${star}`}
-                >★</button>
-              ))}
-            </div>
-            <input className="border rounded px-2 py-1 flex-1" placeholder="Comment (optional)" value={newRatingComment} onChange={e => setNewRatingComment(e.target.value)} />
-            <button onClick={postRating} className="px-3 py-1 rounded bg-gray-900 text-white">Submit</button>
+        {token ? (
+          <div className="inline-flex items-center gap-1" aria-label="Set rating">
+            {[1,2,3,4,5].map(star => (
+              <button
+                key={star}
+                className={`text-2xl hover:scale-110 transition-transform ${Math.round(Number(ratings.average || 0)) >= star ? 'text-yellow-500' : 'text-gray-300'}`}
+                onClick={() => submitRating(star)}
+                aria-label={`Rate ${star}`}
+                title={`Rate ${star}`}
+              >★</button>
+            ))}
           </div>
+        ) : (
+          <div className="text-sm text-gray-600">Login to rate.</div>
         )}
       </div>
 
       <div>
         <h2 className="font-medium mb-2">Comments</h2>
         {token && (
-          <div className="flex items-center gap-2 mb-3">
-            <input className="border rounded px-2 py-1 flex-1" placeholder="Write a comment" value={newComment} onChange={e => setNewComment(e.target.value)} />
-            <button onClick={postComment} className="px-3 py-1 rounded bg-gray-900 text-white">Post</button>
+          <div className="mb-3">
+            <textarea
+              className="w-full border rounded px-3 py-2 text-sm"
+              rows={3}
+              placeholder="Write a comment"
+              value={newComment}
+              onChange={e => setNewComment(e.target.value)}
+              onKeyDown={e => { if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); postComment(); } }}
+            />
+            <div className="flex justify-end mt-2">
+              <button onClick={postComment} className="px-3 py-1 rounded bg-gray-900 text-white">Post</button>
+            </div>
           </div>
         )}
         <ul className="space-y-2">
           {comments.map(c => (
-            <li key={c.id} className="bg-white border rounded p-2">
-              <div className="text-sm">{c.content}</div>
-              <div className="text-xs text-gray-500">{new Date(c.created_at).toLocaleString()}</div>
+            <li key={c.id} className="bg-white border rounded p-3">
+              <div className="text-sm text-gray-800 whitespace-pre-wrap">{c.content}</div>
+              <div className="text-xs text-gray-500 mt-1">{new Date(c.created_at).toLocaleString()}</div>
               {token && <button onClick={() => deleteComment(c.id)} className="text-xs text-red-600 mt-1">Delete</button>}
             </li>
           ))}

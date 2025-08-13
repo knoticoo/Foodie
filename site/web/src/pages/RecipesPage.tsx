@@ -14,20 +14,14 @@ export const RecipesPage: React.FC = () => {
   const { token, authorizedFetch } = useAuth();
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [q, setQ] = useState('');
-  const [ingredient, setIngredient] = useState('');
-  const [diet, setDiet] = useState('');
-  const [maxTime, setMaxTime] = useState('');
-  const [maxCost, setMaxCost] = useState('');
   const [limit, setLimit] = useState(20);
   const [offset, setOffset] = useState(0);
+  const [category, setCategory] = useState<string>('');
 
   const runSearch = async () => {
     const params = new URLSearchParams();
     if (q) params.set('q', q);
-    if (ingredient) params.set('ingredient', ingredient);
-    if (diet) params.set('diet', diet);
-    if (maxTime) params.set('maxTime', maxTime);
-    if (maxCost) params.set('maxCost', maxCost);
+    // category is UI-only for now; backend has no category filter yet
     params.set('limit', String(limit));
     params.set('offset', String(offset));
     const url = `${API_BASE_URL}/api/recipes?${params.toString()}`;
@@ -47,12 +41,15 @@ export const RecipesPage: React.FC = () => {
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold">Browse recipes</h1>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-6 gap-2">
-        <input className="border rounded px-3 py-2 md:col-span-2" placeholder="Search recipes" value={q} onChange={e => setQ(e.target.value)} />
-        <input className="border rounded px-3 py-2" placeholder="Ingredient" value={ingredient} onChange={e => setIngredient(e.target.value)} />
-        <input className="border rounded px-3 py-2" placeholder="Diet (comma-separated)" value={diet} onChange={e => setDiet(e.target.value)} />
-        <input className="border rounded px-3 py-2" placeholder="Max time (min)" value={maxTime} onChange={e => setMaxTime(e.target.value)} />
-        <input className="border rounded px-3 py-2" placeholder="Max cost (cents)" value={maxCost} onChange={e => setMaxCost(e.target.value)} />
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
+        <input className="border rounded px-3 py-2 md:col-span-2" placeholder="Search by name" value={q} onChange={e => setQ(e.target.value)} />
+        <select className="border rounded px-3 py-2" value={category} onChange={e => setCategory(e.target.value)}>
+          <option value="">All categories</option>
+          <option value="breakfast">Breakfast</option>
+          <option value="lunch">Lunch</option>
+          <option value="dinner">Dinner</option>
+          <option value="dessert">Dessert</option>
+        </select>
         <button onClick={resetAndSearch} className="px-3 py-2 rounded bg-gray-900 text-white">Search</button>
       </div>
 

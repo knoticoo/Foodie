@@ -31,7 +31,7 @@ export const HomePage: React.FC = () => {
         <p className="text-gray-700 mb-4">Cook seasonal favorites, save what you love, and plan your week.</p>
         <div className="flex gap-3">
           <Link to="/recipes" className="px-4 py-2 rounded bg-gray-900 text-white">Browse recipes</Link>
-          <Link to="/preferences" className="px-4 py-2 rounded border">Set preferences</Link>
+          <Link to="/profile" className="px-4 py-2 rounded border">Your profile</Link>
         </div>
       </section>
 
