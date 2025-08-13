@@ -30,25 +30,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (!res.ok) throw new Error('me failed');
       const me = await res.json();
       setIsAdmin(Boolean(me?.is_admin));
+      const premiumActive = Boolean(me?.is_premium) || (me?.premium_expires_at && new Date(me.premium_expires_at) > new Date());
+      setIsPremium(premiumActive);
     } catch {
       setIsAdmin(false);
-    }
-  };
-
-  const fetchBillingStatus = async (jwt: string) => {
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/billing/status`, { headers: { Authorization: `Bearer ${jwt}` } });
-      if (!res.ok) throw new Error('status failed');
-      const d = await res.json();
-      setIsPremium(Boolean(d?.isPremium));
-    } catch {
       setIsPremium(false);
     }
   };
 
   const refreshStatus = async () => {
     if (!token) return;
-    await Promise.allSettled([fetchMe(token), fetchBillingStatus(token)]);
+    await fetchMe(token);
   };
 
   useEffect(() => {
