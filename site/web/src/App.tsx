@@ -17,34 +17,46 @@ import { ChallengesPage } from './pages/ChallengesPage';
 import { ProfilePage } from './pages/ProfilePage';
 
 function NavBar() {
-  const { token, isAdmin, logout } = useAuth();
+  const { token, isAdmin, isPremium, logout } = useAuth();
   const [open, setOpen] = React.useState(false);
+  const [openDiscover, setOpenDiscover] = React.useState(false);
+  const [openUser, setOpenUser] = React.useState(false);
   return (
     <header className="bg-white border-b">
       <div className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between">
         <div className="flex items-center gap-6">
           <Link to="/" className="font-semibold">Latvian Recipes</Link>
-          <nav className="hidden md:flex items-center gap-4 text-sm">
+          <nav className="hidden md:flex items-center gap-4 text-sm relative">
             <Link to="/recipes" className="hover:underline">Browse</Link>
-            <Link to="/challenges" className="hover:underline">Challenges</Link>
-            <Link to="/prices" className="hover:underline">Prices</Link>
-            <Link to="/billing" className="hover:underline">Premium</Link>
-            {token && (
-              <>
-                <Link to="/submit" className="hover:underline">Submit</Link>
-                <Link to="/planner" className="hover:underline">Planner</Link>
-                <Link to="/profile" className="hover:underline">Profile</Link>
-                <Link to="/recommendations" className="hover:underline">For you</Link>
-              </>
-            )}
+            <div className="relative" onMouseLeave={() => setOpenDiscover(false)}>
+              <button className="hover:underline" onClick={() => setOpenDiscover(v => !v)}>Discover ▾</button>
+              {openDiscover && (
+                <div className="absolute z-20 mt-2 bg-white border rounded shadow-md p-2 min-w-[160px]">
+                  <Link to="/challenges" className="block px-3 py-1 hover:bg-gray-50" onClick={() => setOpenDiscover(false)}>Challenges</Link>
+                  <Link to="/prices" className="block px-3 py-1 hover:bg-gray-50" onClick={() => setOpenDiscover(false)}>Prices</Link>
+                </div>
+              )}
+            </div>
+            <Link to="/billing" className="hover:underline">Premium{isPremium ? ' ✓' : ''}</Link>
             {isAdmin && (
               <a href={`http://${window.location.hostname}:5173/`} className="hover:underline" target="_blank" rel="noreferrer">Admin</a>
             )}
           </nav>
         </div>
-        <div className="hidden md:flex items-center gap-3">
+        <div className="hidden md:flex items-center gap-3 relative">
           {token ? (
-            <button onClick={logout} className="px-3 py-1 rounded bg-gray-900 text-white text-sm">Logout</button>
+            <div className="relative" onMouseLeave={() => setOpenUser(false)}>
+              <button className="px-3 py-1 rounded border" onClick={() => setOpenUser(v => !v)}>Account ▾</button>
+              {openUser && (
+                <div className="absolute right-0 z-20 mt-2 bg-white border rounded shadow-md p-2 min-w-[180px]">
+                  <Link to="/profile" className="block px-3 py-1 hover:bg-gray-50" onClick={() => setOpenUser(false)}>Profile</Link>
+                  <Link to="/planner" className="block px-3 py-1 hover:bg-gray-50" onClick={() => setOpenUser(false)}>Planner</Link>
+                  <Link to="/recommendations" className="block px-3 py-1 hover:bg-gray-50" onClick={() => setOpenUser(false)}>For you</Link>
+                  <Link to="/submit" className="block px-3 py-1 hover:bg-gray-50" onClick={() => setOpenUser(false)}>Submit</Link>
+                  <button className="block w-full text-left px-3 py-1 hover:bg-gray-50" onClick={() => { setOpenUser(false); logout(); }}>Logout</button>
+                </div>
+              )}
+            </div>
           ) : (
             <>
               <Link to="/login" className="hover:underline text-sm">Login</Link>
@@ -60,23 +72,26 @@ function NavBar() {
         <div className="md:hidden border-t">
           <nav className="px-4 py-3 flex flex-col gap-3 text-sm">
             <Link to="/recipes" onClick={() => setOpen(false)}>Browse</Link>
-            <Link to="/challenges" onClick={() => setOpen(false)}>Challenges</Link>
-            <Link to="/prices" onClick={() => setOpen(false)}>Prices</Link>
-            <Link to="/billing" onClick={() => setOpen(false)}>Premium</Link>
+            <div className="border rounded">
+              <div className="px-3 py-2 font-medium">Discover</div>
+              <Link to="/challenges" onClick={() => setOpen(false)} className="block px-3 py-1">Challenges</Link>
+              <Link to="/prices" onClick={() => setOpen(false)} className="block px-3 py-1">Prices</Link>
+            </div>
+            <Link to="/billing" onClick={() => setOpen(false)}>Premium{isPremium ? ' ✓' : ''}</Link>
             {token && (
-              <>
-                <Link to="/submit" onClick={() => setOpen(false)}>Submit</Link>
-                <Link to="/planner" onClick={() => setOpen(false)}>Planner</Link>
-                <Link to="/profile" onClick={() => setOpen(false)}>Profile</Link>
-                <Link to="/recommendations" onClick={() => setOpen(false)}>For you</Link>
-              </>
+              <div className="border rounded">
+                <div className="px-3 py-2 font-medium">Account</div>
+                <Link to="/profile" onClick={() => setOpen(false)} className="block px-3 py-1">Profile</Link>
+                <Link to="/planner" onClick={() => setOpen(false)} className="block px-3 py-1">Planner</Link>
+                <Link to="/recommendations" onClick={() => setOpen(false)} className="block px-3 py-1">For you</Link>
+                <Link to="/submit" onClick={() => setOpen(false)} className="block px-3 py-1">Submit</Link>
+                <button onClick={() => { setOpen(false); logout(); }} className="text-left px-3 py-1">Logout</button>
+              </div>
             )}
             {isAdmin && (
               <a href={`http://${window.location.hostname}:5173/`} target="_blank" rel="noreferrer" onClick={() => setOpen(false)}>Admin</a>
             )}
-            {token ? (
-              <button onClick={() => { setOpen(false); logout(); }} className="text-left">Logout</button>
-            ) : (
+            {!token && (
               <>
                 <Link to="/login" onClick={() => setOpen(false)}>Login</Link>
                 <Link to="/register" onClick={() => setOpen(false)}>Sign up</Link>

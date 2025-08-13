@@ -13,10 +13,11 @@ adminRouter.use(requireAuth, requireAdmin);
 adminRouter.get('/recipes', async (req, res) => {
   const status = String(req.query.status ?? 'all');
   const q = typeof req.query.q === 'string' ? req.query.q : undefined;
+  const sortBy = (req.query.sortBy === 'top' || req.query.sortBy === 'new') ? (req.query.sortBy as 'top' | 'new') : undefined;
   const limit = typeof req.query.limit === 'string' ? Math.min(Number(req.query.limit), 200) : 50;
   const offset = typeof req.query.offset === 'string' ? Math.max(Number(req.query.offset), 0) : 0;
 
-  const recipes = await findRecipes({ query: q }, limit, offset);
+  const recipes = await findRecipes({ query: q, sortBy }, limit, offset);
   let filtered = recipes;
   if (status === 'pending') filtered = recipes.filter((r: any) => r.is_approved === false);
   if (status === 'approved') filtered = recipes.filter((r: any) => r.is_approved !== false);
@@ -157,6 +158,14 @@ adminRouter.put('/users/:id/premium', async (req, res) => {
   res.status(204).end();
 });
 
+// Toggle admin flag
+adminRouter.put('/users/:id/admin', async (req, res) => {
+  const id = String(req.params.id || '');
+  const body = req.body as { isAdmin?: boolean };
+  await pgPool.query('UPDATE users SET is_admin=$1 WHERE id=$2', [body.isAdmin === true, id]);
+  res.status(204).end();
+});
+
 // List users for admin (supports filter: all|new|premium)
 adminRouter.get('/users', async (req, res) => {
   const status = String(req.query.status ?? 'all');
@@ -204,4 +213,17 @@ adminRouter.put('/stores/:id/affiliate-template', async (req, res) => {
   const template = (body.template || '').trim();
   await pgPool.query('UPDATE stores SET affiliate_url_template=$1 WHERE id=$2', [template || null, id]);
   res.status(204).end();
+});
+
+// Admin: list latest comments across recipes
+adminRouter.get('/comments', async (_req, res) => {
+  const { rows } = await pgPool.query(
+    `SELECT c.id, c.user_id, u.email, c.recipe_id, r.title AS recipe_title, c.content, c.created_at
+     FROM recipe_comments c
+     JOIN users u ON u.id = c.user_id
+     JOIN recipes r ON r.id = c.recipe_id
+     ORDER BY c.created_at DESC
+     LIMIT 200`
+  );
+  res.json({ comments: rows });
 });

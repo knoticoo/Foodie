@@ -6,6 +6,7 @@ export interface RecipeListFilters {
   diet?: string[];
   maxTimeMinutes?: number;
   maxCostCents?: number;
+  sortBy?: 'new' | 'top';
 }
 
 export async function findRecipes(filters: RecipeListFilters, limit = 20, offset = 0) {
@@ -40,6 +41,10 @@ export async function findRecipes(filters: RecipeListFilters, limit = 20, offset
 
   const whereSql = where.length > 0 ? `WHERE ${where.join(' AND ')}` : '';
 
+  const orderSql = (filters.sortBy === 'top')
+    ? `ORDER BY avg_rating DESC NULLS LAST, rating_count DESC NULLS LAST, created_at DESC`
+    : `ORDER BY created_at DESC`;
+
   const sql = `
     SELECT 
       id,
@@ -53,15 +58,21 @@ export async function findRecipes(filters: RecipeListFilters, limit = 20, offset
       sponsor_name,
       sponsor_url,
       is_premium_only,
+      created_at,
       images->>0 AS cover_image,
       (
         SELECT AVG(rating)::numeric(10,2)
         FROM recipe_ratings rr
         WHERE rr.recipe_id = recipes.id
-      ) AS avg_rating
+      ) AS avg_rating,
+      (
+        SELECT COUNT(*)::int
+        FROM recipe_ratings rr2
+        WHERE rr2.recipe_id = recipes.id
+      ) AS rating_count
     FROM recipes
     ${whereSql}
-    ORDER BY created_at DESC
+    ${orderSql}
     LIMIT ${limit} OFFSET ${offset}
   `;
 

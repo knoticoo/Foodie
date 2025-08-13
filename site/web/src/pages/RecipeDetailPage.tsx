@@ -128,7 +128,10 @@ export const RecipeDetailPage: React.FC = () => {
   return (
     <div className="space-y-6">
       <div className="space-y-3">
-        <h1 className="text-2xl font-semibold">{recipe.title}</h1>
+        <h1 className="text-2xl font-semibold flex items-center gap-2">
+          <span>{recipe.title}</span>
+          {recipe.is_premium_only && <span className="text-xs px-2 py-0.5 rounded bg-yellow-100 text-yellow-800 border">Premium</span>}
+        </h1>
         {recipe.description && <p className="text-gray-700">{recipe.description}</p>}
         {(recipe.sponsor_name && recipe.sponsor_url) && (
           <a className="text-sm text-blue-600 underline" href={recipe.sponsor_url} target="_blank" rel="noreferrer">Sponsored by {recipe.sponsor_name}</a>
