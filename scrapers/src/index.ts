@@ -6,6 +6,7 @@ import { scrapeRimiPrices } from './jobs/prices/rimi.js';
 import { scrapeMaximaPrices } from './jobs/prices/maxima.js';
 import { scrapeBarboraPrices } from './jobs/prices/barbora.js';
 import { scrapeOpenSourceRecipes } from './jobs/recipes/open_source.js';
+import { scrapeLidlPrices } from './jobs/prices/lidl.js';
 
 console.log('Scrapers service starting...');
 
@@ -15,6 +16,7 @@ cron.schedule('0 3 * * 0', async () => {
   await scrapeRimiPrices();
   await scrapeMaximaPrices();
   await scrapeBarboraPrices();
+  await scrapeLidlPrices();
   console.log('[Cron] Price update finished');
 });
 
@@ -32,6 +34,7 @@ cron.schedule('0 4 * * 1', async () => {
     await scrapeRimiPrices();
     await scrapeMaximaPrices();
     await scrapeBarboraPrices();
+    await scrapeLidlPrices();
     console.log('[Warmup] Initial price updates completed');
   } catch (e) {
     console.error('[Warmup] Price warmup failed', e);

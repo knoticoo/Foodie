@@ -204,6 +204,7 @@ export function App() {
       <nav className="admin-tabs">
         <a href="#auth">Auth</a>
         <a href="#users">Users</a>
+        <a href="#comments">Comments</a>
         <a href="#monetization">Monetization</a>
         <a href="#recipes">Recipes</a>
         <a href="#planner">Planner</a>
@@ -459,6 +460,21 @@ export function App() {
             }
           }}>Post</button>
         </div>
+        <div id="comments" className="stack">
+          <div className="inline" style={{ marginBottom: 8 }}>
+            <button onClick={async () => {
+              if (!token) return;
+              const res = await fetch(`${API}/api/admin/comments`, { headers: { Authorization: `Bearer ${token}` } });
+              const data = await res.json();
+              setRatings((data.comments || []).map((c: any) => ({ rating: c.email || '', comment: `${c.content} (on ${c.recipe_title})` })));
+            }}>Load latest</button>
+          </div>
+          <ul>
+            {ratings.map((r, i) => (
+              <li key={i}>💬 {r.comment}</li>
+            ))}
+          </ul>
+        </div>
       </section>
 
       <section>
@@ -533,6 +549,14 @@ export function App() {
                       body: JSON.stringify({ isPremium: false, premiumExpiresAt: null })
                     });
                   }}>Revoke</button>
+                  <button style={{ marginLeft: 6 }} disabled={!token} onClick={async () => {
+                    await fetch(`${API}/api/admin/users/${u.id}/admin`, {
+                      method: 'PUT',
+                      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                      body: JSON.stringify({ isAdmin: !u.is_admin })
+                    });
+                    await loadUsers();
+                  }}>{`Set ${u.is_admin ? 'User' : 'Admin'}`}</button>
                 </td>
               </tr>
             ))}
