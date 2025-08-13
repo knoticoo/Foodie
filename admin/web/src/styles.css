@@ -185,10 +185,12 @@ input, select, textarea, button { font-size: 14px; }
 }
 .status-pill[data-status="ok"] { background: var(--ok-bg); border-color: #bbf7d0; color: var(--ok); }
 .status-pill[data-status="error"] { background: var(--error-bg); border-color: #fecaca; color: var(--error); }
+.status-pill[data-status="unknown"] { background: #f8fafc; border-color: var(--border); color: #334155; }
 .status-pill.count { background: #f8fafc; color: #0f172a; border-color: var(--border); }
 .dot { width: 8px; height: 8px; border-radius: 999px; display: inline-block; }
 .dot[data-status="ok"] { background: var(--ok); box-shadow: 0 0 0 3px rgba(5,150,105,0.2); }
 .dot[data-status="error"] { background: var(--error); box-shadow: 0 0 0 3px rgba(220,38,38,0.2); }
+.dot[data-status="unknown"] { background: #9ca3af; box-shadow: 0 0 0 3px rgba(148,163,184,0.2); }
 
 /* Modal */
 .modal-backdrop {
