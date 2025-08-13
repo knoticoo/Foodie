@@ -73,18 +73,23 @@ export const SubmitRecipePage: React.FC = () => {
     e.preventDefault();
     setStatus('Submitting...');
     try {
-      // Map steps to text-only for backend compatibility; include images in images[]
       const stepTexts = steps.map(s => s.text).filter(t => t.trim().length > 0);
       const allImages = images.concat(steps.map(s => s.image).filter(Boolean) as string[]);
+      const payload: any = {
+        title,
+        description,
+        steps: stepTexts,
+        images: allImages
+      };
+      if (category) payload.category = category;
+      if (difficulty && difficulty.trim()) payload.difficulty = difficulty;
+      if (totalMinutes && String(totalMinutes).trim()) payload.total_time_minutes = Number(totalMinutes);
+      if (ingredients.length > 0) payload.ingredients = ingredients.filter(i => i.name && i.name.trim().length > 0);
+
       const res = await authorizedFetch(`${API_BASE_URL}/api/recipes/submit`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title,
-          description,
-          steps: stepTexts,
-          images: allImages
-        })
+        body: JSON.stringify(payload)
       });
       const data = await res.json().catch(() => ({}));
       if (res.ok) setStatus(`Submitted! Share token: ${data.shareToken || 'pending approval'}`);

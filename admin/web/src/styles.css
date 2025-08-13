@@ -29,6 +29,11 @@ h2 {
   margin: 0 0 12px 0;
 }
 
+/* Layout */
+#root { padding: 16px; }
+.stack { display: grid; gap: 16px; }
+.inline { display: inline-flex; gap: 8px; align-items: center; }
+
 /* Card-like sections */
 section {
   background: var(--card-bg);
@@ -36,6 +41,7 @@ section {
   border-radius: 10px;
   padding: 16px;
 }
+section + section { margin-top: 12px; }
 
 /* Elevation for sections */
 section { box-shadow: 0 1px 2px rgba(16,24,40,0.04), 0 1px 3px rgba(16,24,40,0.08); }
@@ -90,14 +96,13 @@ table {
   border-collapse: collapse;
 }
 
+thead th { background: #f9fafb; font-weight: 600; }
 th, td {
   border-bottom: 1px solid var(--border);
   padding: 8px;
   text-align: left;
 }
 
-/* Table header + hover */
-thead th { background: #f9fafb; font-weight: 600; }
 tbody tr:hover { background: #f9fafb; }
 tbody tr:last-child td { border-bottom: none; }
 
@@ -117,10 +122,6 @@ tbody tr:last-child td { border-bottom: none; }
 /* Sticky admin header polish */
 .admin-header { position: sticky; top: 0; background: var(--bg); padding-top: 8px; z-index: 101; border-bottom: 1px solid var(--border); margin-bottom: 8px; }
 
-/* Stacks */
-.stack { display: grid; gap: 16px; }
-.inline { display: inline-flex; gap: 8px; align-items: center; }
-
 /* Badge */
 .badge {
   display: inline-block;
@@ -131,9 +132,6 @@ tbody tr:last-child td { border-bottom: none; }
   color: #3730a3;
   border: 1px solid #e0e7ff;
 }
-
-/* Slightly smaller control sizing for density */
-input, select, textarea, button { font-size: 14px; }
 
 /* Sticky quick navigation */
 .admin-tabs {
@@ -152,10 +150,19 @@ input, select, textarea, button { font-size: 14px; }
   text-decoration: none;
   border: 1px solid var(--border);
   background: #ffffff;
-  color: var(--text);
+  color: #0f172a;
   padding: 6px 10px;
   border-radius: 8px;
 }
-.admin-tabs a:hover {
-  background: #f3f4f6;
-}
+.admin-tabs a:hover { background: #f3f4f6; }
+
+/* Lists inside sections */
+ul { list-style: none; padding: 0; margin: 0; }
+ul li { padding: 6px 4px; border-bottom: 1px dashed var(--border); }
+ul li:last-child { border-bottom: 0; }
+
+/* Recipe list items */
+li.inline { display: flex; align-items: center; gap: 8px; }
+
+/* Density */
+input, select, textarea, button { font-size: 14px; }

@@ -6,8 +6,19 @@ import { findRecipes } from '../services/recipesService.js';
 
 export const adminRouter = Router();
 
-// All admin routes require auth+admin
-adminRouter.use(requireAuth, requireAdmin);
+// Allow x-admin-api-key to bypass JWT auth check by short-circuiting
+adminRouter.use((req, res, next) => {
+  const key = req.headers['x-admin-api-key'];
+  if (typeof key === 'string' && key) {
+    // Skip requireAuth; requireAdmin will validate the key
+    return requireAdmin(req as any, res as any, next as any);
+  }
+  // Fallback: require JWT + admin role
+  return requireAuth(req as any, res as any, (err?: any) => {
+    if (err) return next(err);
+    return requireAdmin(req as any, res as any, next as any);
+  });
+});
 
 // List recipes for admin (supports status filter: all|pending|approved)
 adminRouter.get('/recipes', async (req, res) => {
@@ -31,8 +42,8 @@ adminRouter.post('/recipes', async (req, res) => {
   const title = String(body.title || '').trim();
   if (title.length < 3) return res.status(400).json({ error: 'title required' });
   const { rows } = await pgPool.query(
-    `INSERT INTO recipes (title, description, steps, images, servings, total_time_minutes, nutrition, ingredients, is_approved)
-     VALUES ($1, $2, $3::jsonb, $4::jsonb, COALESCE($5,2), $6, $7::jsonb, $8::jsonb, TRUE)
+    `INSERT INTO recipes (title, description, steps, images, servings, total_time_minutes, nutrition, ingredients, is_approved, category, difficulty)
+     VALUES ($1, $2, $3::jsonb, $4::jsonb, COALESCE($5,2), $6, $7::jsonb, $8::jsonb, TRUE, $9, $10)
      RETURNING id`,
     [
       title,
@@ -42,7 +53,9 @@ adminRouter.post('/recipes', async (req, res) => {
       body.servings ?? 2,
       body.total_time_minutes ?? null,
       JSON.stringify(body.nutrition ?? {}),
-      JSON.stringify(body.ingredients ?? [])
+      JSON.stringify(body.ingredients ?? []),
+      body.category ?? null,
+      body.difficulty ?? null
     ]
   );
   res.status(201).json({ id: rows[0].id });
@@ -61,8 +74,10 @@ adminRouter.put('/recipes/:id', async (req, res) => {
       servings = COALESCE($5, servings),
       total_time_minutes = COALESCE($6, total_time_minutes),
       nutrition = COALESCE($7::jsonb, nutrition),
-      ingredients = COALESCE($8::jsonb, ingredients)
-     WHERE id=$9`,
+      ingredients = COALESCE($8::jsonb, ingredients),
+      category = COALESCE($9, category),
+      difficulty = COALESCE($10, difficulty)
+     WHERE id=$11`,
     [
       body.title ?? null,
       body.description ?? null,
@@ -72,6 +87,8 @@ adminRouter.put('/recipes/:id', async (req, res) => {
       body.total_time_minutes ?? null,
       body.nutrition ? JSON.stringify(body.nutrition) : null,
       body.ingredients ? JSON.stringify(body.ingredients) : null,
+      body.category ?? null,
+      body.difficulty ?? null,
       id
     ]
   );

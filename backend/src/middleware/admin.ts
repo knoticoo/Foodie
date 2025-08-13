@@ -1,7 +1,14 @@
 import type { Request, Response, NextFunction } from 'express';
 import { pgPool } from '../db/pool.js';
+import { env } from '../config/env.js';
 
 export async function requireAdmin(req: Request, res: Response, next: NextFunction) {
+  // API key bypass for admin automation and admin panel
+  const key = req.headers['x-admin-api-key'];
+  if (typeof key === 'string' && key && env.adminApiKey && key === env.adminApiKey) {
+    return next();
+  }
+
   const user = (req as any).user as { id: string } | undefined;
   if (!user?.id) return res.status(401).json({ error: 'Unauthorized' });
   try {
