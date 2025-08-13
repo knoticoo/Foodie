@@ -8,6 +8,10 @@
   --primary: #111827;
   --primary-contrast: #ffffff;
   --accent: #2563eb;
+  --ok: #059669;
+  --ok-bg: #ecfdf5;
+  --error: #dc2626;
+  --error-bg: #fef2f2;
 }
 
 html, body {
@@ -166,3 +170,22 @@ li.inline { display: flex; align-items: center; gap: 8px; }
 
 /* Density */
 input, select, textarea, button { font-size: 14px; }
+
+/* Status pills */
+.status-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: #fff;
+  font-size: 0.9rem;
+}
+.status-pill[data-status="ok"] { background: var(--ok-bg); border-color: #bbf7d0; color: var(--ok); }
+.status-pill[data-status="error"] { background: var(--error-bg); border-color: #fecaca; color: var(--error); }
+.status-pill.count { background: #f8fafc; color: #0f172a; border-color: var(--border); }
+.dot { width: 8px; height: 8px; border-radius: 999px; display: inline-block; }
+.dot[data-status="ok"] { background: var(--ok); box-shadow: 0 0 0 3px rgba(5,150,105,0.2); }
+.dot[data-status="error"] { background: var(--error); box-shadow: 0 0 0 3px rgba(220,38,38,0.2); }
