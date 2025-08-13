@@ -21,6 +21,14 @@ export function App() {
   const [latestComments, setLatestComments] = useState<any[]>([]);
   const [recipeComments, setRecipeComments] = useState<any[]>([]);
 
+  // Edit modals state
+  const [isRecipeModalOpen, setIsRecipeModalOpen] = useState(false);
+  const [recipeModalStatus, setRecipeModalStatus] = useState('');
+  const [recipeForm, setRecipeForm] = useState<any | null>(null);
+  const [isUserModalOpen, setIsUserModalOpen] = useState(false);
+  const [userModalStatus, setUserModalStatus] = useState('');
+  const [userForm, setUserForm] = useState<any | null>(null);
+
   // JWT auth fallback (if no ADMIN_API_KEY)
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -164,6 +172,114 @@ export function App() {
     setPlan(prev => prev.concat({ planned_date: weekStart, meal_slot: 'dinner', recipe_id: recipes[0]?.id || '', servings: 2 }));
   }
 
+  // Open recipe modal and preload data
+  async function openRecipeModal(r: any) {
+    setRecipeModalStatus('');
+    // Seed with list data
+    const base = {
+      id: r.id,
+      title: r.title || '',
+      description: r.description || '',
+      coverImageUrl: r.cover_image || '',
+      servings: r.servings || 2,
+      total_time_minutes: r.total_time_minutes || '',
+      category: r.category || '',
+      difficulty: r.difficulty || '',
+      stepsJson: '[]',
+      ingredientsJson: '[]'
+    } as any;
+    setRecipeForm(base);
+    setIsRecipeModalOpen(true);
+    // Try loading full details for steps/images/ingredients
+    try {
+      const res = await fetch(`${API}/api/recipes/${r.id}`, { headers: token ? { Authorization: `Bearer ${token}` } : {} as any });
+      if (res.ok) {
+        const d = await res.json();
+        setRecipeForm((prev: any) => prev && ({
+          ...prev,
+          title: d.title ?? prev.title,
+          description: d.description ?? prev.description,
+          coverImageUrl: Array.isArray(d.images) && d.images.length > 0 ? d.images[0] : prev.coverImageUrl,
+          servings: d.servings ?? prev.servings,
+          total_time_minutes: d.total_time_minutes ?? prev.total_time_minutes,
+          stepsJson: JSON.stringify(d.steps ?? [], null, 2),
+          ingredientsJson: JSON.stringify(d.ingredients ?? [], null, 2)
+        }));
+      }
+    } catch {}
+  }
+
+  async function saveRecipeModal() {
+    if (!recipeForm) return;
+    setRecipeModalStatus('Saving...');
+    const payload: any = {
+      title: recipeForm.title?.trim() || undefined,
+      description: recipeForm.description ?? undefined,
+      servings: recipeForm.servings ? Number(recipeForm.servings) : undefined,
+      total_time_minutes: recipeForm.total_time_minutes !== '' ? Number(recipeForm.total_time_minutes) : undefined,
+      category: recipeForm.category || undefined,
+      difficulty: recipeForm.difficulty || undefined
+    };
+    // Images from coverImageUrl
+    if (typeof recipeForm.coverImageUrl === 'string') payload.images = [recipeForm.coverImageUrl];
+    // Optional JSON fields
+    try { if (recipeForm.stepsJson && recipeForm.stepsJson.trim()) payload.steps = JSON.parse(recipeForm.stepsJson); } catch {}
+    try { if (recipeForm.ingredientsJson && recipeForm.ingredientsJson.trim()) payload.ingredients = JSON.parse(recipeForm.ingredientsJson); } catch {}
+
+    const res = await fetch(`${API}/api/admin/recipes/${recipeForm.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', ...adminHeaders() },
+      body: JSON.stringify(payload)
+    });
+    if (res.status === 204) {
+      setRecipeModalStatus('Saved');
+      await loadRecipes();
+      setIsRecipeModalOpen(false);
+      setRecipeForm(null);
+    } else {
+      const err = await res.json().catch(() => ({}));
+      setRecipeModalStatus(err?.error || 'Error');
+    }
+  }
+
+  // User edit modal
+  function openUserModal(u: any) {
+    setUserModalStatus('');
+    setUserForm({
+      id: u.id,
+      email: u.email,
+      is_admin: Boolean(u.is_admin),
+      is_premium: Boolean(u.is_premium),
+      premium_expires_at: u.premium_expires_at || ''
+    });
+    setIsUserModalOpen(true);
+  }
+
+  async function saveUserModal() {
+    if (!userForm) return;
+    setUserModalStatus('Saving...');
+    try {
+      // Admin toggle
+      await fetch(`${API}/api/admin/users/${userForm.id}/admin`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', ...adminHeaders() },
+        body: JSON.stringify({ isAdmin: !!userForm.is_admin })
+      });
+      // Premium settings
+      await fetch(`${API}/api/admin/users/${userForm.id}/premium`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', ...adminHeaders() },
+        body: JSON.stringify({ isPremium: !!userForm.is_premium, premiumExpiresAt: userForm.premium_expires_at || null })
+      });
+      setUserModalStatus('Saved');
+      await loadUsers();
+      setIsUserModalOpen(false);
+      setUserForm(null);
+    } catch (e) {
+      setUserModalStatus('Error');
+    }
+  }
+
   useEffect(() => {
     // Auto-initialize admin data only if we have a key or a token
     if (ADMIN_API_KEY || token) {
@@ -241,7 +357,8 @@ export function App() {
           {recipes.map(r => (
             <li key={r.id} className="inline" style={{ gap: 8 }}>
               {toImageUrl(r.cover_image) && <img src={toImageUrl(r.cover_image)} alt="" width={40} height={28} style={{ objectFit: 'cover', borderRadius: 4, border: '1px solid var(--border)' }} />}
-              <span>{r.title}</span>
+              <span style={{ flex: 1 }}>{r.title}</span>
+              <button onClick={() => openRecipeModal(r)} disabled={!ADMIN_API_KEY && !token}>Edit</button>
             </li>
           ))}
         </ul>
@@ -323,7 +440,8 @@ export function App() {
                 <td>{u.premium_expires_at || '—'}</td>
                 <td>{new Date(u.created_at).toLocaleString()}</td>
                 <td>
-                  <button onClick={async () => {
+                  <button onClick={() => openUserModal(u)} disabled={!ADMIN_API_KEY && !token}>Edit</button>
+                  <button style={{ marginLeft: 6 }} onClick={async () => {
                     await fetch(`${API}/api/admin/users/${u.id}/premium`, {
                       method: 'PUT',
                       headers: { 'Content-Type': 'application/json', ...adminHeaders() },
@@ -351,6 +469,104 @@ export function App() {
           </tbody>
         </table>
       </section>
+
+      {/* Recipe edit modal */}
+      {isRecipeModalOpen && recipeForm && (
+        <div className="modal-backdrop" onClick={() => { setIsRecipeModalOpen(false); setRecipeForm(null); }}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
+            <div className="inline" style={{ justifyContent: 'space-between', width: '100%' }}>
+              <h2>Edit recipe</h2>
+              <button onClick={() => { setIsRecipeModalOpen(false); setRecipeForm(null); }}>✕</button>
+            </div>
+            <div className="stack">
+              <label>
+                <div>Title</div>
+                <input value={recipeForm.title} onChange={e => setRecipeForm((f: any) => ({ ...f, title: e.target.value }))} />
+              </label>
+              <label>
+                <div>Description</div>
+                <textarea rows={3} value={recipeForm.description} onChange={e => setRecipeForm((f: any) => ({ ...f, description: e.target.value }))} />
+              </label>
+              <div className="inline" style={{ gap: 8 }}>
+                <label style={{ flex: 1 }}>
+                  <div>Servings</div>
+                  <input type="number" min={1} value={recipeForm.servings} onChange={e => setRecipeForm((f: any) => ({ ...f, servings: Number(e.target.value || 1) }))} />
+                </label>
+                <label style={{ flex: 1 }}>
+                  <div>Total time (min)</div>
+                  <input type="number" min={0} value={recipeForm.total_time_minutes} onChange={e => setRecipeForm((f: any) => ({ ...f, total_time_minutes: e.target.value }))} />
+                </label>
+              </div>
+              <div className="inline" style={{ gap: 8 }}>
+                <label style={{ flex: 1 }}>
+                  <div>Category</div>
+                  <input value={recipeForm.category} onChange={e => setRecipeForm((f: any) => ({ ...f, category: e.target.value }))} />
+                </label>
+                <label style={{ flex: 1 }}>
+                  <div>Difficulty</div>
+                  <input value={recipeForm.difficulty} onChange={e => setRecipeForm((f: any) => ({ ...f, difficulty: e.target.value }))} />
+                </label>
+              </div>
+              <label>
+                <div>Cover image URL</div>
+                <input value={recipeForm.coverImageUrl} onChange={e => setRecipeForm((f: any) => ({ ...f, coverImageUrl: e.target.value }))} />
+              </label>
+              <label>
+                <div>Steps (JSON array)</div>
+                <textarea rows={6} value={recipeForm.stepsJson} onChange={e => setRecipeForm((f: any) => ({ ...f, stepsJson: e.target.value }))} />
+              </label>
+              <label>
+                <div>Ingredients (JSON array)</div>
+                <textarea rows={6} value={recipeForm.ingredientsJson} onChange={e => setRecipeForm((f: any) => ({ ...f, ingredientsJson: e.target.value }))} />
+              </label>
+              <div className="inline" style={{ justifyContent: 'space-between' }}>
+                <div className="admin-meta">{recipeModalStatus}</div>
+                <div className="inline" style={{ gap: 8 }}>
+                  <button onClick={() => { setIsRecipeModalOpen(false); setRecipeForm(null); }}>Cancel</button>
+                  <button data-variant="primary" onClick={saveRecipeModal} disabled={!ADMIN_API_KEY && !token}>Save</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* User edit modal */}
+      {isUserModalOpen && userForm && (
+        <div className="modal-backdrop" onClick={() => { setIsUserModalOpen(false); setUserForm(null); }}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
+            <div className="inline" style={{ justifyContent: 'space-between', width: '100%' }}>
+              <h2>Edit user</h2>
+              <button onClick={() => { setIsUserModalOpen(false); setUserForm(null); }}>✕</button>
+            </div>
+            <div className="stack">
+              <div>
+                <div>Email</div>
+                <input value={userForm.email} disabled />
+              </div>
+              <div className="inline">
+                <label className="inline" style={{ gap: 6 }}>
+                  <input type="checkbox" checked={!!userForm.is_admin} onChange={e => setUserForm((f: any) => ({ ...f, is_admin: e.target.checked }))} /> Admin
+                </label>
+                <label className="inline" style={{ gap: 6 }}>
+                  <input type="checkbox" checked={!!userForm.is_premium} onChange={e => setUserForm((f: any) => ({ ...f, is_premium: e.target.checked }))} /> Premium
+                </label>
+              </div>
+              <label>
+                <div>Premium until (ISO date, optional)</div>
+                <input placeholder="YYYY-MM-DD or empty" value={userForm.premium_expires_at} onChange={e => setUserForm((f: any) => ({ ...f, premium_expires_at: e.target.value }))} />
+              </label>
+              <div className="inline" style={{ justifyContent: 'space-between' }}>
+                <div className="admin-meta">{userModalStatus}</div>
+                <div className="inline" style={{ gap: 8 }}>
+                  <button onClick={() => { setIsUserModalOpen(false); setUserForm(null); }}>Cancel</button>
+                  <button data-variant="primary" onClick={saveUserModal} disabled={!ADMIN_API_KEY && !token}>Save</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       {/* Removed other admin sections for now */}
     </div>
   );
