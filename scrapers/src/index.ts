@@ -10,8 +10,8 @@ import { scrapeLidlPrices } from './jobs/prices/lidl.js';
 
 console.log('Scrapers service starting...');
 
-// Weekly price updates (Sunday 03:00)
-cron.schedule('0 3 * * 0', async () => {
+// Daily price updates (03:00 every day)
+cron.schedule('0 3 * * *', async () => {
   console.log('[Cron] Updating prices...');
   await scrapeRimiPrices();
   await scrapeMaximaPrices();

@@ -393,6 +393,7 @@ const CommentsModule: React.FC<{ comments: any[], loading: boolean, onDelete: (i
 export function App() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'recipes' | 'users' | 'comments'>('dashboard')
   const [stats, setStats] = useState({
     total_users: 0,
     total_recipes: 0,
@@ -545,9 +546,21 @@ export function App() {
             <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider px-4 py-2">
               {!sidebarCollapsed && 'Main'}
             </div>
-            <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left bg-blue-500 text-white shadow-lg">
+            <button onClick={() => setActiveTab('dashboard')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left ${activeTab==='dashboard'?'bg-blue-500 text-white shadow-lg':'text-gray-700 hover:bg-gray-100'}`}>
               <BarChart3 className="w-5 h-5 flex-shrink-0" />
               {!sidebarCollapsed && <span className="font-medium">Dashboard</span>}
+            </button>
+            <button onClick={() => setActiveTab('recipes')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left ${activeTab==='recipes'?'bg-blue-500 text-white shadow-lg':'text-gray-700 hover:bg-gray-100'}`}>
+              <BookOpen className="w-5 h-5 flex-shrink-0" />
+              {!sidebarCollapsed && <span className="font-medium">Recipes</span>}
+            </button>
+            <button onClick={() => setActiveTab('users')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left ${activeTab==='users'?'bg-blue-500 text-white shadow-lg':'text-gray-700 hover:bg-gray-100'}`}>
+              <Users className="w-5 h-5 flex-shrink-0" />
+              {!sidebarCollapsed && <span className="font-medium">Users</span>}
+            </button>
+            <button onClick={() => setActiveTab('comments')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left ${activeTab==='comments'?'bg-blue-500 text-white shadow-lg':'text-gray-700 hover:bg-gray-100'}`}>
+              <MessageSquare className="w-5 h-5 flex-shrink-0" />
+              {!sidebarCollapsed && <span className="font-medium">Comments</span>}
             </button>
           </div>
         </nav>
@@ -594,11 +607,21 @@ export function App() {
         {/* Page Content */}
         <main className="flex-1 p-6 overflow-auto">
           <div className="max-w-7xl mx-auto space-y-6">
-            <ServerStatus health={health} />
-            <Statistics stats={stats} />
-            <RecipesModule recipes={recipes} loading={recipesLoading} />
-            <UsersModule users={users} loading={usersLoading} />
-            <CommentsModule comments={comments} loading={commentsLoading} onDelete={deleteComment} />
+            {activeTab === 'dashboard' && (
+              <>
+                <ServerStatus health={health} />
+                <Statistics stats={stats} />
+              </>
+            )}
+            {activeTab === 'recipes' && (
+              <RecipesModule recipes={recipes} loading={recipesLoading} />
+            )}
+            {activeTab === 'users' && (
+              <UsersModule users={users} loading={usersLoading} />
+            )}
+            {activeTab === 'comments' && (
+              <CommentsModule comments={comments} loading={commentsLoading} onDelete={deleteComment} />
+            )}
           </div>
         </main>
       </div>
