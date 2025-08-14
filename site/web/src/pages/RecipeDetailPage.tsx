@@ -1,9 +1,33 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../auth/AuthContext';
 import { RatingStars } from '../components/RatingStars';
 import { AdsBanner } from '../components/AdsBanner';
-import { Clock, Users, ChefHat, Play, Pause, SkipForward, ListChecks, ShoppingCart, Plus, Minus } from 'lucide-react';
+import { 
+  Clock, 
+  Users, 
+  ChefHat, 
+  Play, 
+  Pause, 
+  SkipForward, 
+  ListChecks, 
+  ShoppingCart, 
+  Plus, 
+  Minus,
+  Heart,
+  Share2,
+  Download,
+  Star,
+  Timer,
+  CheckCircle,
+  AlertCircle,
+  Crown,
+  X,
+  ArrowLeft,
+  ArrowRight,
+  MessageSquare
+} from 'lucide-react';
 
 const defaultApiBase = typeof window !== 'undefined'
   ? `http://${window.location.hostname}:3000`
@@ -22,6 +46,20 @@ function toImageUrl(src?: string | null): string | undefined {
 type Recipe = { id: string; title: string; description?: string; ingredients?: any[]; servings?: number; is_premium_only?: boolean; sponsor_name?: string; sponsor_url?: string; total_time_minutes?: number };
 
 type Comment = { id: string; user_id: string; content: string; created_at: string };
+
+const fadeInUp = {
+  initial: { opacity: 0, y: 20 },
+  animate: { opacity: 1, y: 0 },
+  transition: { duration: 0.5 }
+};
+
+const staggerContainer = {
+  animate: {
+    transition: {
+      staggerChildren: 0.1
+    }
+  }
+};
 
 export const RecipeDetailPage: React.FC = () => {
   const { id } = useParams();
@@ -80,8 +118,48 @@ export const RecipeDetailPage: React.FC = () => {
     return () => clearInterval(t);
   }, [timerRunning]);
 
-  if (premiumRequired) return <div className="space-y-2"><div>Premium recipe. Please upgrade to view.</div><a className="text-blue-600 underline" href="/billing">Go Premium</a></div>;
-  if (!recipe) return <div>Loading…</div>;
+  if (premiumRequired) {
+    return (
+      <motion.div 
+        className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-100 flex items-center justify-center p-4"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+      >
+        <motion.div 
+          className="max-w-md w-full bg-white rounded-3xl shadow-2xl p-8 text-center"
+          initial={{ scale: 0.9, y: 20 }}
+          animate={{ scale: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+        >
+          <div className="w-20 h-20 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center mx-auto mb-6">
+            <Crown className="w-10 h-10 text-white" />
+          </div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">Premium Recepte</h2>
+          <p className="text-gray-600 mb-6">Šī recepte ir pieejama tikai Premium lietotājiem. Iegādājieties Premium, lai piekļūtu ekskluzīvām receptēm un papildu funkcijām.</p>
+          <motion.a 
+            href="/billing" 
+            className="inline-flex items-center gap-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white px-6 py-3 rounded-xl font-semibold hover:from-amber-600 hover:to-orange-600 transition-all duration-200 shadow-lg hover:shadow-xl"
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+          >
+            <Crown className="w-5 h-5" />
+            Iegādāties Premium
+          </motion.a>
+        </motion.div>
+      </motion.div>
+    );
+  }
+
+  if (!recipe) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600 text-lg">Ielādē recepti...</p>
+        </div>
+      </div>
+    );
+  }
 
   const steps: any[] = Array.isArray((recipe as any).steps) ? (recipe as any).steps : [];
 
@@ -101,7 +179,7 @@ export const RecipeDetailPage: React.FC = () => {
 
   const deleteComment = async (commentId: string) => {
     if (!token) return;
-    if (!window.confirm('Delete this comment?')) return;
+    if (!window.confirm('Dzēst šo komentāru?')) return;
     const res = await authorizedFetch(`${API_BASE_URL}/api/recipes/${id}/comments/${commentId}`, { method: 'DELETE' });
     if (res.status === 204) setComments(prev => prev.filter(c => c.id !== commentId));
   };
@@ -158,218 +236,503 @@ export const RecipeDetailPage: React.FC = () => {
     if (m < 60) return `${m} min`;
     const h = Math.floor(m / 60);
     const mm = m % 60;
-    return mm ? `${h} h ${mm} min` : `${h} h`;
+    return mm ? `${h} st ${mm} min` : `${h} st`;
   };
 
   const currentStepObj = steps[currentStep] || null;
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="space-y-3">
-        <h1 className="text-3xl font-bold flex items-center gap-3">
-          <span>{recipe.title}</span>
-          {recipe.is_premium_only && <span className="text-xs px-2 py-0.5 rounded bg-yellow-100 text-yellow-800 border">Premium</span>}
-        </h1>
-        {recipe.description && <p className="text-gray-700 text-lg leading-relaxed">{recipe.description}</p>}
-        {(recipe.sponsor_name && recipe.sponsor_url) && (
-          <a className="text-sm text-blue-600 underline" href={recipe.sponsor_url} target="_blank" rel="noreferrer">Sponsored by {recipe.sponsor_name}</a>
-        )}
-        <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600">
-          <span className="inline-flex items-center gap-1"><Clock className="w-4 h-4" /> {fmtTime(totalTime)}</span>
-          <span className="inline-flex items-center gap-1"><Users className="w-4 h-4" /> {servings ?? recipe.servings ?? 2} porcijas</span>
-        </div>
-      </div>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        <motion.div
+          variants={staggerContainer}
+          initial="initial"
+          animate="animate"
+          className="space-y-8"
+        >
+          {/* Header Section */}
+          <motion.div variants={fadeInUp} className="bg-white rounded-3xl shadow-xl overflow-hidden">
+            <div className="relative">
+              {/* Hero Image */}
+              {Array.isArray((recipe as any).images) && (recipe as any).images.length > 0 && (
+                <div className="relative h-96 md:h-[500px] overflow-hidden">
+                  <img
+                    src={toImageUrl((recipe as any).images[0])}
+                    alt={recipe.title}
+                    className="w-full h-full object-cover"
+                    onClick={() => setLightboxIdx(0)}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                  
+                  {/* Floating Action Buttons */}
+                  <div className="absolute top-6 right-6 flex gap-3">
+                    {token && (
+                      <motion.button
+                        onClick={toggleFavorite}
+                        className={`w-12 h-12 rounded-full backdrop-blur-md border border-white/20 flex items-center justify-center transition-all duration-200 ${
+                          fav ? 'bg-red-500 text-white' : 'bg-white/20 text-white hover:bg-white/30'
+                        }`}
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
+                      >
+                        <Heart className={`w-5 h-5 ${fav ? 'fill-current' : ''}`} />
+                      </motion.button>
+                    )}
+                    <motion.button
+                      className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-md border border-white/20 text-white hover:bg-white/30 transition-all duration-200 flex items-center justify-center"
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
+                    >
+                      <Share2 className="w-5 h-5" />
+                    </motion.button>
+                  </div>
 
-      <AdsBanner placement="recipe_detail_inline" />
-
-      {/* Hero Image */}
-      {Array.isArray((recipe as any).images) && (recipe as any).images.length > 0 && (
-        <div className="space-y-2">
-          <div className="aspect-[16/9] bg-gray-100 overflow-hidden rounded-xl shadow">
-            <img
-              src={toImageUrl((recipe as any).images[0])}
-              alt={recipe.title}
-              className="w-full h-full object-cover"
-              onClick={() => setLightboxIdx(0)}
-            />
-          </div>
-          {(recipe as any).images.length > 1 && (
-            <div className="grid grid-cols-4 gap-2">
-              {(recipe as any).images.slice(1, 5).map((src: string, i: number) => (
-                <button key={i} className="aspect-square rounded overflow-hidden bg-gray-100" onClick={() => setLightboxIdx(i + 1)}>
-                  <img src={toImageUrl(src)} alt="Thumb" className="w-full h-full object-cover" />
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Controls */}
-      <div className="flex flex-wrap items-center gap-3">
-        <div className="inline-flex items-center gap-2 border rounded-lg px-2 py-1">
-          <button className="p-1" aria-label="Minus" onClick={() => setServings(s => Math.max(1, Number(s || recipe.servings || 2) - 1))}><Minus className="w-4 h-4" /></button>
-          <span className="min-w-[3rem] text-center">{servings ?? recipe.servings ?? 2}</span>
-          <button className="p-1" aria-label="Plus" onClick={() => setServings(s => Number(s || recipe.servings || 2) + 1)}><Plus className="w-4 h-4" /></button>
-          <button className="ml-2 btn btn-secondary" onClick={loadScaled}>Mērogot</button>
-        </div>
-        <button onClick={loadGrocery} className="btn btn-secondary inline-flex items-center gap-2"><ShoppingCart className="w-4 h-4" /> Saraksts</button>
-        {token && <button onClick={toggleFavorite} className="btn btn-secondary">{fav ? 'Atcelt izlasi' : 'Saglabāt izlasi'}</button>}
-        <button className="btn btn-primary inline-flex items-center gap-2" onClick={() => setCookMode(v => !v)}>
-          {cookMode ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />} {cookMode ? 'Stop' : 'Cook Mode'}
-        </button>
-      </div>
-
-      {/* Ingredients and Steps */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
-        <div className="md:col-span-1">
-          {Array.isArray(recipe.ingredients) && recipe.ingredients.length > 0 && (
-            <div className="bg-white border rounded-xl p-4 shadow-sm">
-              <h2 className="font-semibold mb-3 flex items-center gap-2"><ListChecks className="w-4 h-4" /> Sastāvdaļas</h2>
-              <ul className="space-y-2 text-sm text-gray-800">
-                {recipe.ingredients.map((it: any, idx: number) => (
-                  <li key={idx} className="flex items-start gap-2">
-                    <input type="checkbox" className="mt-1" checked={!!checkedIngredients[idx]} onChange={() => setCheckedIngredients(prev => ({ ...prev, [idx]: !prev[idx] }))} />
-                    <span>{it.name ?? it.ingredient ?? 'Item'} — {it.quantity ?? it.amount ?? ''} {it.unit ?? ''}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {scaled && (
-            <div className="bg-white border rounded-xl p-4 shadow-sm mt-4">
-              <h3 className="font-medium mb-2">Mērogotas sastāvdaļas</h3>
-              <ul className="list-disc ml-6 text-sm text-gray-700">
-                {scaled.map((it: any, idx: number) => (
-                  <li key={idx}>{it.name} — {it.quantity} {it.unit}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {grocery && (
-            <div className="bg-white border rounded-xl p-4 shadow-sm mt-4">
-              <h3 className="font-medium mb-2">Iepirkumu saraksts</h3>
-              <ul className="list-disc ml-6 text-sm text-gray-700">
-                {(grocery.items || []).map((it: any, idx: number) => (
-                  <li key={idx}>{it.name} — {it.totalQuantity} {it.unit}</li>
-                ))}
-              </ul>
-              {grocery.pricing ? (
-                <div className="text-sm text-gray-700 mt-2">
-                  Aptuvenās izmaksas: €{((grocery.pricing.totalCents || 0) / 100).toFixed(2)}
-                  {grocery.pricing.totalCents === 0 && (
-                    <div className="text-xs text-amber-600 mt-1">
-                      * Daži produkti nav atrodami cenrāžos
-                    </div>
-                  )}
-                </div>
-              ) : grocery.premiumNote ? (
-                <div className="text-sm text-blue-600 mt-2 p-2 bg-blue-50 rounded">
-                  💎 Premium nepieciešams izmaksu aprēķinam un detalizētai cenu analīzei
-                </div>
-              ) : null}
-            </div>
-          )}
-        </div>
-
-        <div className="md:col-span-2">
-          {steps.length > 0 && (
-            <div className="bg-white border rounded-xl p-4 shadow-sm">
-              <h2 className="font-semibold mb-3 flex items-center gap-2"><ChefHat className="w-4 h-4" /> Gatavošana</h2>
-              {!cookMode ? (
-                <ol className="list-decimal ml-6 space-y-3 text-gray-800">
-                  {steps.map((s: any, i: number) => (
-                    <li key={i} className="leading-relaxed">
-                      <div className="flex justify-between items-start gap-2">
-                        <span>{typeof s === 'string' ? s : (s?.text ?? '')}</span>
-                        {s?.duration && <span className="text-xs text-gray-500 whitespace-nowrap"><Clock className="inline w-3 h-3 mr-1" />{s.duration} min</span>}
+                  {/* Recipe Info Overlay */}
+                  <div className="absolute bottom-0 left-0 right-0 p-8">
+                    <div className="max-w-4xl">
+                      <div className="flex items-center gap-3 mb-4">
+                        <h1 className="text-4xl md:text-5xl font-bold text-white leading-tight">{recipe.title}</h1>
+                        {recipe.is_premium_only && (
+                          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-gradient-to-r from-amber-400 to-orange-500 text-white text-sm font-semibold">
+                            <Crown className="w-4 h-4" />
+                            Premium
+                          </span>
+                        )}
                       </div>
-                    </li>
-                  ))}
-                </ol>
-              ) : (
-                <div className="space-y-4">
-                  <div className="text-sm text-gray-500">Solis {currentStep + 1} no {steps.length}</div>
-                  <div className="text-lg leading-relaxed">{typeof currentStepObj === 'string' ? currentStepObj : (currentStepObj?.text ?? '')}</div>
-                  <div className="flex items-center gap-3">
-                    <button className="btn btn-secondary" onClick={() => setTimerRunning(r => !r)}>{timerRunning ? 'Pauze' : 'Starts'}</button>
-                    <div className="font-mono text-lg">{String(Math.floor(timerSeconds / 60)).padStart(2, '0')}:{String(timerSeconds % 60).padStart(2, '0')}</div>
-                    <button className="btn btn-secondary inline-flex items-center gap-2" onClick={() => {
-                      const next = Math.min(steps.length - 1, currentStep + 1);
-                      setCurrentStep(next);
-                      const dur = Number(steps[next]?.duration || 0);
-                      setTimerSeconds(Number.isFinite(dur) && dur > 0 ? dur * 60 : 0);
-                    }}><SkipForward className="w-4 h-4" /> Nākamais solis</button>
+                      
+                      {recipe.description && (
+                        <p className="text-gray-200 text-lg md:text-xl leading-relaxed mb-6 max-w-3xl">{recipe.description}</p>
+                      )}
+
+                      <div className="flex flex-wrap items-center gap-6">
+                        <div className="flex items-center gap-2 text-white">
+                          <Clock className="w-5 h-5" />
+                          <span className="font-medium">{fmtTime(totalTime)}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-white">
+                          <Users className="w-5 h-5" />
+                          <span className="font-medium">{servings ?? recipe.servings ?? 2} porcijas</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-white">
+                          <Star className="w-5 h-5 fill-current text-yellow-400" />
+                          <span className="font-medium">{ratings.average ? Number(ratings.average).toFixed(1) : '—'}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Additional Images Carousel */}
+              {(recipe as any).images && (recipe as any).images.length > 1 && (
+                <div className="p-6 bg-gray-50">
+                  <div className="flex gap-4 overflow-x-auto pb-2">
+                    {(recipe as any).images.slice(1, 6).map((src: string, i: number) => (
+                      <motion.button 
+                        key={i} 
+                        className="flex-shrink-0 w-24 h-24 rounded-xl overflow-hidden border-2 border-transparent hover:border-blue-500 transition-all duration-200"
+                        onClick={() => setLightboxIdx(i + 1)}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                      >
+                        <img src={toImageUrl(src)} alt={`Papildu attēls ${i + 1}`} className="w-full h-full object-cover" />
+                      </motion.button>
+                    ))}
                   </div>
                 </div>
               )}
             </div>
-          )}
+          </motion.div>
 
-          {/* Ratings and Comments */}
-          <div className="bg-white border rounded-xl p-4 shadow-sm mt-4">
-            <h2 className="font-semibold mb-2">Novērtējums</h2>
-            <div className="flex items-center gap-3">
-              <RatingStars value={ratings.average} />
-              <div className="text-sm text-gray-600">Vidējais: {ratings.average ?? '—'}</div>
-              {token ? (
-                <div className="inline-flex items-center gap-1 ml-auto" aria-label="Set rating">
-                  {[1,2,3,4,5].map(star => (
-                    <button
-                      key={star}
-                      className={`text-2xl hover:scale-110 transition-transform ${Math.round(Number(ratings.average || 0)) >= star ? 'text-yellow-500' : 'text-gray-300'}`}
-                      onClick={() => submitRating(star)}
-                      aria-label={`Rate ${star}`}
-                      title={`Rate ${star}`}
-                    >★</button>
-                  ))}
+          <AdsBanner placement="recipe_detail_inline" />
+
+          {/* Controls */}
+          <motion.div variants={fadeInUp} className="bg-white rounded-2xl shadow-lg p-6">
+            <div className="flex flex-wrap items-center gap-4">
+              {/* Servings Control */}
+              <div className="flex items-center gap-3 bg-gray-50 rounded-xl p-3">
+                <span className="text-sm font-medium text-gray-700">Porcijas:</span>
+                <div className="flex items-center gap-2">
+                  <motion.button 
+                    className="w-8 h-8 rounded-lg bg-blue-500 text-white flex items-center justify-center hover:bg-blue-600 transition-colors"
+                    onClick={() => setServings(s => Math.max(1, Number(s || recipe.servings || 2) - 1))}
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                  >
+                    <Minus className="w-4 h-4" />
+                  </motion.button>
+                  <span className="w-12 text-center font-semibold">{servings ?? recipe.servings ?? 2}</span>
+                  <motion.button 
+                    className="w-8 h-8 rounded-lg bg-blue-500 text-white flex items-center justify-center hover:bg-blue-600 transition-colors"
+                    onClick={() => setServings(s => Number(s || recipe.servings || 2) + 1)}
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                  >
+                    <Plus className="w-4 h-4" />
+                  </motion.button>
                 </div>
-              ) : (
-                <div className="text-sm text-gray-600 ml-auto">Ieiet, lai vērtētu.</div>
-              )}
-            </div>
-          </div>
+                <motion.button 
+                  onClick={loadScaled} 
+                  className="ml-2 px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors font-medium"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  Pārrēķināt
+                </motion.button>
+              </div>
 
-          <div className="bg-white border rounded-xl p-4 shadow-sm mt-4">
-            <h2 className="font-semibold mb-2">Komentāri</h2>
-            {token && (
-              <div className="mb-3">
-                <textarea
-                  className="w-full border rounded px-3 py-2 text-sm"
-                  rows={3}
-                  placeholder="Uzrakstiet komentāru"
-                  value={newComment}
-                  onChange={e => setNewComment(e.target.value)}
-                  onKeyDown={e => { if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); postComment(); } }}
-                />
-                <div className="flex justify-end mt-2">
-                  <button onClick={postComment} className="btn btn-primary">Publicēt</button>
+              {/* Action Buttons */}
+              <motion.button 
+                onClick={loadGrocery} 
+                className="flex items-center gap-2 px-4 py-3 bg-green-100 text-green-700 rounded-xl hover:bg-green-200 transition-colors font-medium"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <ShoppingCart className="w-4 h-4" />
+                Iepirkumu saraksts
+              </motion.button>
+
+              <motion.button 
+                className="flex items-center gap-2 px-4 py-3 bg-orange-100 text-orange-700 rounded-xl hover:bg-orange-200 transition-colors font-medium"
+                onClick={() => setCookMode(v => !v)}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                {cookMode ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+                {cookMode ? 'Apturēt gatavošanu' : 'Sākt gatavošanu'}
+              </motion.button>
+            </div>
+          </motion.div>
+
+          {/* Main Content */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Ingredients Sidebar */}
+            <motion.div variants={fadeInUp} className="lg:col-span-1 space-y-6">
+              {Array.isArray(recipe.ingredients) && recipe.ingredients.length > 0 && (
+                <div className="bg-white rounded-2xl shadow-lg p-6">
+                  <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                    <ListChecks className="w-5 h-5 text-blue-500" />
+                    Sastāvdaļas
+                  </h2>
+                  <div className="space-y-3">
+                    {recipe.ingredients.map((it: any, idx: number) => (
+                      <motion.div 
+                        key={idx} 
+                        className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors"
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: idx * 0.05 }}
+                      >
+                        <input 
+                          type="checkbox" 
+                          className="w-5 h-5 text-blue-500 rounded border-gray-300 focus:ring-blue-500" 
+                          checked={!!checkedIngredients[idx]} 
+                          onChange={() => setCheckedIngredients(prev => ({ ...prev, [idx]: !prev[idx] }))} 
+                        />
+                        <span className={`flex-1 ${checkedIngredients[idx] ? 'line-through text-gray-500' : 'text-gray-900'}`}>
+                          <span className="font-medium">{it.name ?? it.ingredient ?? 'Produkts'}</span>
+                          <span className="text-gray-600 ml-2">— {it.quantity ?? it.amount ?? ''} {it.unit ?? ''}</span>
+                        </span>
+                      </motion.div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {scaled && (
+                <motion.div 
+                  className="bg-blue-50 rounded-2xl shadow-lg p-6"
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                >
+                  <h3 className="font-bold text-blue-900 mb-3 flex items-center gap-2">
+                    <CheckCircle className="w-5 h-5" />
+                    Pārrēķinātās sastāvdaļas
+                  </h3>
+                  <div className="space-y-2">
+                    {scaled.map((it: any, idx: number) => (
+                      <div key={idx} className="text-blue-800">
+                        <span className="font-medium">{it.name}</span> — {it.quantity} {it.unit}
+                      </div>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+
+              {grocery && (
+                <motion.div 
+                  className="bg-green-50 rounded-2xl shadow-lg p-6"
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                >
+                  <h3 className="font-bold text-green-900 mb-3 flex items-center gap-2">
+                    <ShoppingCart className="w-5 h-5" />
+                    Iepirkumu saraksts
+                  </h3>
+                  <div className="space-y-2 mb-4">
+                    {(grocery.items || []).map((it: any, idx: number) => (
+                      <div key={idx} className="text-green-800">
+                        <span className="font-medium">{it.name}</span> — {it.totalQuantity} {it.unit}
+                      </div>
+                    ))}
+                  </div>
+                  {grocery.pricing ? (
+                    <div className="bg-green-100 rounded-lg p-3">
+                      <div className="text-green-900 font-semibold">
+                        Aptuvenās izmaksas: €{((grocery.pricing.totalCents || 0) / 100).toFixed(2)}
+                      </div>
+                      {grocery.pricing.totalCents === 0 && (
+                        <div className="text-xs text-amber-600 mt-1">
+                          * Daži produkti nav atrodami cenrāžos
+                        </div>
+                      )}
+                    </div>
+                  ) : grocery.premiumNote ? (
+                    <div className="bg-gradient-to-r from-amber-100 to-orange-100 rounded-lg p-3 border border-amber-200">
+                      <div className="flex items-center gap-2 text-amber-800">
+                        <Crown className="w-4 h-4" />
+                        <span className="font-medium">Premium nepieciešams izmaksu aprēķinam</span>
+                      </div>
+                    </div>
+                  ) : null}
+                </motion.div>
+              )}
+            </motion.div>
+
+            {/* Steps and Content */}
+            <motion.div variants={fadeInUp} className="lg:col-span-2 space-y-6">
+              {steps.length > 0 && (
+                <div className="bg-white rounded-2xl shadow-lg p-6">
+                  <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+                    <ChefHat className="w-5 h-5 text-orange-500" />
+                    Gatavošanas soļi
+                  </h2>
+                  
+                  {!cookMode ? (
+                    <div className="space-y-6">
+                      {steps.map((s: any, i: number) => (
+                        <motion.div 
+                          key={i} 
+                          className="flex gap-4 p-4 rounded-xl hover:bg-gray-50 transition-colors"
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: i * 0.1 }}
+                        >
+                          <div className="flex-shrink-0 w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center font-bold text-sm">
+                            {i + 1}
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-gray-900 leading-relaxed">{typeof s === 'string' ? s : (s?.text ?? '')}</p>
+                            {s?.duration && (
+                              <div className="flex items-center gap-1 mt-2 text-sm text-gray-500">
+                                <Timer className="w-4 h-4" />
+                                {s.duration} minūtes
+                              </div>
+                            )}
+                          </div>
+                        </motion.div>
+                      ))}
+                    </div>
+                  ) : (
+                    <motion.div 
+                      className="bg-gradient-to-br from-orange-50 to-red-50 rounded-xl p-6"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                    >
+                      <div className="flex items-center justify-between mb-4">
+                        <span className="text-sm font-medium text-orange-700">Solis {currentStep + 1} no {steps.length}</span>
+                        <div className="w-32 bg-orange-200 rounded-full h-2">
+                          <div 
+                            className="bg-orange-500 h-2 rounded-full transition-all duration-300"
+                            style={{ width: `${((currentStep + 1) / steps.length) * 100}%` }}
+                          />
+                        </div>
+                      </div>
+                      
+                      <div className="text-lg leading-relaxed text-gray-900 mb-6">
+                        {typeof currentStepObj === 'string' ? currentStepObj : (currentStepObj?.text ?? '')}
+                      </div>
+                      
+                      <div className="flex items-center gap-4 mb-4">
+                        <motion.button 
+                          className="flex items-center gap-2 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
+                          onClick={() => setTimerRunning(r => !r)}
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                        >
+                          {timerRunning ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+                          {timerRunning ? 'Pauze' : 'Sākt'}
+                        </motion.button>
+                        
+                        <div className="flex items-center gap-2 text-2xl font-mono font-bold text-orange-700">
+                          <Timer className="w-5 h-5" />
+                          {String(Math.floor(timerSeconds / 60)).padStart(2, '0')}:{String(timerSeconds % 60).padStart(2, '0')}
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center gap-3">
+                        <motion.button 
+                          className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50"
+                          onClick={() => {
+                            const prev = Math.max(0, currentStep - 1);
+                            setCurrentStep(prev);
+                            const dur = Number(steps[prev]?.duration || 0);
+                            setTimerSeconds(Number.isFinite(dur) && dur > 0 ? dur * 60 : 0);
+                          }}
+                          disabled={currentStep === 0}
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                        >
+                          <ArrowLeft className="w-4 h-4" />
+                          Iepriekšējais
+                        </motion.button>
+                        
+                        <motion.button 
+                          className="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors disabled:opacity-50"
+                          onClick={() => {
+                            const next = Math.min(steps.length - 1, currentStep + 1);
+                            setCurrentStep(next);
+                            const dur = Number(steps[next]?.duration || 0);
+                            setTimerSeconds(Number.isFinite(dur) && dur > 0 ? dur * 60 : 0);
+                          }}
+                          disabled={currentStep >= steps.length - 1}
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                        >
+                          <ArrowRight className="w-4 h-4" />
+                          Nākamais
+                        </motion.button>
+                      </div>
+                    </motion.div>
+                  )}
+                </div>
+              )}
+
+              {/* Ratings and Comments */}
+              <div className="bg-white rounded-2xl shadow-lg p-6">
+                <h2 className="text-xl font-bold text-gray-900 mb-4">Novērtējums un komentāri</h2>
+                
+                <div className="flex items-center justify-between mb-6 p-4 bg-gray-50 rounded-xl">
+                  <div className="flex items-center gap-3">
+                    <RatingStars value={ratings.average} />
+                    <div className="text-lg font-semibold text-gray-900">
+                      {ratings.average ? Number(ratings.average).toFixed(1) : '—'}
+                    </div>
+                    <div className="text-sm text-gray-500">
+                      ({ratings.ratings?.length || 0} vērtējumi)
+                    </div>
+                  </div>
+                  
+                  {token ? (
+                    <div className="flex items-center gap-1">
+                      {[1,2,3,4,5].map(star => (
+                        <motion.button
+                          key={star}
+                          className={`text-2xl transition-colors ${Math.round(Number(ratings.average || 0)) >= star ? 'text-yellow-500' : 'text-gray-300 hover:text-yellow-400'}`}
+                          onClick={() => submitRating(star)}
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.9 }}
+                        >
+                          ★
+                        </motion.button>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-sm text-gray-500">Ielogojieties, lai vērtētu</div>
+                  )}
+                </div>
+
+                {token && (
+                  <div className="mb-6">
+                    <textarea
+                      className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                      rows={3}
+                      placeholder="Dalieties ar savu pieredzi par šo recepti..."
+                      value={newComment}
+                      onChange={e => setNewComment(e.target.value)}
+                      onKeyDown={e => { if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); postComment(); } }}
+                    />
+                    <div className="flex justify-end mt-3">
+                      <motion.button 
+                        onClick={postComment} 
+                        className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium"
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                      >
+                        Publicēt komentāru
+                      </motion.button>
+                    </div>
+                  </div>
+                )}
+
+                <div className="space-y-4">
+                  {comments.map(c => (
+                    <motion.div 
+                      key={c.id} 
+                      className="bg-gray-50 rounded-xl p-4"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                    >
+                      <div className="text-gray-900 whitespace-pre-wrap mb-2">{c.content}</div>
+                      <div className="flex items-center justify-between">
+                        <div className="text-xs text-gray-500">{new Date(c.created_at).toLocaleString('lv-LV')}</div>
+                        {token && (
+                          <button 
+                            onClick={() => deleteComment(c.id)} 
+                            className="text-xs text-red-600 hover:text-red-800 transition-colors"
+                          >
+                            Dzēst
+                          </button>
+                        )}
+                      </div>
+                    </motion.div>
+                  ))}
+                  {comments.length === 0 && (
+                    <div className="text-center py-8 text-gray-500">
+                      <MessageSquare className="w-12 h-12 mx-auto mb-2 text-gray-300" />
+                      <p>Pagaidām nav komentāru</p>
+                      <p className="text-sm">Esiet pirmais, kas dalās ar savu pieredzi!</p>
+                    </div>
+                  )}
                 </div>
               </div>
-            )}
-            <ul className="space-y-2">
-              {comments.map(c => (
-                <li key={c.id} className="bg-white border rounded p-3">
-                  <div className="text-sm text-gray-800 whitespace-pre-wrap">{c.content}</div>
-                  <div className="text-xs text-gray-500 mt-1">{new Date(c.created_at).toLocaleString()}</div>
-                  {token && <button onClick={() => deleteComment(c.id)} className="text-xs text-red-600 mt-1">Dzēst</button>}
-                </li>
-              ))}
-              {comments.length === 0 && <div className="text-gray-600 text-sm">Pagaidām nav komentāru.</div>}
-            </ul>
+            </motion.div>
           </div>
-        </div>
+        </motion.div>
       </div>
 
-      {/* Lightbox */}
-      {lightboxIdx != null && Array.isArray((recipe as any).images) && (
-        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center" onClick={() => setLightboxIdx(null)}>
-          <img src={toImageUrl((recipe as any).images[lightboxIdx])} alt="Full" className="max-w-[90vw] max-h-[85vh] rounded shadow-lg" />
-        </div>
-      )}
+      {/* Image Lightbox */}
+      <AnimatePresence>
+        {lightboxIdx != null && Array.isArray((recipe as any).images) && (
+          <motion.div 
+            className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setLightboxIdx(null)}
+          >
+            <motion.div
+              className="relative max-w-4xl max-h-[90vh]"
+              initial={{ scale: 0.8 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0.8 }}
+              onClick={e => e.stopPropagation()}
+            >
+              <img 
+                src={toImageUrl((recipe as any).images[lightboxIdx])} 
+                alt="Pilns attēls" 
+                className="max-w-full max-h-full rounded-lg shadow-2xl" 
+              />
+              <button
+                onClick={() => setLightboxIdx(null)}
+                className="absolute top-4 right-4 w-10 h-10 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center text-white hover:bg-white/30 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
