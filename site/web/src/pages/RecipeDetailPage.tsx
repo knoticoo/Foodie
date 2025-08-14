@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import { RatingStars } from '../components/RatingStars';
 import { AdsBanner } from '../components/AdsBanner';
+import { Clock, Users, ChefHat, Play, Pause, SkipForward, ListChecks, ShoppingCart, Plus, Minus } from 'lucide-react';
 
 const defaultApiBase = typeof window !== 'undefined'
   ? `http://${window.location.hostname}:3000`
@@ -18,7 +19,7 @@ function toImageUrl(src?: string | null): string | undefined {
   return `${STATIC_BASE_URL}/${src}`;
 }
 
-type Recipe = { id: string; title: string; description?: string; ingredients?: any[]; servings?: number; is_premium_only?: boolean; sponsor_name?: string; sponsor_url?: string };
+type Recipe = { id: string; title: string; description?: string; ingredients?: any[]; servings?: number; is_premium_only?: boolean; sponsor_name?: string; sponsor_url?: string; total_time_minutes?: number };
 
 type Comment = { id: string; user_id: string; content: string; created_at: string };
 
@@ -36,6 +37,13 @@ export const RecipeDetailPage: React.FC = () => {
   const [grocery, setGrocery] = useState<any | null>(null);
   const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
 
+  // Cook mode state
+  const [cookMode, setCookMode] = useState(false);
+  const [currentStep, setCurrentStep] = useState(0);
+  const [checkedIngredients, setCheckedIngredients] = useState<Record<number, boolean>>({});
+  const [timerSeconds, setTimerSeconds] = useState<number>(0);
+  const [timerRunning, setTimerRunning] = useState(false);
+
   useEffect(() => {
     if (!id) return;
     // Load recipe (handle premium gate)
@@ -43,6 +51,10 @@ export const RecipeDetailPage: React.FC = () => {
       if (r.status === 402) { setPremiumRequired(true); setRecipe(null); return; }
       const data = await r.json();
       setRecipe(data); setServings(data?.servings ?? null);
+      // If steps have durations, initialize timer to first step duration
+      const stepsArr: any[] = Array.isArray(data?.steps) ? data.steps : [];
+      const firstDur = Number(stepsArr?.[0]?.duration || 0);
+      if (Number.isFinite(firstDur) && firstDur > 0) setTimerSeconds(firstDur * 60); else setTimerSeconds(0);
     }).catch(() => setRecipe(null));
 
     // Comments
@@ -59,7 +71,14 @@ export const RecipeDetailPage: React.FC = () => {
     } else setFav(null);
 
     setScaled(null); setGrocery(null); setPremiumRequired(false);
+    setCookMode(false); setCurrentStep(0); setCheckedIngredients({}); setTimerRunning(false);
   }, [id, token]);
+
+  useEffect(() => {
+    if (!timerRunning) return;
+    const t = setInterval(() => setTimerSeconds(s => Math.max(0, s - 1)), 1000);
+    return () => clearInterval(t);
+  }, [timerRunning]);
 
   if (premiumRequired) return <div className="space-y-2"><div>Premium recipe. Please upgrade to view.</div><a className="text-blue-600 underline" href="/billing">Go Premium</a></div>;
   if (!recipe) return <div>Loading…</div>;
@@ -126,25 +145,48 @@ export const RecipeDetailPage: React.FC = () => {
     else if (res.status === 402) setGrocery({ items: data.items, premiumNote: true });
   };
 
+  const totalTime = useMemo(() => {
+    const explicit = Number((recipe as any)?.total_time_minutes || 0);
+    if (explicit > 0) return explicit;
+    // otherwise sum durations if present
+    const sum = steps.reduce((acc, s) => acc + (Number(s?.duration || 0) || 0), 0);
+    return sum || null;
+  }, [recipe, steps]);
+
+  const fmtTime = (m?: number | null) => {
+    if (!m || m <= 0) return '—';
+    if (m < 60) return `${m} min`;
+    const h = Math.floor(m / 60);
+    const mm = m % 60;
+    return mm ? `${h} h ${mm} min` : `${h} h`;
+  };
+
+  const currentStepObj = steps[currentStep] || null;
+
   return (
-    <div className="space-y-6">
+    <div className="max-w-5xl mx-auto space-y-6">
+      {/* Header */}
       <div className="space-y-3">
-        <h1 className="text-2xl font-semibold flex items-center gap-2">
+        <h1 className="text-3xl font-bold flex items-center gap-3">
           <span>{recipe.title}</span>
           {recipe.is_premium_only && <span className="text-xs px-2 py-0.5 rounded bg-yellow-100 text-yellow-800 border">Premium</span>}
         </h1>
-        {recipe.description && <p className="text-gray-700">{recipe.description}</p>}
+        {recipe.description && <p className="text-gray-700 text-lg leading-relaxed">{recipe.description}</p>}
         {(recipe.sponsor_name && recipe.sponsor_url) && (
           <a className="text-sm text-blue-600 underline" href={recipe.sponsor_url} target="_blank" rel="noreferrer">Sponsored by {recipe.sponsor_name}</a>
         )}
+        <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600">
+          <span className="inline-flex items-center gap-1"><Clock className="w-4 h-4" /> {fmtTime(totalTime)}</span>
+          <span className="inline-flex items-center gap-1"><Users className="w-4 h-4" /> {servings ?? recipe.servings ?? 2} porcijas</span>
+        </div>
       </div>
 
       <AdsBanner placement="recipe_detail_inline" />
 
-      {/* Image gallery */}
+      {/* Hero Image */}
       {Array.isArray((recipe as any).images) && (recipe as any).images.length > 0 && (
         <div className="space-y-2">
-          <div className="aspect-[16/9] bg-gray-100 overflow-hidden rounded">
+          <div className="aspect-[16/9] bg-gray-100 overflow-hidden rounded-xl shadow">
             <img
               src={toImageUrl((recipe as any).images[0])}
               alt={recipe.title}
@@ -164,120 +206,159 @@ export const RecipeDetailPage: React.FC = () => {
         </div>
       )}
 
-      <div className="flex items-center gap-3">
-        {token && <button onClick={toggleFavorite} className="btn btn-secondary">{fav ? 'Remove favorite' : 'Save to favorites'}</button>}
-        <RatingStars value={ratings.average} />
+      {/* Controls */}
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="inline-flex items-center gap-2 border rounded-lg px-2 py-1">
+          <button className="p-1" aria-label="Minus" onClick={() => setServings(s => Math.max(1, Number(s || recipe.servings || 2) - 1))}><Minus className="w-4 h-4" /></button>
+          <span className="min-w-[3rem] text-center">{servings ?? recipe.servings ?? 2}</span>
+          <button className="p-1" aria-label="Plus" onClick={() => setServings(s => Number(s || recipe.servings || 2) + 1)}><Plus className="w-4 h-4" /></button>
+          <button className="ml-2 btn btn-secondary" onClick={loadScaled}>Mērogot</button>
+        </div>
+        <button onClick={loadGrocery} className="btn btn-secondary inline-flex items-center gap-2"><ShoppingCart className="w-4 h-4" /> Saraksts</button>
+        {token && <button onClick={toggleFavorite} className="btn btn-secondary">{fav ? 'Atcelt izlasi' : 'Saglabāt izlasi'}</button>}
+        <button className="btn btn-primary inline-flex items-center gap-2" onClick={() => setCookMode(v => !v)}>
+          {cookMode ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />} {cookMode ? 'Stop' : 'Cook Mode'}
+        </button>
       </div>
 
-      {Array.isArray(recipe.ingredients) && recipe.ingredients.length > 0 && (
-        <div>
-          <h2 className="font-medium mb-2">Ingredients</h2>
-          <ul className="list-disc ml-6 text-sm text-gray-700">
-            {recipe.ingredients.map((it: any, idx: number) => (
-              <li key={idx}>{it.name ?? it.ingredient ?? 'Item'} — {it.quantity ?? it.amount ?? ''} {it.unit ?? ''}</li>
-            ))}
-          </ul>
+      {/* Ingredients and Steps */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
+        <div className="md:col-span-1">
+          {Array.isArray(recipe.ingredients) && recipe.ingredients.length > 0 && (
+            <div className="bg-white border rounded-xl p-4 shadow-sm">
+              <h2 className="font-semibold mb-3 flex items-center gap-2"><ListChecks className="w-4 h-4" /> Sastāvdaļas</h2>
+              <ul className="space-y-2 text-sm text-gray-800">
+                {recipe.ingredients.map((it: any, idx: number) => (
+                  <li key={idx} className="flex items-start gap-2">
+                    <input type="checkbox" className="mt-1" checked={!!checkedIngredients[idx]} onChange={() => setCheckedIngredients(prev => ({ ...prev, [idx]: !prev[idx] }))} />
+                    <span>{it.name ?? it.ingredient ?? 'Item'} — {it.quantity ?? it.amount ?? ''} {it.unit ?? ''}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {scaled && (
+            <div className="bg-white border rounded-xl p-4 shadow-sm mt-4">
+              <h3 className="font-medium mb-2">Mērogotas sastāvdaļas</h3>
+              <ul className="list-disc ml-6 text-sm text-gray-700">
+                {scaled.map((it: any, idx: number) => (
+                  <li key={idx}>{it.name} — {it.quantity} {it.unit}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {grocery && (
+            <div className="bg-white border rounded-xl p-4 shadow-sm mt-4">
+              <h3 className="font-medium mb-2">Iepirkumu saraksts</h3>
+              <ul className="list-disc ml-6 text-sm text-gray-700">
+                {(grocery.items || []).map((it: any, idx: number) => (
+                  <li key={idx}>{it.name} — {it.totalQuantity} {it.unit}</li>
+                ))}
+              </ul>
+              {grocery.pricing ? (
+                <div className="text-sm text-gray-700 mt-2">Aptuvenās izmaksas: €{((grocery.pricing.totalCents || 0) / 100).toFixed(2)}</div>
+              ) : grocery.premiumNote ? (
+                <div className="text-sm text-gray-600 mt-2">Premium nepieciešams izmaksu aprēķinam.</div>
+              ) : null}
+            </div>
+          )}
         </div>
-      )}
 
-      {steps.length > 0 && (
-        <div>
-          <h2 className="font-medium mb-2">Instructions</h2>
-          <ol className="list-decimal ml-6 space-y-2 text-gray-800">
-            {steps.map((s: any, i: number) => (
-              <li key={i} className="leading-relaxed">{typeof s === 'string' ? s : s?.text ?? ''}</li>
-            ))}
-          </ol>
-        </div>
-      )}
+        <div className="md:col-span-2">
+          {steps.length > 0 && (
+            <div className="bg-white border rounded-xl p-4 shadow-sm">
+              <h2 className="font-semibold mb-3 flex items-center gap-2"><ChefHat className="w-4 h-4" /> Gatavošana</h2>
+              {!cookMode ? (
+                <ol className="list-decimal ml-6 space-y-3 text-gray-800">
+                  {steps.map((s: any, i: number) => (
+                    <li key={i} className="leading-relaxed">
+                      <div className="flex justify-between items-start gap-2">
+                        <span>{typeof s === 'string' ? s : (s?.text ?? '')}</span>
+                        {s?.duration && <span className="text-xs text-gray-500 whitespace-nowrap"><Clock className="inline w-3 h-3 mr-1" />{s.duration} min</span>}
+                      </div>
+                    </li>
+                  ))}
+                </ol>
+              ) : (
+                <div className="space-y-4">
+                  <div className="text-sm text-gray-500">Solis {currentStep + 1} no {steps.length}</div>
+                  <div className="text-lg leading-relaxed">{typeof currentStepObj === 'string' ? currentStepObj : (currentStepObj?.text ?? '')}</div>
+                  <div className="flex items-center gap-3">
+                    <button className="btn btn-secondary" onClick={() => setTimerRunning(r => !r)}>{timerRunning ? 'Pauze' : 'Starts'}</button>
+                    <div className="font-mono text-lg">{String(Math.floor(timerSeconds / 60)).padStart(2, '0')}:{String(timerSeconds % 60).padStart(2, '0')}</div>
+                    <button className="btn btn-secondary inline-flex items-center gap-2" onClick={() => {
+                      const next = Math.min(steps.length - 1, currentStep + 1);
+                      setCurrentStep(next);
+                      const dur = Number(steps[next]?.duration || 0);
+                      setTimerSeconds(Number.isFinite(dur) && dur > 0 ? dur * 60 : 0);
+                    }}><SkipForward className="w-4 h-4" /> Nākamais solis</button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
-      <div className="flex items-center gap-2">
-        <label className="text-sm">Servings</label>
-        <input type="number" min={1} value={servings ?? 2} onChange={e => setServings(Number(e.target.value || 1))} className="border rounded px-2 py-1 w-20" />
-        <button onClick={loadScaled} className="btn btn-secondary">Scale</button>
-        <button onClick={loadGrocery} className="btn btn-secondary">Grocery list</button>
-      </div>
-
-      {scaled && (
-        <div>
-          <h2 className="font-medium mb-2">Scaled ingredients</h2>
-          <ul className="list-disc ml-6 text-sm text-gray-700">
-            {scaled.map((it: any, idx: number) => (
-              <li key={idx}>{it.name} — {it.quantity} {it.unit}</li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      {grocery && (
-        <div>
-          <h2 className="font-medium mb-2">Grocery list</h2>
-          <ul className="list-disc ml-6 text-sm text-gray-700">
-            {(grocery.items || []).map((it: any, idx: number) => (
-              <li key={idx}>{it.name} — {it.totalQuantity} {it.unit}</li>
-            ))}
-          </ul>
-          {grocery.pricing ? (
-            <div className="text-sm text-gray-700 mt-2">Estimated total: €{((grocery.pricing.totalCents || 0) / 100).toFixed(2)}</div>
-          ) : grocery.premiumNote ? (
-            <div className="text-sm text-gray-600 mt-2">Premium required for cost estimation.</div>
-          ) : null}
-        </div>
-      )}
-
-      <div>
-        <h2 className="font-medium mb-2">Rate this recipe</h2>
-        <div className="text-sm text-gray-600 mb-2">Average: {ratings.average ?? '—'}</div>
-        {token ? (
-          <div className="inline-flex items-center gap-1" aria-label="Set rating">
-            {[1,2,3,4,5].map(star => (
-              <button
-                key={star}
-                className={`text-2xl hover:scale-110 transition-transform ${Math.round(Number(ratings.average || 0)) >= star ? 'text-yellow-500' : 'text-gray-300'}`}
-                onClick={() => submitRating(star)}
-                aria-label={`Rate ${star}`}
-                title={`Rate ${star}`}
-              >★</button>
-            ))}
-          </div>
-        ) : (
-          <div className="text-sm text-gray-600">Login to rate.</div>
-        )}
-      </div>
-
-      <div>
-        <h2 className="font-medium mb-2">Comments</h2>
-        {token && (
-          <div className="mb-3">
-            <textarea
-              className="w-full border rounded px-3 py-2 text-sm"
-              rows={3}
-              placeholder="Write a comment"
-              value={newComment}
-              onChange={e => setNewComment(e.target.value)}
-              onKeyDown={e => { if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); postComment(); } }}
-            />
-            <div className="flex justify-end mt-2">
-              <button onClick={postComment} className="btn btn-primary">Post</button>
+          {/* Ratings and Comments */}
+          <div className="bg-white border rounded-xl p-4 shadow-sm mt-4">
+            <h2 className="font-semibold mb-2">Novērtējums</h2>
+            <div className="flex items-center gap-3">
+              <RatingStars value={ratings.average} />
+              <div className="text-sm text-gray-600">Vidējais: {ratings.average ?? '—'}</div>
+              {token ? (
+                <div className="inline-flex items-center gap-1 ml-auto" aria-label="Set rating">
+                  {[1,2,3,4,5].map(star => (
+                    <button
+                      key={star}
+                      className={`text-2xl hover:scale-110 transition-transform ${Math.round(Number(ratings.average || 0)) >= star ? 'text-yellow-500' : 'text-gray-300'}`}
+                      onClick={() => submitRating(star)}
+                      aria-label={`Rate ${star}`}
+                      title={`Rate ${star}`}
+                    >★</button>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-sm text-gray-600 ml-auto">Ieiet, lai vērtētu.</div>
+              )}
             </div>
           </div>
-        )}
-        <ul className="space-y-2">
-          {comments.map(c => (
-            <li key={c.id} className="bg-white border rounded p-3">
-              <div className="text-sm text-gray-800 whitespace-pre-wrap">{c.content}</div>
-              <div className="text-xs text-gray-500 mt-1">{new Date(c.created_at).toLocaleString()}</div>
-              {token && <button onClick={() => deleteComment(c.id)} className="text-xs text-red-600 mt-1">Delete</button>}
-            </li>
-          ))}
-          {comments.length === 0 && <div className="text-gray-600 text-sm">No comments yet.</div>}
-        </ul>
+
+          <div className="bg-white border rounded-xl p-4 shadow-sm mt-4">
+            <h2 className="font-semibold mb-2">Komentāri</h2>
+            {token && (
+              <div className="mb-3">
+                <textarea
+                  className="w-full border rounded px-3 py-2 text-sm"
+                  rows={3}
+                  placeholder="Uzrakstiet komentāru"
+                  value={newComment}
+                  onChange={e => setNewComment(e.target.value)}
+                  onKeyDown={e => { if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); postComment(); } }}
+                />
+                <div className="flex justify-end mt-2">
+                  <button onClick={postComment} className="btn btn-primary">Publicēt</button>
+                </div>
+              </div>
+            )}
+            <ul className="space-y-2">
+              {comments.map(c => (
+                <li key={c.id} className="bg-white border rounded p-3">
+                  <div className="text-sm text-gray-800 whitespace-pre-wrap">{c.content}</div>
+                  <div className="text-xs text-gray-500 mt-1">{new Date(c.created_at).toLocaleString()}</div>
+                  {token && <button onClick={() => deleteComment(c.id)} className="text-xs text-red-600 mt-1">Dzēst</button>}
+                </li>
+              ))}
+              {comments.length === 0 && <div className="text-gray-600 text-sm">Pagaidām nav komentāru.</div>}
+            </ul>
+          </div>
+        </div>
       </div>
 
       {/* Lightbox */}
       {lightboxIdx != null && Array.isArray((recipe as any).images) && (
-        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center animate-fadeIn" onClick={() => setLightboxIdx(null)}>
-          <img src={toImageUrl((recipe as any).images[lightboxIdx])} alt="Full" className="max-w-[90vw] max-h-[85vh] rounded shadow-lg animate-scaleIn" />
+        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center" onClick={() => setLightboxIdx(null)}>
+          <img src={toImageUrl((recipe as any).images[lightboxIdx])} alt="Full" className="max-w-[90vw] max-h-[85vh] rounded shadow-lg" />
         </div>
       )}
     </div>

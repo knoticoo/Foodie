@@ -35,7 +35,7 @@ const STATIC_BASE = (import.meta as any).env?.VITE_STATIC_BASE_URL ||
                     window.__VITE__?.VITE_STATIC_BASE_URL || 
                     'http://localhost:8080'
 
-const ADMIN_API_KEY = (import.meta as any).env?.VITE_ADMIN_API_KEY || 
+const DEFAULT_ADMIN_API_KEY = (import.meta as any).env?.VITE_ADMIN_API_KEY || 
                       window.__VITE__?.VITE_ADMIN_API_KEY || ''
 
 const PUBLIC_WEB_BASE = (import.meta as any).env?.VITE_PUBLIC_WEB_BASE_URL || 
@@ -52,6 +52,10 @@ const Button: React.FC<{
   loading?: boolean
   icon?: React.ReactNode
   className?: string
+  as?: any
+  href?: string
+  target?: string
+  rel?: string
 }> = ({ 
   children = '', 
   variant = 'primary', 
@@ -60,7 +64,8 @@ const Button: React.FC<{
   disabled, 
   loading,
   icon,
-  className = '' 
+  className = '',
+  ...rest
 }) => {
   const baseClasses = 'inline-flex items-center justify-center font-medium rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2'
   
@@ -85,6 +90,7 @@ const Button: React.FC<{
       className={`${baseClasses} ${variants[variant]} ${sizes[size]} ${
         disabled || loading ? 'opacity-50 cursor-not-allowed' : ''
       } ${className}`}
+      {...rest}
     >
       {loading ? (
         <RefreshCw className="w-4 h-4 animate-spin" />
@@ -215,12 +221,12 @@ const RecipesModule: React.FC<{ recipes: any[], loading: boolean }> = ({ recipes
                       const title = prompt('Update title', recipe.title || '')?.trim()
                       if (title && title.length >= 3) {
                         try {
-                          const res = await fetch(`${API}/api/admin/recipes/${recipe.id}`, {
+                          const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+                          const key = localStorage.getItem('ADMIN_API_KEY') || DEFAULT_ADMIN_API_KEY;
+                          if (key) headers['X-Admin-Api-Key'] = key;
+                          await fetch(`${API}/api/admin/recipes/${recipe.id}`, {
                             method: 'PUT',
-                            headers: {
-                              'Content-Type': 'application/json',
-                              ...(ADMIN_API_KEY ? { 'X-Admin-Api-Key': ADMIN_API_KEY } : {})
-                            },
+                            headers,
                             body: JSON.stringify({ title })
                           })
                         } catch (e) {
@@ -231,11 +237,12 @@ const RecipesModule: React.FC<{ recipes: any[], loading: boolean }> = ({ recipes
                     <Button variant="ghost" size="sm" icon={<Trash2 className="w-4 h-4" />} onClick={async () => {
                       if (!confirm('Delete this recipe?')) return
                       try {
+                        const headers: Record<string, string> = {};
+                        const key = localStorage.getItem('ADMIN_API_KEY') || DEFAULT_ADMIN_API_KEY;
+                        if (key) headers['X-Admin-Api-Key'] = key;
                         await fetch(`${API}/api/admin/recipes/${recipe.id}`, {
                           method: 'DELETE',
-                          headers: {
-                            ...(ADMIN_API_KEY ? { 'X-Admin-Api-Key': ADMIN_API_KEY } : {})
-                          }
+                          headers
                         })
                       } catch (e) {
                         console.error('Failed to delete recipe:', e)
@@ -410,6 +417,17 @@ export function App() {
   const [usersLoading, setUsersLoading] = useState(false)
   const [recipesLoading, setRecipesLoading] = useState(false)
   const [commentsLoading, setCommentsLoading] = useState(false)
+  const [adminKey, setAdminKey] = useState<string>(localStorage.getItem('ADMIN_API_KEY') || DEFAULT_ADMIN_API_KEY || '')
+
+  useEffect(() => {
+    localStorage.setItem('ADMIN_API_KEY', adminKey || '')
+  }, [adminKey])
+
+  const buildHeaders = (): HeadersInit => {
+    const h: Record<string, string> = {}
+    if (adminKey) h['X-Admin-Api-Key'] = adminKey
+    return h
+  }
 
   // Load initial data and poll periodically
   useEffect(() => {
@@ -418,9 +436,9 @@ export function App() {
       setRecipesLoading(true); setUsersLoading(true); setCommentsLoading(true);
       try {
         const [usersRes, recipesRes, commentsRes] = await Promise.all([
-          fetch(`${API}/api/admin/users`, { headers: ADMIN_API_KEY ? { 'X-Admin-Api-Key': ADMIN_API_KEY } : {} }),
-          fetch(`${API}/api/admin/recipes`, { headers: ADMIN_API_KEY ? { 'X-Admin-Api-Key': ADMIN_API_KEY } : {} }),
-          fetch(`${API}/api/admin/comments`, { headers: ADMIN_API_KEY ? { 'X-Admin-Api-Key': ADMIN_API_KEY } : {} })
+          fetch(`${API}/api/admin/users`, { headers: buildHeaders() }),
+          fetch(`${API}/api/admin/recipes`, { headers: buildHeaders() }),
+          fetch(`${API}/api/admin/comments`, { headers: buildHeaders() })
         ])
         if (usersRes.ok) {
           const du = await usersRes.json();
@@ -442,11 +460,11 @@ export function App() {
     }
     loadAll();
     return () => { if (timer) clearTimeout(timer) }
-  }, [])
+  }, [adminKey])
 
   const deleteComment = async (id: string) => {
     try {
-      const res = await fetch(`${API}/api/admin/comments/${id}`, { method: 'DELETE', headers: ADMIN_API_KEY ? { 'X-Admin-Api-Key': ADMIN_API_KEY } : {} })
+      const res = await fetch(`${API}/api/admin/comments/${id}`, { method: 'DELETE', headers: buildHeaders() })
       if (res.status === 204) setComments(prev => prev.filter(c => c.id !== id))
     } catch {}
   }
@@ -471,7 +489,7 @@ export function App() {
           }
         } catch {}
         try {
-          const statsRes = await fetch(`${API}/api/admin/stats`, { headers: ADMIN_API_KEY ? { 'X-Admin-Api-Key': ADMIN_API_KEY } : {} })
+          const statsRes = await fetch(`${API}/api/admin/stats`, { headers: buildHeaders() })
           if (statsRes.ok) {
             const adminStats = await statsRes.json()
             setStats((s) => ({ ...s, ...adminStats }))
@@ -484,7 +502,7 @@ export function App() {
       }
     }
     loadData()
-  }, [])
+  }, [adminKey])
 
   if (loading) {
     return (
@@ -567,6 +585,12 @@ export function App() {
 
         {/* Bottom Actions */}
         <div className="p-4 border-t border-gray-200 space-y-2">
+          {!sidebarCollapsed && (
+            <div className="space-y-2">
+              <label className="text-xs text-gray-600">Admin API Key</label>
+              <input value={adminKey} onChange={e => setAdminKey(e.target.value)} placeholder="paste ADMIN_API_KEY" className="w-full px-3 py-2 border rounded-lg text-sm" />
+            </div>
+          )}
           <button
             onClick={() => window.open(PUBLIC_WEB_BASE, '_blank')}
             className="w-full flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-100 rounded-xl transition-colors"
