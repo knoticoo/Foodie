@@ -3,6 +3,8 @@ import { requireAuth } from '../middleware/auth.js';
 import { requireAdmin } from '../middleware/admin.js';
 import { pgPool } from '../db/pool.js';
 import { findRecipes } from '../services/recipesService.js';
+import bcrypt from 'bcryptjs';
+import { env } from '../config/env.js';
 
 export const adminRouter = Router();
 
@@ -183,6 +185,28 @@ adminRouter.put('/users/:id/admin', async (req, res) => {
   res.status(204).end();
 });
 
+// Create user (admin)
+adminRouter.post('/users', async (req, res) => {
+  try {
+    const body = req.body as { email?: string; password?: string; name?: string; isAdmin?: boolean; isPremium?: boolean; premiumExpiresAt?: string | null };
+    const email = String(body?.email || '').trim().toLowerCase();
+    const password = String(body?.password || '').trim();
+    const name = typeof body?.name === 'string' ? body.name.trim() : undefined;
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return res.status(400).json({ error: 'Valid email required' });
+    if (password.length < 6) return res.status(400).json({ error: 'Password min length is 6' });
+
+    const passwordHash = await bcrypt.hash(password, env.bcryptRounds);
+    const { rows } = await pgPool.query(
+      'INSERT INTO users (email, password_hash, full_name, is_admin, is_premium, premium_expires_at) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id',
+      [email, passwordHash, name || null, body?.isAdmin === true, body?.isPremium === true, body?.premiumExpiresAt ?? null]
+    );
+    return res.status(201).json({ id: rows[0].id });
+  } catch (e: any) {
+    if (e?.code === '23505') return res.status(409).json({ error: 'Email already exists' });
+    return res.status(500).json({ error: 'Failed to create user' });
+  }
+});
+
 // List users for admin (supports filter: all|new|premium)
 adminRouter.get('/users', async (req, res) => {
   const status = String(req.query.status ?? 'all');
@@ -243,6 +267,14 @@ adminRouter.get('/comments', async (_req, res) => {
      LIMIT 200`
   );
   res.json({ comments: rows });
+});
+
+// Delete a comment (admin)
+adminRouter.delete('/comments/:id', async (req, res) => {
+  const id = String(req.params.id || '');
+  const result = await pgPool.query('DELETE FROM recipe_comments WHERE id=$1', [id]);
+  const changed = Number(result.rowCount || 0) > 0;
+  return changed ? res.status(204).end() : res.status(404).json({ error: 'Not found' });
 });
 
 adminRouter.get('/stats', async (_req, res) => {

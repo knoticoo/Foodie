@@ -105,7 +105,7 @@ export async function getRecipeByShareToken(token: string) {
 export async function createSubmittedRecipe(userId: string, payload: { title: string; description?: string; steps?: any[]; images?: string[]; category?: string; difficulty?: string; total_time_minutes?: number; ingredients?: any[] }) {
   const sql = `
     INSERT INTO recipes (title, description, steps, images, servings, total_time_minutes, nutrition, ingredients, author_user_id, is_approved, category, difficulty)
-    VALUES ($1, $2, $3::jsonb, $4::jsonb, $5, $6, $7::jsonb, $8::jsonb, $9, FALSE, $10, $11)
+    VALUES ($1, $2, $3::jsonb, $4::jsonb, $5, $6, $7::jsonb, $8::jsonb, $9, TRUE, $10, $11)
     RETURNING id, share_token
   `;
   const params = [
