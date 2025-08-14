@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { 
   ChefHat, 
@@ -56,7 +56,34 @@ const floatVariants = {
   }
 }
 
+const defaultApiBase = typeof window !== 'undefined'
+  ? `http://${window.location.hostname}:3000`
+  : 'http://127.0.0.1:3000';
+const API_BASE_URL = (import.meta as any).env?.VITE_API_BASE_URL ?? defaultApiBase;
+
 export const HomePage: React.FC = () => {
+  const [stats, setStats] = useState({ total_recipes: 0, total_users: 0, total_chefs: 0, total_favorites: 0, average_rating: 0 });
+
+  useEffect(() => {
+    let isMounted = true;
+    (async () => {
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/stats`);
+        if (res.ok) {
+          const data = await res.json();
+          if (isMounted) setStats({
+            total_recipes: Number(data.total_recipes || 0),
+            total_users: Number(data.total_users || 0),
+            total_chefs: Number(data.total_chefs || 0),
+            total_favorites: Number(data.total_favorites || 0),
+            average_rating: Number(data.average_rating || 0)
+          });
+        }
+      } catch {}
+    })();
+    return () => { isMounted = false };
+  }, []);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-neutral-50 via-white to-primary-50/30">
       {/* Hero Section */}
@@ -127,29 +154,29 @@ export const HomePage: React.FC = () => {
               </Button>
             </motion.div>
 
-            {/* Hero Stats */}
-            <motion.div 
-              variants={itemVariants}
-              className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-2xl mx-auto"
-            >
-              {[
-                { icon: BookOpen, value: '10K+', label: 'Receptes' },
-                { icon: Users, value: '50K+', label: 'Lietotāji' },
-                { icon: Heart, value: '1M+', label: 'Iecienītās' },
-                { icon: Award, value: '4.9★', label: 'Vērtējums' },
-              ].map((stat, index) => (
-                <motion.div
-                  key={index}
-                  whileHover={{ scale: 1.05 }}
-                  className="text-center"
-                >
-                  <stat.icon className="w-8 h-8 mx-auto mb-2 text-primary-500" />
-                  <div className="text-2xl font-bold text-neutral-900">{stat.value}</div>
-                  <div className="text-sm text-neutral-600">{stat.label}</div>
-                </motion.div>
-              ))}
-            </motion.div>
-          </motion.div>
+                          {/* Hero Stats */}
+              <motion.div 
+                variants={itemVariants}
+                className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-2xl mx-auto"
+              >
+                {[
+                  { icon: BookOpen, value: stats.total_recipes.toLocaleString(), label: 'Receptes' },
+                  { icon: Users, value: stats.total_users.toLocaleString(), label: 'Lietotāji' },
+                  { icon: ChefHat, value: stats.total_chefs.toLocaleString(), label: 'Pavāri' },
+                  { icon: Star, value: `${stats.average_rating.toFixed(1)}★`, label: 'Vērtējums' },
+                ].map((stat, index) => (
+                  <motion.div
+                    key={index}
+                    whileHover={{ scale: 1.05 }}
+                    className="text-center"
+                  >
+                    <stat.icon className="w-8 h-8 mx-auto mb-2 text-primary-500" />
+                    <div className="text-2xl font-bold text-neutral-900">{stat.value}</div>
+                    <div className="text-sm text-neutral-600">{stat.label}</div>
+                  </motion.div>
+                ))}
+              </motion.div>
+</motion.div>
         </div>
 
         {/* Floating Recipe Cards */}

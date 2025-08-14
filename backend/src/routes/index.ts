@@ -14,6 +14,7 @@ import { adminRouter } from './admin.js';
 import { adsRouter } from './ads.js';
 import { billingRouter } from './billing.js';
 import { profileRouter } from './profile.js';
+import { statsRouter } from './stats.js';
  
 export const router = Router();
  
@@ -32,3 +33,4 @@ router.use('/ads', adsRouter);
 router.use('/billing', billingRouter);
 router.use('/admin', adminRouter);
 router.use('/profile', profileRouter);
+router.use('/stats', statsRouter);

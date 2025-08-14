@@ -49,14 +49,34 @@ const socialLinks = [
   { icon: Twitter, href: 'https://twitter.com/virtualsmaksla', label: 'Twitter' },
 ]
 
-const stats = [
-  { icon: BookOpen, value: '10,000+', label: 'Receptes' },
-  { icon: Users, value: '50,000+', label: 'Lietotāji' },
-  { icon: Award, value: '500+', label: 'Pavāri' },
-  { icon: Star, value: '4.9', label: 'Vērtējums' },
-]
+const defaultApiBase = typeof window !== 'undefined'
+  ? `http://${window.location.hostname}:3000`
+  : 'http://127.0.0.1:3000';
+const API_BASE_URL = (import.meta as any).env?.VITE_API_BASE_URL ?? defaultApiBase;
 
 export const Footer: React.FC = () => {
+  const [stats, setStats] = React.useState({ total_recipes: 0, total_users: 0, total_chefs: 0, total_favorites: 0, average_rating: 0 });
+
+  React.useEffect(() => {
+    let isMounted = true;
+    (async () => {
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/stats`);
+        if (res.ok) {
+          const data = await res.json();
+          if (isMounted) setStats({
+            total_recipes: Number(data.total_recipes || 0),
+            total_users: Number(data.total_users || 0),
+            total_chefs: Number(data.total_chefs || 0),
+            total_favorites: Number(data.total_favorites || 0),
+            average_rating: Number(data.average_rating || 0)
+          });
+        }
+      } catch {}
+    })();
+    return () => { isMounted = false };
+  }, []);
+
   return (
     <footer className="bg-gradient-to-br from-neutral-900 via-neutral-800 to-neutral-900 text-white relative overflow-hidden">
       {/* Background Pattern */}
@@ -74,7 +94,12 @@ export const Footer: React.FC = () => {
         <div className="border-b border-neutral-700">
           <div className="container mx-auto px-4 py-12">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-              {stats.map((stat, index) => (
+              {[
+                { icon: BookOpen, value: stats.total_recipes.toLocaleString(), label: 'Receptes' },
+                { icon: Users, value: stats.total_users.toLocaleString(), label: 'Lietotāji' },
+                { icon: Award, value: stats.total_chefs.toLocaleString(), label: 'Pavāri' },
+                { icon: Star, value: stats.average_rating.toFixed(1), label: 'Vērtējums' },
+              ].map((stat, index) => (
                 <motion.div
                   key={index}
                   initial={{ opacity: 0, y: 20 }}
