@@ -99,6 +99,8 @@ export const PricesPage: React.FC = () => {
       
       if (res.ok) {
         setCheapest(data);
+      } else if (res.status === 404) {
+        setStatus('Produkts nav atrasts. Pamēģiniet citu nosaukumu (piem., "olas" vai "eggs").');
       } else {
         setStatus(data.error || 'Kļūda meklējot cenas');
       }
@@ -124,7 +126,11 @@ export const PricesPage: React.FC = () => {
       const data = await res.json().catch(() => ({}));
       
       if (res.ok) {
-        setCompare(Array.isArray(data?.options) ? data.options : []);
+        const opts = Array.isArray(data?.options) ? data.options : [];
+        setCompare(opts);
+        if (opts.length === 0) setStatus('Nav atrastas cenas šim produktam.');
+      } else if (res.status === 402) {
+        setStatus('Nepieciešams Premium abonements');
       } else {
         setStatus(data.error || 'Kļūda salīdzinot cenas');
       }
@@ -297,10 +303,10 @@ export const PricesPage: React.FC = () => {
                       <p className="text-sm text-neutral-600 mb-2">{cheapest.storeName}</p>
                       <div className="flex items-center justify-between">
                         <span className="text-lg font-bold text-green-600">
-                          €{cheapest.price || 'N/A'} / {cheapest.unit}
+                          €{typeof cheapest.unitPriceCents === 'number' ? (cheapest.unitPriceCents / 100).toFixed(2) : 'N/A'} / {cheapest.packageBaseUnit}
                         </span>
-                        {cheapest.url && (
-                          <Button size="sm" variant="outline">
+                        {cheapest.affiliateUrl && (
+                          <Button as="a" href={cheapest.affiliateUrl} target="_blank" rel="noreferrer" size="sm" variant="outline">
                             <ExternalLink className="w-4 h-4 mr-2" />
                             Skatīt
                           </Button>
@@ -339,7 +345,7 @@ export const PricesPage: React.FC = () => {
                           </div>
                           <div className="flex items-center gap-3">
                             <span className="font-semibold text-lg">
-                              €{option.price || 'N/A'}
+                              €{typeof option.unitPriceCents === 'number' ? (option.unitPriceCents / 100).toFixed(2) : 'N/A'} / {option.packageBaseUnit}
                             </span>
                             {option.affiliateUrl && (
                               <Button
@@ -417,7 +423,7 @@ export const PricesPage: React.FC = () => {
                             <div key={idx} className="flex items-center justify-between p-4 border border-neutral-200 rounded-lg hover:shadow-sm">
                               <div className="flex items-center gap-3 min-w-0">
                                 {r.cover_image ? (
-                                  <img src={r.cover_image} alt="cover" className="w-14 h-14 rounded object-cover" />
+                                  <img src={/^https?:\/\//i.test(r.cover_image) ? r.cover_image : `${(import.meta as any).env?.VITE_STATIC_BASE_URL ?? (typeof window !== 'undefined' ? `http://${window.location.hostname}:8080` : 'http://127.0.0.1:8080')}/${String(r.cover_image).replace(/^\//,'')}`} alt="cover" className="w-14 h-14 rounded object-cover" />
                                 ) : (
                                   <div className="w-14 h-14 rounded bg-neutral-100" />
                                 )}
