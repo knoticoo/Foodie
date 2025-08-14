@@ -59,6 +59,8 @@ export async function findRecipes(filters: RecipeListFilters, limit = 20, offset
       sponsor_url,
       is_premium_only,
       created_at,
+      author_user_id,
+      (SELECT email FROM users u WHERE u.id = recipes.author_user_id) AS author_email,
       images->>0 AS cover_image,
       (
         SELECT AVG(rating)::numeric(10,2)

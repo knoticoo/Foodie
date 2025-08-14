@@ -47,7 +47,15 @@ app.options('*', cors(corsOptions));
 // Stripe webhook requires raw body for signature verification
 app.post('/api/billing/webhook', express.raw({ type: 'application/json' }), billingWebhookHandler);
 
-app.use(express.json({ limit: '5mb' }));
+app.use(express.json({ limit: '25mb' }));
+
+// Gracefully handle large JSON bodies (e.g., base64 images)
+app.use((err: any, _req, res, next) => {
+  if (err && err.type === 'entity.too.large') {
+    return res.status(413).json({ error: 'Payload too large' });
+  }
+  return next(err);
+});
 
 // Attach locale info for downstream handlers
 app.use(i18nMiddleware);

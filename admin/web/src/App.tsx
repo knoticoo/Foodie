@@ -206,15 +206,45 @@ const RecipesModule: React.FC<{ recipes: any[], loading: boolean, onLoadRecipes:
             {recipes.map((recipe, index) => (
               <tr key={recipe.id || index} className="border-b border-gray-100 hover:bg-gray-50">
                 <td className="py-4 px-4 font-medium text-gray-900">{recipe.title || 'Untitled'}</td>
-                <td className="py-4 px-4 text-gray-600">{recipe.author || 'Unknown'}</td>
+                <td className="py-4 px-4 text-gray-600">{recipe.author_email || recipe.author_user_id || 'Unknown'}</td>
                 <td className="py-4 px-4 text-gray-600 text-sm">
                   {recipe.created_at ? new Date(recipe.created_at).toLocaleDateString() : 'Unknown'}
                 </td>
                 <td className="py-4 px-4">
                   <div className="flex gap-2">
-                    <Button variant="ghost" size="sm" icon={<Eye className="w-4 h-4" />} />
-                    <Button variant="ghost" size="sm" icon={<Edit3 className="w-4 h-4" />} />
-                    <Button variant="ghost" size="sm" icon={<Trash2 className="w-4 h-4" />} />
+                    <Button variant="ghost" size="sm" icon={<Eye className="w-4 h-4" />} onClick={() => window.open(`${PUBLIC_WEB_BASE}/recipes/${recipe.id}`, '_blank')} />
+                    <Button variant="ghost" size="sm" icon={<Edit3 className="w-4 h-4" />} onClick={async () => {
+                      const title = prompt('Update title', recipe.title || '')?.trim()
+                      if (title && title.length >= 3) {
+                        try {
+                          const res = await fetch(`${API}/api/admin/recipes/${recipe.id}`, {
+                            method: 'PUT',
+                            headers: {
+                              'Content-Type': 'application/json',
+                              ...(ADMIN_API_KEY ? { 'X-Admin-Api-Key': ADMIN_API_KEY } : {})
+                            },
+                            body: JSON.stringify({ title })
+                          })
+                          if (res.status === 204) onLoadRecipes()
+                        } catch (e) {
+                          console.error('Failed to update recipe:', e)
+                        }
+                      }
+                    }} />
+                    <Button variant="ghost" size="sm" icon={<Trash2 className="w-4 h-4" />} onClick={async () => {
+                      if (!confirm('Delete this recipe?')) return
+                      try {
+                        const res = await fetch(`${API}/api/admin/recipes/${recipe.id}`, {
+                          method: 'DELETE',
+                          headers: {
+                            ...(ADMIN_API_KEY ? { 'X-Admin-Api-Key': ADMIN_API_KEY } : {})
+                          }
+                        })
+                        if (res.status === 204) onLoadRecipes()
+                      } catch (e) {
+                        console.error('Failed to delete recipe:', e)
+                      }
+                    }} />
                   </div>
                 </td>
               </tr>

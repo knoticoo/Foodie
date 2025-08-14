@@ -21,7 +21,7 @@ uploadsRouter.post('/image-base64', async (req, res) => {
   const base64 = match[3];
   const buffer = Buffer.from(base64, 'base64');
   const filename = `${crypto.randomUUID()}.${ext}`;
-  const uploadDir = '/app/uploads/images';
+  const uploadDir = process.env.UPLOAD_DIR || '/app/uploads/images';
   const filePath = path.join(uploadDir, filename);
   try {
     await fs.mkdir(uploadDir, { recursive: true });
