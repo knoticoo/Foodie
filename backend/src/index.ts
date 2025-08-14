@@ -87,4 +87,15 @@ app.listen(env.port, env.host, async () => {
   } catch (err) {
     console.warn('[boot] DB ping failed:', (err as Error).message);
   }
+
+  // Ensure required recipe metadata columns exist to prevent runtime errors
+  try {
+    await pgPool.query("ALTER TABLE recipes ADD COLUMN IF NOT EXISTS category TEXT");
+    await pgPool.query("ALTER TABLE recipes ADD COLUMN IF NOT EXISTS difficulty TEXT");
+    await pgPool.query("ALTER TABLE recipes ADD COLUMN IF NOT EXISTS prep_time_minutes INT");
+    await pgPool.query("ALTER TABLE recipes ADD COLUMN IF NOT EXISTS cook_time_minutes INT");
+    console.log('[boot] Ensured recipe metadata columns exist');
+  } catch (e) {
+    console.warn('[boot] Failed ensuring recipe metadata columns:', (e as Error).message);
+  }
 });

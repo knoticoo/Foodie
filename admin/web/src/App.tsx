@@ -134,7 +134,7 @@ const Statistics: React.FC<{ stats: any }> = ({ stats }) => (
       <BarChart3 className="w-5 h-5" />
       Statistics
     </h2>
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
       <div className="text-center">
         <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-2">
           <Users className="w-6 h-6 text-blue-600" />
@@ -150,11 +150,18 @@ const Statistics: React.FC<{ stats: any }> = ({ stats }) => (
         <p className="text-sm text-gray-600">Total Recipes</p>
       </div>
       <div className="text-center">
-        <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mx-auto mb-2">
-          <MessageSquare className="w-6 h-6 text-purple-600" />
+        <div className="w-12 h-12 bg-amber-100 rounded-lg flex items-center justify-center mx-auto mb-2">
+          <ChefHat className="w-6 h-6 text-amber-600" />
         </div>
-        <p className="text-2xl font-bold text-gray-900">{stats.total_comments || 0}</p>
-        <p className="text-sm text-gray-600">Total Comments</p>
+        <p className="text-2xl font-bold text-gray-900">{stats.total_chefs || 0}</p>
+        <p className="text-sm text-gray-600">Chefs</p>
+      </div>
+      <div className="text-center">
+        <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mx-auto mb-2">
+          <Star className="w-6 h-6 text-purple-600" />
+        </div>
+        <p className="text-2xl font-bold text-gray-900">{Number(stats.average_rating || 0).toFixed(1)}</p>
+        <p className="text-sm text-gray-600">Avg Rating</p>
       </div>
     </div>
   </div>
@@ -365,7 +372,9 @@ export function App() {
     total_users: 0,
     total_recipes: 0,
     total_comments: 0,
-    total_ratings: 0
+    total_ratings: 0,
+    total_chefs: 0,
+    average_rating: 0
   })
   const [health, setHealth] = useState<any>(null)
   const [loading, setLoading] = useState(true)
@@ -388,42 +397,38 @@ export function App() {
           setHealth(null)
         }
 
-        // Load stats (might fail if admin key is not configured)
+        // Load public stats for dashboard counters
+        try {
+          const pubStatsRes = await fetch(`${API}/api/stats`)
+          if (pubStatsRes.ok) {
+            const pub = await pubStatsRes.json()
+            setStats((s) => ({
+              ...s,
+              total_users: Number(pub.total_users || s.total_users),
+              total_recipes: Number(pub.total_recipes || s.total_recipes),
+              total_chefs: Number(pub.total_chefs || 0),
+              average_rating: Number(pub.average_rating || 0)
+            }))
+          }
+        } catch {}
+
+        // Load admin stats (comments/ratings aggregates)
         try {
           const statsRes = await fetch(`${API}/api/admin/stats`, {
             headers: ADMIN_API_KEY ? { 'X-Admin-Api-Key': ADMIN_API_KEY } : {}
           })
           if (statsRes.ok) {
             const statsData = await statsRes.json()
-            setStats(statsData)
+            setStats((s) => ({ ...s, ...statsData }))
           } else {
-            console.warn('Stats failed:', statsRes.status, 'Admin key configured:', !!ADMIN_API_KEY)
-            // Use default stats if admin endpoint fails
-            setStats({
-              total_users: 0,
-              total_recipes: 0,
-              total_comments: 0,
-              total_ratings: 0
-            })
+            console.warn('Admin stats failed:', statsRes.status)
           }
         } catch (statsError) {
           console.warn('Stats endpoint error:', statsError)
-          setStats({
-            total_users: 0,
-            total_recipes: 0,
-            total_comments: 0,
-            total_ratings: 0
-          })
         }
       } catch (error) {
         console.error('Failed to load data:', error)
         setHealth(null)
-        setStats({
-          total_users: 0,
-          total_recipes: 0,
-          total_comments: 0,
-          total_ratings: 0
-        })
       } finally {
         setLoading(false)
       }

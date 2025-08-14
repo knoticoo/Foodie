@@ -42,14 +42,34 @@ const itemVariants = {
   }
 }
 
+const defaultApiBase = typeof window !== 'undefined'
+  ? `http://${window.location.hostname}:3000`
+  : 'http://127.0.0.1:3000';
+const API_BASE_URL = (import.meta as any).env?.VITE_API_BASE_URL ?? defaultApiBase;
+
 export const LoginPage: React.FC = () => {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [totalRecipes, setTotalRecipes] = useState<number>(0)
   const { login } = useAuth()
   const navigate = useNavigate()
+
+  React.useEffect(() => {
+    let isMounted = true
+    ;(async () => {
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/stats`)
+        if (res.ok) {
+          const data = await res.json()
+          if (isMounted) setTotalRecipes(Number(data.total_recipes || 0))
+        }
+      } catch {}
+    })()
+    return () => { isMounted = false }
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -218,7 +238,7 @@ export const LoginPage: React.FC = () => {
         <motion.div variants={itemVariants} className="mt-8">
           <div className="grid grid-cols-3 gap-4 text-center">
             {[
-              { icon: ChefHat, text: '10K+ Receptes' },
+              { icon: ChefHat, text: `${totalRecipes.toLocaleString()} Receptes` },
               { icon: Sparkles, text: 'AI Ieteikumi' },
               { icon: ArrowRight, text: 'Premium Saturs' }
             ].map((feature, index) => (
