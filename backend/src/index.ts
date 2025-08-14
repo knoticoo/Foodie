@@ -2,6 +2,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 import express from 'express';
+import type { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import { router as apiRouter } from './routes/index.js';
 import { i18nMiddleware } from './middleware/i18n.js';
@@ -50,7 +51,7 @@ app.post('/api/billing/webhook', express.raw({ type: 'application/json' }), bill
 app.use(express.json({ limit: '25mb' }));
 
 // Gracefully handle large JSON bodies (e.g., base64 images)
-app.use((err: any, _req, res, next) => {
+app.use((err: any, _req: Request, res: Response, next: NextFunction) => {
   if (err && err.type === 'entity.too.large') {
     return res.status(413).json({ error: 'Payload too large' });
   }
