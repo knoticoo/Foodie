@@ -258,9 +258,18 @@ export const RecipeDetailPage: React.FC = () => {
                 ))}
               </ul>
               {grocery.pricing ? (
-                <div className="text-sm text-gray-700 mt-2">Aptuvenās izmaksas: €{((grocery.pricing.totalCents || 0) / 100).toFixed(2)}</div>
+                <div className="text-sm text-gray-700 mt-2">
+                  Aptuvenās izmaksas: €{((grocery.pricing.totalCents || 0) / 100).toFixed(2)}
+                  {grocery.pricing.totalCents === 0 && (
+                    <div className="text-xs text-amber-600 mt-1">
+                      * Daži produkti nav atrodami cenrāžos
+                    </div>
+                  )}
+                </div>
               ) : grocery.premiumNote ? (
-                <div className="text-sm text-gray-600 mt-2">Premium nepieciešams izmaksu aprēķinam.</div>
+                <div className="text-sm text-blue-600 mt-2 p-2 bg-blue-50 rounded">
+                  💎 Premium nepieciešams izmaksu aprēķinam un detalizētai cenu analīzei
+                </div>
               ) : null}
             </div>
           )}
