@@ -45,6 +45,16 @@
         to { transform: rotate(360deg); }
       }
     </style>
+    <script>
+      window.__VITE__ = window.__VITE__ || {};
+      (function() {
+        var host = window.location.hostname;
+        var protocol = window.location.protocol;
+        window.__VITE__.VITE_API_BASE_URL = protocol + '//' + host + ':3000';
+        window.__VITE__.VITE_STATIC_BASE_URL = protocol + '//' + host + ':8080';
+        window.__VITE__.VITE_PUBLIC_WEB_BASE_URL = protocol + '//' + host + ':80';
+      })();
+    </script>
   </head>
   <body>
     <div id="loading">

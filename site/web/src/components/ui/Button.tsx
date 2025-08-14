@@ -10,6 +10,7 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   iconPosition?: 'left' | 'right'
   fullWidth?: boolean
   animated?: boolean
+  asChild?: boolean
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
@@ -22,6 +23,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     iconPosition = 'left',
     fullWidth = false,
     animated = true,
+    asChild = false,
     disabled,
     children,
     ...props
@@ -85,6 +87,50 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       md: 'px-4 py-3 text-base gap-2',
       lg: 'px-6 py-4 text-lg gap-3',
       xl: 'px-8 py-5 text-xl gap-3',
+    }
+
+    // If rendering as child (e.g., React Router Link), clone it with button styles
+    if (asChild && React.isValidElement(children)) {
+      const child = children as React.ReactElement<any>
+      const composedClassName = cn(baseClasses, variants[variant], sizes[size], child.props.className, className)
+
+      const handleClick: React.MouseEventHandler = (e) => {
+        if (disabled || loading) {
+          e.preventDefault()
+          e.stopPropagation()
+          return
+        }
+        if (typeof (props as any).onClick === 'function') (props as any).onClick(e)
+        if (typeof child.props.onClick === 'function') child.props.onClick(e)
+      }
+
+      return React.cloneElement(
+        child,
+        {
+          className: composedClassName,
+          onClick: handleClick,
+          'aria-disabled': disabled || loading ? true : undefined,
+          tabIndex: disabled || loading ? -1 : child.props.tabIndex,
+        },
+        (
+          <>
+            {loading && (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              </div>
+            )}
+            <div className={cn('flex items-center gap-2', { 'opacity-0': loading })}>
+              {icon && iconPosition === 'left' && (
+                <span className="flex-shrink-0">{icon}</span>
+              )}
+              {child.props.children}
+              {icon && iconPosition === 'right' && (
+                <span className="flex-shrink-0">{icon}</span>
+              )}
+            </div>
+          </>
+        )
+      )
     }
 
     const ButtonComponent = animated ? motion.button : 'button'

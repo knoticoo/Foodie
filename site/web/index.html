@@ -9,10 +9,17 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
     <script>
       window.__VITE__ = window.__VITE__ || {};
-      window.__VITE__.VITE_API_BASE_URL = 'http://91.99.206.177:3000';
-      window.__VITE__.VITE_STATIC_BASE_URL = 'http://91.99.206.177:8080';
-      // Admin URL: set to your admin subdomain in production
-      window.__VITE__.VITE_ADMIN_WEB_URL = 'http://91.99.206.177:5173/';
+      (function() {
+        var host = window.location.hostname;
+        var protocol = window.location.protocol;
+        var apiPort = '3000';
+        var staticPort = '8080';
+        var adminPort = '5173';
+        window.__VITE__.VITE_API_BASE_URL = protocol + '//' + host + ':' + apiPort;
+        window.__VITE__.VITE_STATIC_BASE_URL = protocol + '//' + host + ':' + staticPort;
+        // Admin URL: set to your admin subdomain in production
+        window.__VITE__.VITE_ADMIN_WEB_URL = protocol + '//' + host + ':' + adminPort + '/';
+      })();
     </script>
   </head>
   <body>
