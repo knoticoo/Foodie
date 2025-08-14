@@ -168,7 +168,7 @@ const Statistics: React.FC<{ stats: any }> = ({ stats }) => (
 )
 
 // Recipes Module
-const RecipesModule: React.FC<{ recipes: any[], loading: boolean, onLoadRecipes: () => void }> = ({ recipes, loading, onLoadRecipes }) => (
+const RecipesModule: React.FC<{ recipes: any[], loading: boolean }> = ({ recipes, loading }) => (
   <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6 mb-6">
     <div className="flex items-center justify-between mb-4">
       <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
@@ -177,14 +177,6 @@ const RecipesModule: React.FC<{ recipes: any[], loading: boolean, onLoadRecipes:
       </h2>
       <div className="flex gap-2">
         <Button 
-          variant="secondary" 
-          icon={<RefreshCw className="w-4 h-4" />}
-          onClick={onLoadRecipes}
-          loading={loading}
-        >
-          Refresh
-        </Button>
-        <Button 
           variant="primary" 
           icon={<Plus className="w-4 h-4" />}
         >
@@ -192,7 +184,6 @@ const RecipesModule: React.FC<{ recipes: any[], loading: boolean, onLoadRecipes:
         </Button>
       </div>
     </div>
-    
     {loading ? (
       <div className="flex items-center justify-center py-8">
         <RefreshCw className="w-6 h-6 text-blue-500 animate-spin" />
@@ -232,7 +223,6 @@ const RecipesModule: React.FC<{ recipes: any[], loading: boolean, onLoadRecipes:
                             },
                             body: JSON.stringify({ title })
                           })
-                          if (res.status === 204) onLoadRecipes()
                         } catch (e) {
                           console.error('Failed to update recipe:', e)
                         }
@@ -241,13 +231,12 @@ const RecipesModule: React.FC<{ recipes: any[], loading: boolean, onLoadRecipes:
                     <Button variant="ghost" size="sm" icon={<Trash2 className="w-4 h-4" />} onClick={async () => {
                       if (!confirm('Delete this recipe?')) return
                       try {
-                        const res = await fetch(`${API}/api/admin/recipes/${recipe.id}`, {
+                        await fetch(`${API}/api/admin/recipes/${recipe.id}`, {
                           method: 'DELETE',
                           headers: {
                             ...(ADMIN_API_KEY ? { 'X-Admin-Api-Key': ADMIN_API_KEY } : {})
                           }
                         })
-                        if (res.status === 204) onLoadRecipes()
                       } catch (e) {
                         console.error('Failed to delete recipe:', e)
                       }
@@ -263,17 +252,14 @@ const RecipesModule: React.FC<{ recipes: any[], loading: boolean, onLoadRecipes:
       <div className="text-center py-8">
         <BookOpen className="w-12 h-12 text-gray-400 mx-auto mb-4" />
         <h3 className="text-lg font-semibold text-gray-700 mb-2">No recipes found</h3>
-        <p className="text-gray-500 mb-4">Start by loading recipes from the database</p>
-        <Button variant="primary" onClick={onLoadRecipes} icon={<RefreshCw className="w-4 h-4" />}>
-          Load Recipes
-        </Button>
+        <p className="text-gray-500 mb-4">Data will appear automatically.</p>
       </div>
     )}
   </div>
 )
 
 // Users Module
-const UsersModule: React.FC<{ users: any[], loading: boolean, onLoadUsers: () => void }> = ({ users, loading, onLoadUsers }) => (
+const UsersModule: React.FC<{ users: any[], loading: boolean }> = ({ users, loading }) => (
   <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
     <div className="flex items-center justify-between mb-4">
       <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
@@ -282,14 +268,6 @@ const UsersModule: React.FC<{ users: any[], loading: boolean, onLoadUsers: () =>
       </h2>
       <div className="flex gap-2">
         <Button 
-          variant="secondary" 
-          icon={<RefreshCw className="w-4 h-4" />}
-          onClick={onLoadUsers}
-          loading={loading}
-        >
-          Refresh
-        </Button>
-        <Button 
           variant="primary" 
           icon={<Plus className="w-4 h-4" />}
         >
@@ -297,7 +275,6 @@ const UsersModule: React.FC<{ users: any[], loading: boolean, onLoadUsers: () =>
         </Button>
       </div>
     </div>
-    
     {loading ? (
       <div className="flex items-center justify-center py-8">
         <RefreshCw className="w-6 h-6 text-blue-500 animate-spin" />
@@ -356,10 +333,58 @@ const UsersModule: React.FC<{ users: any[], loading: boolean, onLoadUsers: () =>
       <div className="text-center py-8">
         <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
         <h3 className="text-lg font-semibold text-gray-700 mb-2">No users found</h3>
-        <p className="text-gray-500 mb-4">Start by loading users from the database</p>
-        <Button variant="primary" onClick={onLoadUsers} icon={<RefreshCw className="w-4 h-4" />}>
-          Load Users
-        </Button>
+        <p className="text-gray-500 mb-4">Data will appear automatically.</p>
+      </div>
+    )}
+  </div>
+)
+
+// Comments Module
+const CommentsModule: React.FC<{ comments: any[], loading: boolean, onDelete: (id: string) => void }> = ({ comments, loading, onDelete }) => (
+  <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
+    <div className="flex items-center justify-between mb-4">
+      <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+        <MessageSquare className="w-5 h-5" />
+        Comments
+      </h2>
+    </div>
+    {loading ? (
+      <div className="flex items-center justify-center py-8">
+        <RefreshCw className="w-6 h-6 text-blue-500 animate-spin" />
+        <span className="ml-2 text-gray-600">Loading comments...</span>
+      </div>
+    ) : comments.length > 0 ? (
+      <div className="overflow-x-auto">
+        <table className="w-full">
+          <thead>
+            <tr className="border-b border-gray-200">
+              <th className="text-left py-3 px-4 font-semibold text-gray-900">Recipe</th>
+              <th className="text-left py-3 px-4 font-semibold text-gray-900">User</th>
+              <th className="text-left py-3 px-4 font-semibold text-gray-900">Content</th>
+              <th className="text-left py-3 px-4 font-semibold text-gray-900">Created</th>
+              <th className="text-left py-3 px-4 font-semibold text-gray-900">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {comments.map((c, index) => (
+              <tr key={c.id || index} className="border-b border-gray-100 hover:bg-gray-50">
+                <td className="py-3 px-4 text-gray-900">{c.recipe_title || c.recipe_id}</td>
+                <td className="py-3 px-4 text-gray-600">{c.email || c.user_id}</td>
+                <td className="py-3 px-4 text-gray-700 max-w-xl truncate">{c.content}</td>
+                <td className="py-3 px-4 text-gray-600 text-sm">{c.created_at ? new Date(c.created_at).toLocaleString() : ''}</td>
+                <td className="py-3 px-4">
+                  <Button variant="ghost" size="sm" icon={<Trash2 className="w-4 h-4" />} onClick={() => onDelete(c.id)} />
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    ) : (
+      <div className="text-center py-8">
+        <MessageSquare className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+        <h3 className="text-lg font-semibold text-gray-700 mb-2">No comments found</h3>
+        <p className="text-gray-500 mb-4">Data will appear automatically.</p>
       </div>
     )}
   </div>
@@ -380,24 +405,57 @@ export function App() {
   const [loading, setLoading] = useState(true)
   const [users, setUsers] = useState<any[]>([])
   const [recipes, setRecipes] = useState<any[]>([])
+  const [comments, setComments] = useState<any[]>([])
   const [usersLoading, setUsersLoading] = useState(false)
   const [recipesLoading, setRecipesLoading] = useState(false)
+  const [commentsLoading, setCommentsLoading] = useState(false)
 
-  // Load initial data
+  // Load initial data and poll periodically
+  useEffect(() => {
+    let timer: any;
+    const loadAll = async () => {
+      setRecipesLoading(true); setUsersLoading(true); setCommentsLoading(true);
+      try {
+        const [usersRes, recipesRes, commentsRes] = await Promise.all([
+          fetch(`${API}/api/admin/users`, { headers: ADMIN_API_KEY ? { 'X-Admin-Api-Key': ADMIN_API_KEY } : {} }),
+          fetch(`${API}/api/admin/recipes`, { headers: ADMIN_API_KEY ? { 'X-Admin-Api-Key': ADMIN_API_KEY } : {} }),
+          fetch(`${API}/api/admin/comments`, { headers: ADMIN_API_KEY ? { 'X-Admin-Api-Key': ADMIN_API_KEY } : {} })
+        ])
+        if (usersRes.ok) {
+          const du = await usersRes.json();
+          setUsers(Array.isArray(du) ? du : du.users || [])
+        }
+        if (recipesRes.ok) {
+          const dr = await recipesRes.json();
+          setRecipes(Array.isArray(dr) ? dr : dr.recipes || [])
+        }
+        if (commentsRes.ok) {
+          const dc = await commentsRes.json();
+          setComments(Array.isArray(dc) ? dc : dc.comments || [])
+        }
+      } catch (e) {
+      } finally {
+        setRecipesLoading(false); setUsersLoading(false); setCommentsLoading(false);
+      }
+      timer = setTimeout(loadAll, 30000);
+    }
+    loadAll();
+    return () => { if (timer) clearTimeout(timer) }
+  }, [])
+
+  const deleteComment = async (id: string) => {
+    try {
+      const res = await fetch(`${API}/api/admin/comments/${id}`, { method: 'DELETE', headers: ADMIN_API_KEY ? { 'X-Admin-Api-Key': ADMIN_API_KEY } : {} })
+      if (res.status === 204) setComments(prev => prev.filter(c => c.id !== id))
+    } catch {}
+  }
+
+  // Load initial health and stats
   useEffect(() => {
     const loadData = async () => {
       try {
-        // Load health check
         const healthRes = await fetch(`${API}/api/health`)
-        if (healthRes.ok) {
-          const healthData = await healthRes.json()
-          setHealth(healthData)
-        } else {
-          console.warn('Health check failed:', healthRes.status)
-          setHealth(null)
-        }
-
-        // Load public stats for dashboard counters
+        if (healthRes.ok) setHealth(await healthRes.json()); else setHealth(null)
         try {
           const pubStatsRes = await fetch(`${API}/api/stats`)
           if (pubStatsRes.ok) {
@@ -411,67 +469,21 @@ export function App() {
             }))
           }
         } catch {}
-
-        // Load admin stats (comments/ratings aggregates)
         try {
-          const statsRes = await fetch(`${API}/api/admin/stats`, {
-            headers: ADMIN_API_KEY ? { 'X-Admin-Api-Key': ADMIN_API_KEY } : {}
-          })
+          const statsRes = await fetch(`${API}/api/admin/stats`, { headers: ADMIN_API_KEY ? { 'X-Admin-Api-Key': ADMIN_API_KEY } : {} })
           if (statsRes.ok) {
-            const statsData = await statsRes.json()
-            setStats((s) => ({ ...s, ...statsData }))
-          } else {
-            console.warn('Admin stats failed:', statsRes.status)
+            const adminStats = await statsRes.json()
+            setStats((s) => ({ ...s, ...adminStats }))
           }
-        } catch (statsError) {
-          console.warn('Stats endpoint error:', statsError)
-        }
-      } catch (error) {
-        console.error('Failed to load data:', error)
+        } catch {}
+      } catch {
         setHealth(null)
       } finally {
         setLoading(false)
       }
     }
-
     loadData()
   }, [])
-
-  // Load users function
-  const loadUsers = async () => {
-    setUsersLoading(true)
-    try {
-      const response = await fetch(`${API}/api/admin/users`, {
-        headers: ADMIN_API_KEY ? { 'X-Admin-Api-Key': ADMIN_API_KEY } : {}
-      })
-      if (response.ok) {
-        const data = await response.json()
-        setUsers(Array.isArray(data) ? data : data.users || [])
-      }
-    } catch (error) {
-      console.error('Error loading users:', error)
-    } finally {
-      setUsersLoading(false)
-    }
-  }
-
-  // Load recipes function
-  const loadRecipes = async () => {
-    setRecipesLoading(true)
-    try {
-      const response = await fetch(`${API}/api/admin/recipes`, {
-        headers: ADMIN_API_KEY ? { 'X-Admin-Api-Key': ADMIN_API_KEY } : {}
-      })
-      if (response.ok) {
-        const data = await response.json()
-        setRecipes(Array.isArray(data) ? data : data.recipes || [])
-      }
-    } catch (error) {
-      console.error('Error loading recipes:', error)
-    } finally {
-      setRecipesLoading(false)
-    }
-  }
 
   if (loading) {
     return (
@@ -582,25 +594,11 @@ export function App() {
         {/* Page Content */}
         <main className="flex-1 p-6 overflow-auto">
           <div className="max-w-7xl mx-auto space-y-6">
-            {/* Server Status Module */}
             <ServerStatus health={health} />
-            
-            {/* Statistics Module */}
             <Statistics stats={stats} />
-            
-            {/* Recipes Module */}
-            <RecipesModule 
-              recipes={recipes} 
-              loading={recipesLoading} 
-              onLoadRecipes={loadRecipes} 
-            />
-            
-            {/* Users Module */}
-            <UsersModule 
-              users={users} 
-              loading={usersLoading} 
-              onLoadUsers={loadUsers} 
-            />
+            <RecipesModule recipes={recipes} loading={recipesLoading} />
+            <UsersModule users={users} loading={usersLoading} />
+            <CommentsModule comments={comments} loading={commentsLoading} onDelete={deleteComment} />
           </div>
         </main>
       </div>
