@@ -63,7 +63,7 @@ export async function findRecipes(filters: RecipeListFilters, limit = 20, offset
       (SELECT email FROM users u WHERE u.id = recipes.author_user_id) AS author_email,
       images->>0 AS cover_image,
       (
-        SELECT AVG(rating)::numeric(10,2)
+        SELECT COALESCE(ROUND(AVG(rating)::numeric, 2), NULL)
         FROM recipe_ratings rr
         WHERE rr.recipe_id = recipes.id
       ) AS avg_rating,

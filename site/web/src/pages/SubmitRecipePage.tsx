@@ -529,9 +529,11 @@ export const SubmitRecipePage: React.FC = () => {
                                 onChange={(e) => e.target.files && onUploadImage(e.target.files[0], idx)}
                                 className="hidden"
                               />
-                              <Button type="button" variant="outline" size="sm" as="span">
-                                <Camera className="w-4 h-4 mr-2" />
-                                {step.image ? 'Mainīt attēlu' : 'Pievienot attēlu'}
+                              <Button type="button" variant="outline" size="sm" asChild>
+                                <span>
+                                  <Camera className="w-4 h-4 mr-2" />
+                                  {step.image ? 'Mainīt attēlu' : 'Pievienot attēlu'}
+                                </span>
                               </Button>
                             </label>
                           </div>
@@ -589,9 +591,11 @@ export const SubmitRecipePage: React.FC = () => {
                         }}
                         className="hidden"
                       />
-                      <Button type="button" variant="outline" as="span">
-                        <Upload className="w-4 h-4 mr-2" />
-                        Izvēlieties failus
+                      <Button type="button" variant="outline" asChild>
+                        <span>
+                          <Upload className="w-4 h-4 mr-2" />
+                          Izvēlieties failus
+                        </span>
                       </Button>
                     </label>
                   </div>

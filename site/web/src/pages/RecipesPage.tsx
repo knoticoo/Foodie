@@ -133,7 +133,12 @@ export const RecipesPage: React.FC = () => {
       })
       
       console.log('Received data:', data) // Debug log
-      setRecipes(Array.isArray(data?.recipes) ? data.recipes : Array.isArray(data) ? data : [])
+      // Normalize server data (avg_rating may be a string from SQL numeric)
+      const items = (Array.isArray(data?.recipes) ? data.recipes : Array.isArray(data) ? data : []).map((r: any) => ({
+        ...r,
+        avg_rating: r?.avg_rating != null ? Number(r.avg_rating) : null,
+      }))
+      setRecipes(items)
     } catch (error) {
       console.error('Error in runSearch:', error)
       setRecipes([])
@@ -225,7 +230,7 @@ export const RecipesPage: React.FC = () => {
                   </span>
                 )}
               </div>
-              {recipe.avg_rating && (
+              {typeof recipe.avg_rating === 'number' && Number.isFinite(recipe.avg_rating) && (
                 <span className="flex items-center gap-1">
                   <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
                   {recipe.avg_rating.toFixed(1)}
@@ -262,14 +267,14 @@ export const RecipesPage: React.FC = () => {
                 )}
               </div>
               
-              {recipe.avg_rating && (
+              {typeof recipe.avg_rating === 'number' && Number.isFinite(recipe.avg_rating) && (
                 <div className="flex items-center gap-1">
                   {[...Array(5)].map((_, i) => (
                     <Star
                       key={i}
                       className={cn(
                         "w-3 h-3",
-                        i < Math.round(recipe.avg_rating!) 
+                        i < Math.round((recipe.avg_rating as number)) 
                           ? "fill-yellow-400 text-yellow-400" 
                           : "text-neutral-300"
                       )}
