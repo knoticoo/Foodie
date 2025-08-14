@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { listRecipes, getRecipe } from '../controllers/recipesController.js';
 import { aggregateGroceryList } from '../services/groceryService.js';
-import { createSubmittedRecipe, getRecipeById, getRecipeByShareToken } from '../services/recipesService.js';
+import { createSubmittedRecipe, getRecipeById, getRecipeByShareToken, findRecipes } from '../services/recipesService.js';
 import { scaleIngredients } from '../services/scaleService.js';
 import { requireAuth } from '../middleware/auth.js';
 import { listRecipeRatings, upsertRecipeRating, getRecipeAverageRating } from '../services/ratingsService.js';
@@ -11,6 +11,73 @@ export const recipesRouter = Router();
  
 // List recipes with filters
 recipesRouter.get('/', listRecipes);
+
+// Find recipes by budget (in major units, e.g., 10 => €10.00)
+recipesRouter.get('/budget', async (req, res) => {
+  try {
+    const budgetParam = String(req.query.budget || '').trim();
+    const fallback = Number(budgetParam.replace(/[^0-9.]/g, ''));
+    const budgetMajor = Number.isFinite(fallback) ? fallback : NaN;
+    const limitParam = Number(String(req.query.limit || '20'));
+    const limit = Number.isFinite(limitParam) ? Math.min(Math.max(limitParam, 1), 50) : 20;
+    const q = typeof req.query.q === 'string' ? req.query.q : undefined;
+
+    if (!Number.isFinite(budgetMajor) || budgetMajor <= 0) {
+      return res.status(400).json({ error: 'budget is required (number, e.g., 10)' });
+    }
+    const budgetCents = Math.round(budgetMajor * 100);
+
+    // Optional premium filter (hide premium-only for non-premium users)
+    let isPremium = false;
+    if (typeof req.headers.authorization === 'string' && req.headers.authorization.startsWith('Bearer ')) {
+      try {
+        const { getPremiumStatus } = await import('../middleware/premium.js');
+        isPremium = await getPremiumStatus(req as any);
+      } catch {}
+    }
+
+    // Pull a candidate pool (recent or by query) and estimate cost per recipe
+    const candidates = await findRecipes({ query: q, sortBy: 'new' }, 100, 0);
+
+    // Compute estimated cost for each candidate
+    const { priceGroceryItems } = await import('../services/priceService.js');
+    const results: any[] = [];
+
+    for (const r of candidates) {
+      // Exclude unapproved and premium-only if not premium
+      if (r.is_approved === false) continue;
+      if (!isPremium && r.is_premium_only === true) continue;
+
+      const full = await getRecipeById(String((r as any).id));
+      const ingredients = (full as any)?.ingredients ?? [];
+      if (!Array.isArray(ingredients) || ingredients.length === 0) continue;
+
+      const aggregated = aggregateGroceryList(ingredients);
+      const priced = await priceGroceryItems(aggregated);
+      const total = Number(priced.totalCents || 0);
+      if (total <= budgetCents && total > 0) {
+        results.push({
+          id: (r as any).id,
+          title: (r as any).title,
+          cover_image: (r as any).cover_image ?? null,
+          servings: (full as any)?.servings ?? 2,
+          estimatedCostCents: total
+        });
+      }
+      if (results.length >= limit * 2) {
+        // Enough matches collected, break early to keep response snappy
+        break;
+      }
+    }
+
+    // Sort by estimated cost ascending and cap to limit
+    results.sort((a, b) => a.estimatedCostCents - b.estimatedCostCents);
+    const sliced = results.slice(0, limit);
+    return res.json({ recipes: sliced, limit, budgetCents });
+  } catch (e) {
+    return res.status(500).json({ error: 'Failed to search by budget' });
+  }
+});
  
 // Get by share token (public link)
 recipesRouter.get('/share/:token', async (req, res) => {

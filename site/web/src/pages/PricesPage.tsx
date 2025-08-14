@@ -14,7 +14,8 @@ import {
   Gift,
   Target,
   AlertCircle,
-  Calculator
+  Calculator,
+  Wallet
 } from 'lucide-react';
 import { useAuth } from '../auth/AuthContext';
 import { Button } from '../components/ui/Button';
@@ -82,6 +83,9 @@ export const PricesPage: React.FC = () => {
   const [compare, setCompare] = useState<any[] | null>(null);
   const [status, setStatus] = useState('');
   const [loading, setLoading] = useState(false);
+  const [budget, setBudget] = useState<string>('');
+  const [budgetLoading, setBudgetLoading] = useState(false);
+  const [budgetResults, setBudgetResults] = useState<any[] | null>(null);
 
   const doCheapest = async () => {
     setLoading(true);
@@ -106,7 +110,7 @@ export const PricesPage: React.FC = () => {
   };
 
   const doCompare = async () => {
-    if (!token || !isPremium) {
+    if (!token && true /* keep button gated visually */) {
       setStatus('Nepieciešams Premium abonements');
       return;
     }
@@ -128,6 +132,31 @@ export const PricesPage: React.FC = () => {
       setStatus('Neizdevās salīdzināt cenas');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const searchBudgetRecipes = async () => {
+    const value = Number(String(budget).replace(/[^0-9.]/g, ''));
+    if (!Number.isFinite(value) || value <= 0) {
+      setStatus('Ievadiet derīgu budžetu (piem., 10)');
+      return;
+    }
+    setBudgetLoading(true);
+    setStatus('');
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/recipes/budget?budget=${encodeURIComponent(String(value))}`);
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        setBudgetResults(Array.isArray(data?.recipes) ? data.recipes : []);
+      } else {
+        setBudgetResults([]);
+        setStatus(data.error || 'Kļūda meklējot receptes pēc budžeta');
+      }
+    } catch {
+      setBudgetResults([]);
+      setStatus('Neizdevās meklēt receptes pēc budžeta');
+    } finally {
+      setBudgetLoading(false);
     }
   };
 
@@ -345,6 +374,71 @@ export const PricesPage: React.FC = () => {
                   </Card>
                 </motion.div>
               )}
+
+              {/* Budget Recipes */}
+              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+                <Card className="p-6">
+                  <CardHeader className="p-0 mb-6">
+                    <CardTitle className="flex items-center gap-2">
+                      <Wallet className="w-5 h-5" />
+                      Receptes pēc budžeta
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-0 space-y-4">
+                    <div className="flex flex-col md:flex-row gap-4">
+                      <div className="flex-1">
+                        <Input
+                          placeholder="Budžets (piem., 10)"
+                          value={budget}
+                          onChange={(e) => setBudget(e.target.value)}
+                          className="text-lg"
+                          onKeyDown={(e) => e.key === 'Enter' && searchBudgetRecipes()}
+                        />
+                      </div>
+                      <div>
+                        <Button
+                          onClick={searchBudgetRecipes}
+                          loading={budgetLoading}
+                          variant="gradient"
+                          icon={<Wallet className="w-4 h-4" />}
+                          disabled={!String(budget).trim()}
+                        >
+                          Meklēt receptes
+                        </Button>
+                      </div>
+                    </div>
+
+                    {budgetResults && (
+                      <div className="space-y-3 mt-2">
+                        {budgetResults.length === 0 ? (
+                          <div className="text-sm text-neutral-600">Nav atrastas receptes dotajam budžetam</div>
+                        ) : (
+                          budgetResults.map((r, idx) => (
+                            <div key={idx} className="flex items-center justify-between p-4 border border-neutral-200 rounded-lg hover:shadow-sm">
+                              <div className="flex items-center gap-3 min-w-0">
+                                {r.cover_image ? (
+                                  <img src={r.cover_image} alt="cover" className="w-14 h-14 rounded object-cover" />
+                                ) : (
+                                  <div className="w-14 h-14 rounded bg-neutral-100" />
+                                )}
+                                <div className="min-w-0">
+                                  <a href={`/recipes/${r.id}`} className="font-medium text-neutral-900 hover:underline truncate block">
+                                    {r.title}
+                                  </a>
+                                  <div className="text-sm text-neutral-600">Aptuvenā cena: €{((r.estimatedCostCents || 0) / 100).toFixed(2)}</div>
+                                </div>
+                              </div>
+                              <Button as="a" href={`/recipes/${r.id}`} variant="outline" size="sm">
+                                Apskatīt
+                              </Button>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </motion.div>
             </div>
 
             {/* Premium Features Sidebar */}
