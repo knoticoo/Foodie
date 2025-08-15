@@ -30,7 +30,6 @@ services:
     container_name: recipes_api
     env_file: .env
     environment:
-      ADMIN_API_KEY: ${ADMIN_API_KEY}
     depends_on:
       db:
         condition: service_healthy
@@ -57,7 +56,6 @@ services:
       args:
         VITE_API_BASE_URL: ${ADMIN_WEB_API_BASE_URL}
         VITE_STATIC_BASE_URL: ${ADMIN_WEB_STATIC_BASE_URL}
-        VITE_ADMIN_API_KEY: ${ADMIN_API_KEY}
     container_name: recipes_admin_web
     ports:
       - "5173:80"

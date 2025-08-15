@@ -4,7 +4,7 @@ export const env = {
   corsOrigin: String(process.env.CORS_ORIGIN ?? '*'),
   jwtSecret: String(process.env.JWT_SECRET || ''),
   bcryptRounds: Number(process.env.BCRYPT_ROUNDS ?? 10),
-  adminApiKey: String(process.env.ADMIN_API_KEY || ''),
+
   db: {
     host: String(process.env.DB_HOST ?? process.env.POSTGRES_HOST ?? 'db'),
     port: Number(process.env.DB_PORT ?? process.env.POSTGRES_PORT ?? 5432),

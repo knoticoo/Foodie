@@ -8,19 +8,9 @@ import { env } from '../config/env.js';
 
 export const adminRouter = Router();
 
-// Allow x-admin-api-key to bypass JWT auth check by short-circuiting
-adminRouter.use((req, res, next) => {
-  const key = req.headers['x-admin-api-key'];
-  if (typeof key === 'string' && key) {
-    // Skip requireAuth; requireAdmin will validate the key
-    return requireAdmin(req as any, res as any, next as any);
-  }
-  // Fallback: require JWT + admin role
-  return requireAuth(req as any, res as any, (err?: any) => {
-    if (err) return next(err);
-    return requireAdmin(req as any, res as any, next as any);
-  });
-});
+// Require JWT authentication and admin privileges for all admin routes
+adminRouter.use(requireAuth);
+adminRouter.use(requireAdmin);
 
 // List recipes for admin (supports status filter: all|pending|approved)
 adminRouter.get('/recipes', async (req, res) => {
