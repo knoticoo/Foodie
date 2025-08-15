@@ -303,7 +303,10 @@ export const PricesPage: React.FC = () => {
                       <p className="text-sm text-neutral-600 mb-2">{cheapest.storeName}</p>
                       <div className="flex items-center justify-between">
                         <span className="text-lg font-bold text-green-600">
-                          €{typeof cheapest.unitPriceCents === 'number' ? (cheapest.unitPriceCents / 100).toFixed(2) : 'N/A'} / {cheapest.packageBaseUnit}
+                          {typeof cheapest.unitPriceCents === 'number' 
+                            ? `€${(cheapest.unitPriceCents / 100).toFixed(2)} / ${cheapest.packageBaseUnit}`
+                            : <span className="text-amber-600">Cena nav pieejama</span>
+                          }
                         </span>
                         {cheapest.affiliateUrl && (
                           <Button as="a" href={cheapest.affiliateUrl} target="_blank" rel="noreferrer" size="sm" variant="outline">
@@ -345,7 +348,10 @@ export const PricesPage: React.FC = () => {
                           </div>
                           <div className="flex items-center gap-3">
                             <span className="font-semibold text-lg">
-                              €{typeof option.unitPriceCents === 'number' ? (option.unitPriceCents / 100).toFixed(2) : 'N/A'} / {option.packageBaseUnit}
+                              {typeof option.unitPriceCents === 'number' 
+                                ? `€${(option.unitPriceCents / 100).toFixed(2)} / ${option.packageBaseUnit}`
+                                : <span className="text-amber-600">Cena nav pieejama</span>
+                              }
                             </span>
                             {option.affiliateUrl && (
                               <Button
