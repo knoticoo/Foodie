@@ -16,33 +16,42 @@ import { ChallengesPage } from './pages/ChallengesPage';
 import { ProfilePage } from './pages/ProfilePage';
 import { Header } from './components/layout/Header';
 import { Footer } from './components/layout/Footer';
+import { ErrorBoundary } from './components/ErrorBoundary';
+import NotFoundPage from './pages/NotFoundPage';
 
 export const App: React.FC = () => {
   return (
-    <AuthProvider>
-      <BrowserRouter>
-        <div className="min-h-screen flex flex-col">
-          <Header />
-          <main className="flex-1">
-            <Routes>
-              <Route path="/" element={<HomePage />} />
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/register" element={<RegisterPage />} />
-              <Route path="/recipes" element={<RecipesPage />} />
-              <Route path="/recipes/:id" element={<RecipeDetailPage />} />
-              <Route path="/favorites" element={<FavoritesPage />} />
-              <Route path="/submit" element={<SubmitRecipePage />} />
-              <Route path="/preferences" element={<PreferencesPage />} />
-              <Route path="/recommendations" element={<RecommendationsPage />} />
-              <Route path="/prices" element={<PricesPage />} />
-              <Route path="/billing" element={<BillingPage />} />
-              <Route path="/challenges" element={<ChallengesPage />} />
-              <Route path="/profile" element={<ProfilePage />} />
-            </Routes>
-          </main>
-          <Footer />
-        </div>
-      </BrowserRouter>
-    </AuthProvider>
+    <ErrorBoundary>
+      <AuthProvider>
+        <BrowserRouter>
+          <div className="min-h-screen flex flex-col">
+            <ErrorBoundary fallback={<div className="p-4 text-center text-red-600">Header sabruka</div>}>
+              <Header />
+            </ErrorBoundary>
+            <main className="flex-1">
+              <Routes>
+                <Route path="/" element={<ErrorBoundary><HomePage /></ErrorBoundary>} />
+                <Route path="/login" element={<ErrorBoundary><LoginPage /></ErrorBoundary>} />
+                <Route path="/register" element={<ErrorBoundary><RegisterPage /></ErrorBoundary>} />
+                <Route path="/recipes" element={<ErrorBoundary><RecipesPage /></ErrorBoundary>} />
+                <Route path="/recipes/:id" element={<ErrorBoundary><RecipeDetailPage /></ErrorBoundary>} />
+                <Route path="/favorites" element={<ErrorBoundary><FavoritesPage /></ErrorBoundary>} />
+                <Route path="/submit" element={<ErrorBoundary><SubmitRecipePage /></ErrorBoundary>} />
+                <Route path="/preferences" element={<ErrorBoundary><PreferencesPage /></ErrorBoundary>} />
+                <Route path="/recommendations" element={<ErrorBoundary><RecommendationsPage /></ErrorBoundary>} />
+                <Route path="/prices" element={<ErrorBoundary><PricesPage /></ErrorBoundary>} />
+                <Route path="/billing" element={<ErrorBoundary><BillingPage /></ErrorBoundary>} />
+                <Route path="/challenges" element={<ErrorBoundary><ChallengesPage /></ErrorBoundary>} />
+                <Route path="/profile" element={<ErrorBoundary><ProfilePage /></ErrorBoundary>} />
+                <Route path="*" element={<ErrorBoundary><NotFoundPage /></ErrorBoundary>} />
+              </Routes>
+            </main>
+            <ErrorBoundary fallback={<div className="p-4 text-center text-gray-600">Footer sabruka</div>}>
+              <Footer />
+            </ErrorBoundary>
+          </div>
+        </BrowserRouter>
+      </AuthProvider>
+    </ErrorBoundary>
   );
 };
