@@ -28,7 +28,6 @@ import {
   UserPlus,
   Crown,
   Save,
-  Cancel,
   Filter,
   Download,
   Upload
@@ -43,8 +42,11 @@ const STATIC_BASE = (import.meta as any).env?.VITE_STATIC_BASE_URL ||
                     window.__VITE__?.VITE_STATIC_BASE_URL || 
                     'http://localhost:8080'
 
-const DEFAULT_ADMIN_API_KEY = (import.meta as any).env?.VITE_ADMIN_API_KEY || 
-                      window.__VITE__?.VITE_ADMIN_API_KEY || ''
+// Extract JWT token from URL parameters
+const getJWTFromURL = (): string | null => {
+  const params = new URLSearchParams(window.location.search)
+  return params.get('token')
+}
 
 const PUBLIC_WEB_BASE = (import.meta as any).env?.VITE_PUBLIC_WEB_BASE_URL || 
                         (window as any).__VITE__?.VITE_PUBLIC_WEB_BASE_URL || 
@@ -264,8 +266,8 @@ const RecipesModule: React.FC<{
   recipes: any[]
   loading: boolean
   onRefresh: () => void
-  apiKey: string
-}> = ({ recipes, loading, onRefresh, apiKey }) => {
+  jwtToken: string
+}> = ({ recipes, loading, onRefresh, jwtToken }) => {
   const [editingRecipe, setEditingRecipe] = useState<any | null>(null)
   const [filter, setFilter] = useState('all')
   const [searchTerm, setSearchTerm] = useState('')
@@ -282,7 +284,7 @@ const RecipesModule: React.FC<{
   const updateRecipe = async (id: string, updates: any) => {
     try {
       const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-      if (apiKey) headers['X-Admin-Api-Key'] = apiKey;
+      if (jwtToken) headers['Authorization'] = `Bearer ${jwtToken}`;
       
       const response = await fetch(`${API}/api/admin/recipes/${id}`, {
         method: 'PUT',
@@ -304,7 +306,7 @@ const RecipesModule: React.FC<{
     
     try {
       const headers: Record<string, string> = {};
-      if (apiKey) headers['X-Admin-Api-Key'] = apiKey;
+      if (jwtToken) headers['Authorization'] = `Bearer ${jwtToken}`;
       
       const response = await fetch(`${API}/api/admin/recipes/${id}`, {
         method: 'DELETE',
@@ -535,8 +537,8 @@ const UsersModule: React.FC<{
   users: any[]
   loading: boolean
   onRefresh: () => void
-  apiKey: string
-}> = ({ users, loading, onRefresh, apiKey }) => {
+  jwtToken: string
+}> = ({ users, loading, onRefresh, jwtToken }) => {
   const [editingUser, setEditingUser] = useState<any | null>(null)
   const [filter, setFilter] = useState('all')
   const [searchTerm, setSearchTerm] = useState('')
@@ -868,16 +870,27 @@ export function App() {
   const [usersLoading, setUsersLoading] = useState(false)
   const [recipesLoading, setRecipesLoading] = useState(false)
   const [commentsLoading, setCommentsLoading] = useState(false)
-  const [adminKey, setAdminKey] = useState<string>(localStorage.getItem('ADMIN_API_KEY') || DEFAULT_ADMIN_API_KEY || '')
+  const [jwtToken, setJwtToken] = useState<string>(getJWTFromURL() || localStorage.getItem('JWT_TOKEN') || '')
   const [apiError, setApiError] = useState<string | null>(null)
 
   useEffect(() => {
-    localStorage.setItem('ADMIN_API_KEY', adminKey || '')
-  }, [adminKey])
+    // Store JWT token in localStorage if available
+    if (jwtToken) {
+      localStorage.setItem('JWT_TOKEN', jwtToken)
+    }
+  }, [jwtToken])
+
+  useEffect(() => {
+    // Check for token in URL on initial load
+    const urlToken = getJWTFromURL()
+    if (urlToken && urlToken !== jwtToken) {
+      setJwtToken(urlToken)
+    }
+  }, [])
 
   const buildHeaders = (): HeadersInit => {
     const h: Record<string, string> = {}
-    if (adminKey) h['X-Admin-Api-Key'] = adminKey
+    if (jwtToken) h['Authorization'] = `Bearer ${jwtToken}`
     return h
   }
 
@@ -932,7 +945,7 @@ export function App() {
     }
     loadAll();
     return () => { if (timer) clearTimeout(timer) }
-  }, [adminKey])
+  }, [jwtToken])
 
   const deleteComment = async (id: string) => {
     if (!confirm('Vai tiešām vēlaties dzēst šo komentāru?')) return
@@ -989,7 +1002,7 @@ export function App() {
       }
     }
     loadData()
-  }, [adminKey])
+  }, [jwtToken])
 
   if (loading) {
     return (
@@ -1123,16 +1136,11 @@ export function App() {
         <div className="p-4 border-t border-gray-200 space-y-3">
           {!sidebarCollapsed && (
             <div className="space-y-2">
-              <label className="text-xs font-medium text-gray-600">Admin API atslēga</label>
-              <div className="relative">
-                <Key className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <input 
-                  value={adminKey} 
-                  onChange={e => setAdminKey(e.target.value)} 
-                  placeholder="Ievadiet ADMIN_API_KEY" 
-                  className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
-                  type="password"
-                />
+              <div className="flex items-center gap-2">
+                <div className={`w-2 h-2 rounded-full ${jwtToken ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                <label className="text-xs font-medium text-gray-600">
+                  {jwtToken ? 'Pieslēgts kā administrators' : 'Nav autentificēts'}
+                </label>
               </div>
               {apiError && (
                 <div className="text-xs text-red-600 p-2 bg-red-50 rounded-lg">
@@ -1219,7 +1227,7 @@ export function App() {
                 recipes={recipes} 
                 loading={recipesLoading} 
                 onRefresh={refreshData}
-                apiKey={adminKey}
+                jwtToken={jwtToken}
               />
             )}
             {activeTab === 'users' && (
@@ -1227,7 +1235,7 @@ export function App() {
                 users={users} 
                 loading={usersLoading} 
                 onRefresh={refreshData}
-                apiKey={adminKey}
+                jwtToken={jwtToken}
               />
             )}
             {activeTab === 'comments' && (

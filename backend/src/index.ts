@@ -37,7 +37,7 @@ const corsOptions: cors.CorsOptions = {
     return callback(new Error('Not allowed by CORS'));
   },
   methods: ['GET','HEAD','PUT','PATCH','POST','DELETE','OPTIONS'],
-  allowedHeaders: ['Content-Type','Authorization','X-Admin-Api-Key'],
+  allowedHeaders: ['Content-Type','Authorization'],
   credentials: false,
   preflightContinue: false,
   optionsSuccessStatus: 204
