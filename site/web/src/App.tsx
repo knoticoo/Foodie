@@ -1,23 +1,26 @@
-import React from 'react';
+import React, { lazy } from 'react';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
-import { HomePage } from './pages/HomePage';
-import { LoginPage } from './pages/LoginPage';
-import { RegisterPage } from './pages/RegisterPage';
-import { RecipesPage } from './pages/RecipesPage';
-import { RecipeDetailPage } from './pages/RecipeDetailPage';
-import { FavoritesPage } from './pages/FavoritesPage';
 import { AuthProvider } from './auth/AuthContext';
-import { SubmitRecipePage } from './pages/SubmitRecipePage';
-import { PreferencesPage } from './pages/PreferencesPage';
-import { RecommendationsPage } from './pages/RecommendationsPage';
-import { PricesPage } from './pages/PricesPage';
-import { BillingPage } from './pages/BillingPage';
-import { ChallengesPage } from './pages/ChallengesPage';
-import { ProfilePage } from './pages/ProfilePage';
 import { Header } from './components/layout/Header';
 import { Footer } from './components/layout/Footer';
 import { ErrorBoundary } from './components/ErrorBoundary';
-import NotFoundPage from './pages/NotFoundPage';
+import { LazyRoute } from './components/LazyRoute';
+
+// Lazy load pages for better performance
+const HomePage = lazy(() => import('./pages/HomePage').then(m => ({ default: m.HomePage })));
+const LoginPage = lazy(() => import('./pages/LoginPage').then(m => ({ default: m.LoginPage })));
+const RegisterPage = lazy(() => import('./pages/RegisterPage').then(m => ({ default: m.RegisterPage })));
+const RecipesPage = lazy(() => import('./pages/RecipesPage').then(m => ({ default: m.RecipesPage })));
+const RecipeDetailPage = lazy(() => import('./pages/RecipeDetailPage').then(m => ({ default: m.RecipeDetailPage })));
+const FavoritesPage = lazy(() => import('./pages/FavoritesPage').then(m => ({ default: m.FavoritesPage })));
+const SubmitRecipePage = lazy(() => import('./pages/SubmitRecipePage').then(m => ({ default: m.SubmitRecipePage })));
+const PreferencesPage = lazy(() => import('./pages/PreferencesPage').then(m => ({ default: m.PreferencesPage })));
+const RecommendationsPage = lazy(() => import('./pages/RecommendationsPage').then(m => ({ default: m.RecommendationsPage })));
+const PricesPage = lazy(() => import('./pages/PricesPage').then(m => ({ default: m.PricesPage })));
+const BillingPage = lazy(() => import('./pages/BillingPage').then(m => ({ default: m.BillingPage })));
+const ChallengesPage = lazy(() => import('./pages/ChallengesPage').then(m => ({ default: m.ChallengesPage })));
+const ProfilePage = lazy(() => import('./pages/ProfilePage').then(m => ({ default: m.ProfilePage })));
+const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
 
 export const App: React.FC = () => {
   return (
@@ -30,20 +33,20 @@ export const App: React.FC = () => {
             </ErrorBoundary>
             <main className="flex-1">
               <Routes>
-                <Route path="/" element={<ErrorBoundary><HomePage /></ErrorBoundary>} />
-                <Route path="/login" element={<ErrorBoundary><LoginPage /></ErrorBoundary>} />
-                <Route path="/register" element={<ErrorBoundary><RegisterPage /></ErrorBoundary>} />
-                <Route path="/recipes" element={<ErrorBoundary><RecipesPage /></ErrorBoundary>} />
-                <Route path="/recipes/:id" element={<ErrorBoundary><RecipeDetailPage /></ErrorBoundary>} />
-                <Route path="/favorites" element={<ErrorBoundary><FavoritesPage /></ErrorBoundary>} />
-                <Route path="/submit" element={<ErrorBoundary><SubmitRecipePage /></ErrorBoundary>} />
-                <Route path="/preferences" element={<ErrorBoundary><PreferencesPage /></ErrorBoundary>} />
-                <Route path="/recommendations" element={<ErrorBoundary><RecommendationsPage /></ErrorBoundary>} />
-                <Route path="/prices" element={<ErrorBoundary><PricesPage /></ErrorBoundary>} />
-                <Route path="/billing" element={<ErrorBoundary><BillingPage /></ErrorBoundary>} />
-                <Route path="/challenges" element={<ErrorBoundary><ChallengesPage /></ErrorBoundary>} />
-                <Route path="/profile" element={<ErrorBoundary><ProfilePage /></ErrorBoundary>} />
-                <Route path="*" element={<ErrorBoundary><NotFoundPage /></ErrorBoundary>} />
+                <Route path="/" element={<LazyRoute loadingVariant="skeleton"><HomePage /></LazyRoute>} />
+                <Route path="/login" element={<LazyRoute loadingVariant="spinner"><LoginPage /></LazyRoute>} />
+                <Route path="/register" element={<LazyRoute loadingVariant="spinner"><RegisterPage /></LazyRoute>} />
+                <Route path="/recipes" element={<LazyRoute loadingVariant="skeleton"><RecipesPage /></LazyRoute>} />
+                <Route path="/recipes/:id" element={<LazyRoute loadingVariant="skeleton"><RecipeDetailPage /></LazyRoute>} />
+                <Route path="/favorites" element={<LazyRoute loadingVariant="skeleton"><FavoritesPage /></LazyRoute>} />
+                <Route path="/submit" element={<LazyRoute loadingVariant="full"><SubmitRecipePage /></LazyRoute>} />
+                <Route path="/preferences" element={<LazyRoute loadingVariant="spinner"><PreferencesPage /></LazyRoute>} />
+                <Route path="/recommendations" element={<LazyRoute loadingVariant="skeleton"><RecommendationsPage /></LazyRoute>} />
+                <Route path="/prices" element={<LazyRoute loadingVariant="skeleton"><PricesPage /></LazyRoute>} />
+                <Route path="/billing" element={<LazyRoute loadingVariant="spinner"><BillingPage /></LazyRoute>} />
+                <Route path="/challenges" element={<LazyRoute loadingVariant="skeleton"><ChallengesPage /></LazyRoute>} />
+                <Route path="/profile" element={<LazyRoute loadingVariant="spinner"><ProfilePage /></LazyRoute>} />
+                <Route path="*" element={<LazyRoute loadingVariant="full"><NotFoundPage /></LazyRoute>} />
               </Routes>
             </main>
             <ErrorBoundary fallback={<div className="p-4 text-center text-gray-600">Footer sabruka</div>}>
