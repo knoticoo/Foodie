@@ -29,7 +29,6 @@ services:
     build: ./backend
     container_name: recipes_api
     env_file: .env
-    environment:
     depends_on:
       db:
         condition: service_healthy
