@@ -131,9 +131,10 @@ export const AdminAuth: React.FC<AdminAuthProps> = ({ onLogin, loading }) => {
           </p>
         </div>
 
-        {/* Login Form */}
+                 {/* Login Form */}
         <form onSubmit={handleSubmit} style={{ width: '100%' }}>
-          <div style={{ marginBottom: '24px' }}>
+          {/* Email Field */}
+          <div style={{ marginBottom: '20px' }}>
             <label style={{
               display: 'block',
               fontSize: '14px',
@@ -141,7 +142,7 @@ export const AdminAuth: React.FC<AdminAuthProps> = ({ onLogin, loading }) => {
               color: '#374151',
               marginBottom: '8px'
             }}>
-              Admin API Atslēga
+              E-pasta adrese
             </label>
             <div style={{ position: 'relative' }}>
               <div style={{
@@ -152,13 +153,62 @@ export const AdminAuth: React.FC<AdminAuthProps> = ({ onLogin, loading }) => {
                 color: '#9ca3af',
                 zIndex: 1
               }}>
-                <Key size={20} />
+                <Mail size={20} />
               </div>
               <input
-                type={showKey ? 'text' : 'password'}
-                value={adminKey}
-                onChange={(e) => setAdminKey(e.target.value)}
-                placeholder="Ievadiet admin API atslēgu..."
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="admin@example.com"
+                style={{
+                  width: '100%',
+                  padding: '12px 44px',
+                  border: '2px solid #e5e7eb',
+                  borderRadius: '12px',
+                  fontSize: '16px',
+                  outline: 'none',
+                  transition: 'all 0.2s ease',
+                  backgroundColor: '#ffffff'
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = '#667eea'
+                  e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = '#e5e7eb'
+                  e.target.style.boxShadow = 'none'
+                }}
+              />
+            </div>
+          </div>
+
+          {/* Password Field */}
+          <div style={{ marginBottom: '24px' }}>
+            <label style={{
+              display: 'block',
+              fontSize: '14px',
+              fontWeight: '600',
+              color: '#374151',
+              marginBottom: '8px'
+            }}>
+              Parole
+            </label>
+            <div style={{ position: 'relative' }}>
+              <div style={{
+                position: 'absolute',
+                left: '12px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                color: '#9ca3af',
+                zIndex: 1
+              }}>
+                <Lock size={20} />
+              </div>
+              <input
+                type={showPassword ? 'text' : 'password'}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Ievadiet paroli..."
                 style={{
                   width: '100%',
                   padding: '12px 48px 12px 44px',
@@ -180,7 +230,7 @@ export const AdminAuth: React.FC<AdminAuthProps> = ({ onLogin, loading }) => {
               />
               <button
                 type="button"
-                onClick={() => setShowKey(!showKey)}
+                onClick={() => setShowPassword(!showPassword)}
                 style={{
                   position: 'absolute',
                   right: '12px',
@@ -197,7 +247,7 @@ export const AdminAuth: React.FC<AdminAuthProps> = ({ onLogin, loading }) => {
                   justifyContent: 'center'
                 }}
               >
-                {showKey ? <EyeOff size={20} /> : <Eye size={20} />}
+                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
               </button>
             </div>
           </div>
@@ -223,30 +273,30 @@ export const AdminAuth: React.FC<AdminAuthProps> = ({ onLogin, loading }) => {
             </motion.div>
           )}
 
-          {/* Submit Button */}
+                     {/* Submit Button */}
           <motion.button
             type="submit"
-            disabled={!adminKey.trim() || isSubmitting || loading}
+            disabled={!email.trim() || !password.trim() || isSubmitting || loading}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             style={{
               width: '100%',
               padding: '14px',
-              background: adminKey.trim() && !isSubmitting && !loading 
+              background: email.trim() && password.trim() && !isSubmitting && !loading 
                 ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
                 : '#e5e7eb',
-              color: adminKey.trim() && !isSubmitting && !loading ? 'white' : '#9ca3af',
+              color: email.trim() && password.trim() && !isSubmitting && !loading ? 'white' : '#9ca3af',
               border: 'none',
               borderRadius: '12px',
               fontSize: '16px',
               fontWeight: '600',
-              cursor: adminKey.trim() && !isSubmitting && !loading ? 'pointer' : 'not-allowed',
+              cursor: email.trim() && password.trim() && !isSubmitting && !loading ? 'pointer' : 'not-allowed',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               gap: '8px',
               transition: 'all 0.2s ease',
-              boxShadow: adminKey.trim() && !isSubmitting && !loading 
+              boxShadow: email.trim() && password.trim() && !isSubmitting && !loading 
                 ? '0 4px 15px rgba(102, 126, 234, 0.3)' 
                 : 'none'
             }}
@@ -261,12 +311,12 @@ export const AdminAuth: React.FC<AdminAuthProps> = ({ onLogin, loading }) => {
                   borderRadius: '50%',
                   animation: 'spin 1s linear infinite'
                 }} />
-                Pārbauda...
+                Autentificē...
               </>
             ) : (
               <>
                 <LogIn size={20} />
-                Pieslēgties
+                Pieslēgties Admin Panelī
               </>
             )}
           </motion.button>
@@ -285,14 +335,14 @@ export const AdminAuth: React.FC<AdminAuthProps> = ({ onLogin, loading }) => {
             color: '#6b7280',
             margin: '0 0 8px 0'
           }}>
-            Nav admin atslēgas?
+            Nepieciešamas administratora tiesības
           </p>
           <p style={{
             fontSize: '12px',
             color: '#9ca3af',
             margin: '0'
           }}>
-            Sazinieties ar sistēmas administratoru, lai iegūtu piekļuves atslēgu.
+            Lietojiet tos pašus piekļuves datus, kurus izmantojat galvenajā vietnē. Ja jums nav administratora tiesību, sazinieties ar sistēmas administratoru.
           </p>
         </div>
       </motion.div>
