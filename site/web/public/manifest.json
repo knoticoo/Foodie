@@ -1,165 +1,136 @@
 {
-  "name": "Virtuves Māksla - Receptes un Kulinārijas Padomi",
+  "name": "Virtuves Māksla - Kulinārijas Platforma",
   "short_name": "Virtuves Māksla",
-  "description": "Atklājiet garšīgas receptes, ietaupiet uz pārtikas produktiem un kļūstiet par labāku pavāru ar Virtuves Māksla.",
-  "start_url": "/?utm_source=pwa",
-  "scope": "/",
+  "description": "Latvijas vadošā kulinārijas platforma ar vairāk nekā 10,000 receptēm",
+  "start_url": "/",
   "display": "standalone",
-  "orientation": "portrait-primary",
-  "theme_color": "#f97316",
   "background_color": "#ffffff",
+  "theme_color": "#3b82f6",
+  "orientation": "portrait-primary",
+  "scope": "/",
   "lang": "lv",
-  "dir": "ltr",
-  "categories": ["food", "lifestyle", "productivity"],
+  "categories": ["food", "lifestyle", "cooking"],
   "icons": [
     {
-      "src": "/images/icon-72x72.png",
+      "src": "/icons/icon-72x72.png",
       "sizes": "72x72",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "maskable any"
     },
     {
-      "src": "/images/icon-96x96.png",
+      "src": "/icons/icon-96x96.png",
       "sizes": "96x96",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "maskable any"
     },
     {
-      "src": "/images/icon-128x128.png",
+      "src": "/icons/icon-128x128.png",
       "sizes": "128x128",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "maskable any"
     },
     {
-      "src": "/images/icon-144x144.png",
+      "src": "/icons/icon-144x144.png",
       "sizes": "144x144",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "maskable any"
     },
     {
-      "src": "/images/icon-152x152.png",
+      "src": "/icons/icon-152x152.png",
       "sizes": "152x152",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "maskable any"
     },
     {
-      "src": "/images/icon-192x192.png",
+      "src": "/icons/icon-192x192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "maskable any"
     },
     {
-      "src": "/images/icon-384x384.png",
+      "src": "/icons/icon-384x384.png",
       "sizes": "384x384",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "maskable any"
     },
     {
-      "src": "/images/icon-512x512.png",
+      "src": "/icons/icon-512x512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "maskable any"
     }
   ],
   "shortcuts": [
     {
-      "name": "Meklēt receptes",
-      "short_name": "Meklēt",
-      "description": "Ātri atrodiet vēlamos ēdienus",
-      "url": "/recipes?utm_source=pwa_shortcut",
+      "name": "Jaunākās receptes",
+      "short_name": "Receptes",
+      "description": "Apskatīt jaunākās receptes",
+      "url": "/recipes",
       "icons": [
         {
-          "src": "/images/shortcut-search.png",
-          "sizes": "96x96",
-          "type": "image/png"
+          "src": "/icons/icon-96x96.png",
+          "sizes": "96x96"
         }
       ]
     },
     {
-      "name": "Mani favorīti",
-      "short_name": "Favorīti",
-      "description": "Apskatiet saglabātās receptes",
-      "url": "/favorites?utm_source=pwa_shortcut",
+      "name": "Manas iecienītās",
+      "short_name": "Iecienītās",
+      "description": "Apskatīt saglabātās receptes",
+      "url": "/favorites",
       "icons": [
         {
-          "src": "/images/shortcut-favorites.png",
-          "sizes": "96x96",
-          "type": "image/png"
+          "src": "/icons/icon-96x96.png",
+          "sizes": "96x96"
         }
       ]
     },
     {
       "name": "Pievienot recepti",
       "short_name": "Pievienot",
-      "description": "Dalieties ar savu recepti",
-      "url": "/submit?utm_source=pwa_shortcut",
+      "description": "Dalīties ar jaunu recepti",
+      "url": "/submit",
       "icons": [
         {
-          "src": "/images/shortcut-add.png",
-          "sizes": "96x96",
-          "type": "image/png"
+          "src": "/icons/icon-96x96.png",
+          "sizes": "96x96"
         }
       ]
     },
     {
-      "name": "Produktu cenas",
-      "short_name": "Cenas",
-      "description": "Aktuālās pārtikas cenas",
-      "url": "/prices?utm_source=pwa_shortcut",
+      "name": "Mans profils",
+      "short_name": "Profils",
+      "description": "Apskatīt savu profilu",
+      "url": "/profile",
       "icons": [
         {
-          "src": "/images/shortcut-prices.png",
-          "sizes": "96x96",
-          "type": "image/png"
+          "src": "/icons/icon-96x96.png",
+          "sizes": "96x96"
         }
       ]
     }
   ],
   "screenshots": [
     {
-      "src": "/images/screenshot-wide.png",
-      "sizes": "2560x1440",
-      "type": "image/png",
-      "form_factor": "wide",
-      "label": "Receptu pārlūkošana un meklēšana"
-    },
-    {
-      "src": "/images/screenshot-narrow.png",
-      "sizes": "828x1792",
+      "src": "/screenshots/home-mobile.png",
+      "sizes": "390x844",
       "type": "image/png",
       "form_factor": "narrow",
-      "label": "Mobilo ierīču lietotāju saskarne"
-    }
-  ],
-  "related_applications": [
-    {
-      "platform": "play",
-      "url": "https://play.google.com/store/apps/details?id=lv.virtuves.maksla",
-      "id": "lv.virtuves.maksla"
+      "label": "Sākuma lapa mobilajā ierīcē"
     },
     {
-      "platform": "itunes",
-      "url": "https://apps.apple.com/lv/app/virtuves-maksla/id123456789"
-    }
-  ],
-  "prefer_related_applications": false,
-  "features": [
-    "CrossOriginIsolated",
-    "WebAssembly"
-  ],
-  "file_handlers": [
+      "src": "/screenshots/recipes-mobile.png",
+      "sizes": "390x844",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Recepšu katalogs mobilajā ierīcē"
+    },
     {
-      "action": "/import-recipe",
-      "accept": {
-        "application/json": [".recipe.json"],
-        "text/plain": [".recipe.txt"]
-      }
-    }
-  ],
-  "protocol_handlers": [
-    {
-      "protocol": "web+recipe",
-      "url": "/import?url=%s"
+      "src": "/screenshots/home-desktop.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Sākuma lapa datorā"
     }
   ],
   "share_target": {
@@ -168,20 +139,14 @@
     "enctype": "multipart/form-data",
     "params": {
       "title": "title",
-      "text": "text",
+      "text": "description",
       "url": "url",
       "files": [
         {
-          "name": "images",
+          "name": "image",
           "accept": ["image/*"]
         }
       ]
     }
-  },
-  "edge_side_panel": {
-    "preferred_width": 400
-  },
-  "launch_handler": {
-    "client_mode": ["navigate-existing", "navigate-new"]
   }
 }

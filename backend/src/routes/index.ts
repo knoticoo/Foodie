@@ -33,4 +33,5 @@ router.use('/ads', adsRouter);
 router.use('/billing', billingRouter);
 router.use('/admin', adminRouter);
 router.use('/profile', profileRouter);
+router.use('/user', profileRouter); // Add user endpoints as alias to profile
 router.use('/stats', statsRouter);

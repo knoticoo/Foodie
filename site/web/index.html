@@ -3,9 +3,30 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#3b82f6" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Virtuves Māksla" />
+    <meta name="msapplication-TileColor" content="#3b82f6" />
+    <meta name="msapplication-tap-highlight" content="no" />
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json" />
+    
+    <!-- Apple Touch Icons -->
+    <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
+    <link rel="apple-touch-icon" sizes="152x152" href="/icons/icon-152x152.png" />
+    <link rel="apple-touch-icon" sizes="192x192" href="/icons/icon-192x192.png" />
+    
+    <!-- SEO Meta Tags -->
     <meta name="description" content="Virtuves Māksla - Latviešu receptes un kulinārijas māksla. Atklājiet tradicionālās un mūsdienīgas receptes ar cenu aprēķiniem un iepirkumu sarakstiem." />
     <meta name="keywords" content="latviešu receptes, kulinārija, virtuves māksla, ēdienu gatavošana, cenas, iepirkumu saraksts" />
     <title>Virtuves Māksla - Latviešu Receptes</title>
+    
+    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
@@ -27,5 +48,132 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    
+    <!-- Service Worker Registration -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js')
+            .then((registration) => {
+              console.log('SW registered: ', registration);
+              
+              // Check for updates
+              registration.addEventListener('updatefound', () => {
+                const newWorker = registration.installing;
+                if (newWorker) {
+                  newWorker.addEventListener('statechange', () => {
+                    if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                      // New content is available, show update notification
+                      if (window.confirm('Ir pieejama jauna versija. Vai vēlaties atjaunot?')) {
+                        window.location.reload();
+                      }
+                    }
+                  });
+                }
+              });
+            })
+            .catch((registrationError) => {
+              console.log('SW registration failed: ', registrationError);
+            });
+        });
+      }
+      
+      // PWA Install prompt
+      let deferredPrompt;
+      
+      window.addEventListener('beforeinstallprompt', (e) => {
+        // Prevent Chrome 67 and earlier from automatically showing the prompt
+        e.preventDefault();
+        // Stash the event so it can be triggered later
+        deferredPrompt = e;
+        
+        // Show install button or banner
+        showInstallPrompt();
+      });
+      
+      function showInstallPrompt() {
+        // Create install banner
+        const installBanner = document.createElement('div');
+        installBanner.id = 'install-banner';
+        installBanner.innerHTML = `
+          <div style="
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 16px;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            max-width: 400px;
+            margin: 0 auto;
+          ">
+            <div style="flex: 1;">
+              <div style="font-weight: 600; margin-bottom: 4px;">📱 Instalēt aplikāciju</div>
+              <div style="font-size: 14px; opacity: 0.9;">Pievienojiet Virtuves Mākslu savam sākuma ekrānam</div>
+            </div>
+            <div style="display: flex; gap: 8px;">
+              <button onclick="installApp()" style="
+                background: rgba(255,255,255,0.2);
+                border: none;
+                color: white;
+                padding: 8px 16px;
+                border-radius: 8px;
+                cursor: pointer;
+                font-weight: 500;
+              ">Instalēt</button>
+              <button onclick="dismissInstall()" style="
+                background: rgba(255,255,255,0.1);
+                border: none;
+                color: white;
+                padding: 8px 12px;
+                border-radius: 8px;
+                cursor: pointer;
+              ">✕</button>
+            </div>
+          </div>
+        `;
+        
+        // Add to page if not already shown
+        if (!document.getElementById('install-banner')) {
+          document.body.appendChild(installBanner);
+        }
+      }
+      
+      window.installApp = function() {
+        if (deferredPrompt) {
+          // Show the prompt
+          deferredPrompt.prompt();
+          // Wait for the user to respond to the prompt
+          deferredPrompt.userChoice.then((choiceResult) => {
+            if (choiceResult.outcome === 'accepted') {
+              console.log('User accepted the install prompt');
+            } else {
+              console.log('User dismissed the install prompt');
+            }
+            deferredPrompt = null;
+          });
+        }
+        dismissInstall();
+      };
+      
+      window.dismissInstall = function() {
+        const banner = document.getElementById('install-banner');
+        if (banner) {
+          banner.remove();
+        }
+      };
+      
+      // Track app install
+      window.addEventListener('appinstalled', (evt) => {
+        console.log('App was installed');
+        dismissInstall();
+      });
+    </script>
   </body>
 </html>

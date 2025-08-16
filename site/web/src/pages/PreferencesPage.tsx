@@ -37,19 +37,47 @@ export const PreferencesPage: React.FC = () => {
   };
 
   return (
-    <div className="max-w-xl">
-      <h1 className="text-xl font-semibold mb-4">Preferences</h1>
-      <div className="space-y-4">
-        <div>
-          <label className="block text-sm mb-1">Diet preferences (comma-separated)</label>
-          <input className="w-full border rounded px-3 py-2" value={dietPreferences} onChange={e => setDietPreferences(e.target.value)} />
+    <div className="max-w-2xl mx-auto p-6">
+      <div className="bg-white rounded-2xl shadow-lg p-8">
+        <h1 className="text-3xl font-bold text-gray-900 mb-8 text-center">Preferences</h1>
+        <div className="space-y-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Diet preferences (comma-separated)
+            </label>
+            <input 
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-gray-900 placeholder-gray-500" 
+              value={dietPreferences} 
+              onChange={e => setDietPreferences(e.target.value)}
+              placeholder="e.g., vegetarian, gluten-free, dairy-free"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Budget (cents)
+            </label>
+            <input 
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-gray-900 placeholder-gray-500" 
+              value={budgetCents} 
+              onChange={e => setBudgetCents(e.target.value)}
+              placeholder="e.g., 1000 (for $10.00)"
+              type="number"
+            />
+          </div>
+          <div className="flex gap-4 pt-4">
+            <button 
+              onClick={onSave} 
+              className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl"
+            >
+              Save Preferences
+            </button>
+          </div>
+          {status && (
+            <div className="text-sm text-center p-3 bg-green-50 text-green-700 rounded-xl border border-green-200">
+              {status}
+            </div>
+          )}
         </div>
-        <div>
-          <label className="block text-sm mb-1">Budget (cents)</label>
-          <input className="w-full border rounded px-3 py-2" value={budgetCents} onChange={e => setBudgetCents(e.target.value)} />
-        </div>
-        <button onClick={onSave} className="btn btn-primary">Save</button>
-        <div className="text-sm text-gray-700">{status}</div>
       </div>
     </div>
   );

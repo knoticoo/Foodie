@@ -185,11 +185,42 @@ export const Header: React.FC = () => {
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => setAccountOpen(!accountOpen)}
-                  className="flex items-center gap-3 p-2 rounded-xl hover:bg-neutral-100 transition-colors group"
+                  className="flex items-center gap-3 p-2 rounded-xl hover:bg-neutral-100 transition-colors group relative"
                 >
-                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary-500 to-secondary-500 flex items-center justify-center">
-                    <User className="w-4 h-4 text-white" />
+                  <div className="relative">
+                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary-500 to-secondary-500 flex items-center justify-center">
+                      <User className="w-4 h-4 text-white" />
+                    </div>
+                    
+                    {/* User Badges */}
+                    <div className="absolute -top-1 -right-1 flex gap-1">
+                      {isAdmin && (
+                        <div className="w-4 h-4 bg-red-600 rounded-full flex items-center justify-center" title="Administrator">
+                          <Shield className="w-2.5 h-2.5 text-white" />
+                        </div>
+                      )}
+                      {isPremium && (
+                        <div className="w-4 h-4 bg-yellow-500 rounded-full flex items-center justify-center" title="Premium Member">
+                          <Crown className="w-2.5 h-2.5 text-white" />
+                        </div>
+                      )}
+                    </div>
                   </div>
+                  
+                  <div className="hidden sm:block">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium text-neutral-700">{userName || 'Profile'}</span>
+                      <div className="flex gap-1">
+                        {isAdmin && (
+                          <span className="px-2 py-0.5 bg-red-100 text-red-700 text-xs rounded-full font-medium">Admin</span>
+                        )}
+                        {isPremium && (
+                          <span className="px-2 py-0.5 bg-yellow-100 text-yellow-700 text-xs rounded-full font-medium">Premium</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  
                   <motion.div
                     animate={{ rotate: accountOpen ? 180 : 0 }}
                     transition={{ duration: 0.2 }}
@@ -210,11 +241,40 @@ export const Header: React.FC = () => {
                     >
                       <div className="p-4 border-b border-neutral-100 bg-gradient-to-r from-primary-50 to-secondary-50">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary-500 to-secondary-500 flex items-center justify-center">
-                            <User className="w-5 h-5 text-white" />
+                          <div className="relative">
+                            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary-500 to-secondary-500 flex items-center justify-center">
+                              <User className="w-5 h-5 text-white" />
+                            </div>
+                            
+                            {/* Small badges on profile picture */}
+                            <div className="absolute -top-1 -right-1 flex gap-1">
+                              {isAdmin && (
+                                <div className="w-4 h-4 bg-red-600 rounded-full flex items-center justify-center">
+                                  <Shield className="w-2.5 h-2.5 text-white" />
+                                </div>
+                              )}
+                              {isPremium && (
+                                <div className="w-4 h-4 bg-yellow-500 rounded-full flex items-center justify-center">
+                                  <Crown className="w-2.5 h-2.5 text-white" />
+                                </div>
+                              )}
+                            </div>
                           </div>
-                          <div>
-                            <p className="font-semibold text-neutral-900">{userName || 'Mans Konts'}</p>
+                          
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <p className="font-semibold text-neutral-900">{userName || 'Mans Konts'}</p>
+                              
+                              {/* Status badges */}
+                              <div className="flex gap-1">
+                                {isAdmin && (
+                                  <span className="px-1.5 py-0.5 bg-red-100 text-red-700 text-xs rounded-md font-medium">Admin</span>
+                                )}
+                                {isPremium && (
+                                  <span className="px-1.5 py-0.5 bg-yellow-100 text-yellow-700 text-xs rounded-md font-medium">Premium</span>
+                                )}
+                              </div>
+                            </div>
                             <p className="text-sm text-neutral-600">{userEmail || 'Pārvaldīt profilu'}</p>
                           </div>
                         </div>
