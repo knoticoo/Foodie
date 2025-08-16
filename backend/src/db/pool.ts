@@ -1,6 +1,7 @@
 import pkg from 'pg';
 const { Pool } = pkg;
 import { env } from '../config/env.js';
+import { jsonStorage } from './jsonStorage.js';
 
 // Mock in-memory storage for testing without PostgreSQL
 class MockDatabase {
@@ -258,33 +259,18 @@ class MockDatabase {
   }
 }
 
-// Try to use real PostgreSQL, fallback to mock if connection fails
+// Use JSON storage for immediate production deployment
 let pgPool: any;
 
-try {
-  console.log(`[db] Attempting PostgreSQL connection to ${env.db.host}:${env.db.port}/${env.db.database}`);
-  pgPool = new Pool({
-    host: env.db.host,
-    port: env.db.port,
-    user: env.db.user,
-    password: env.db.password,
-    database: env.db.database,
-    max: 10,
-    idleTimeoutMillis: 30000,
-    connectionTimeoutMillis: 2000
-  });
+console.log('[db] Using JSON storage for production deployment');
+pgPool = jsonStorage;
 
-  pgPool.on('error', (err: any) => {
-    console.warn('[db] PostgreSQL connection error:', err.message);
-    console.warn('[db] Will fallback to mock database');
-  });
-
-  console.log('[db] PostgreSQL pool created successfully');
-} catch (error) {
-  console.warn('[db] Failed to create PostgreSQL pool:', error);
-  console.log('[db] Using mock database');
-  pgPool = new MockDatabase();
-}
+// Initialize the JSON storage
+jsonStorage.init().then(() => {
+  console.log('[db] JSON storage initialized successfully');
+}).catch((error) => {
+  console.error('[db] JSON storage initialization failed:', error);
+});
 
 export { pgPool };
 
@@ -294,10 +280,9 @@ export async function assertDatabaseConnectionOk(): Promise<void> {
     if (!result?.rows?.[0]?.ok) {
       throw new Error('Database connection failed');
     }
-    console.log('[db] Database connection verified');
+    console.log('[db] JSON storage connection verified');
   } catch (error) {
-    console.warn('[db] Database connection failed, using mock database:', error);
-    // Fallback to mock database
-    pgPool = new MockDatabase();
+    console.warn('[db] JSON storage connection failed:', error);
+    throw error;
   }
 }

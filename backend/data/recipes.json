@@ -1,0 +1,504 @@
+[
+  {
+    "id": "1",
+    "title": "Tradicionālais Latviešu Borščs",
+    "description": "Bagātīgs un sātīgs borščs ar bieti, gaļu un krēmu. Klasiska latviešu virtuve ar mūsdienu pieskārienu.",
+    "author_name": "Māris Zvirbulis",
+    "author_email": "pavars@virtuves-maksla.lv",
+    "user_id": 2,
+    "is_approved": true,
+    "average_rating": 4.8,
+    "rating_count": 24,
+    "favorite_count": 18,
+    "comment_count": 8,
+    "servings": 6,
+    "prep_time_minutes": 30,
+    "cook_time_minutes": 120,
+    "total_time_minutes": 150,
+    "difficulty": "medium",
+    "category": "dinner",
+    "cost_cents": 850,
+    "cover_image": "/images/borscht.jpg",
+    "images": [
+      "/images/borscht.jpg",
+      "/images/borscht-prep.jpg"
+    ],
+    "ingredients": [
+      {
+        "name": "bietes",
+        "quantity": 500,
+        "unit": "g"
+      },
+      {
+        "name": "liellopu gaļa",
+        "quantity": 400,
+        "unit": "g"
+      },
+      {
+        "name": "kāposti",
+        "quantity": 300,
+        "unit": "g"
+      },
+      {
+        "name": "burkāni",
+        "quantity": 200,
+        "unit": "g"
+      },
+      {
+        "name": "sīpoli",
+        "quantity": 2,
+        "unit": "gab"
+      },
+      {
+        "name": "ķiploki",
+        "quantity": 4,
+        "unit": "daiviņas"
+      },
+      {
+        "name": "lauru lapas",
+        "quantity": 3,
+        "unit": "gab"
+      },
+      {
+        "name": "krējums",
+        "quantity": 200,
+        "unit": "ml"
+      }
+    ],
+    "steps": [
+      {
+        "step": 1,
+        "text": "Nomizojiet un sarīvējiet bietes uz rupjās rīves"
+      },
+      {
+        "step": 2,
+        "text": "Uzvāriet gaļu aukstā ūdenī ar lauru lapām 1.5 stundas"
+      },
+      {
+        "step": 3,
+        "text": "Sagrieziet dārzeņus un pievienojiet buljona"
+      },
+      {
+        "step": 4,
+        "text": "Vāriet vēl 45 minūtes līdz dārzeņi mīksti"
+      },
+      {
+        "step": 5,
+        "text": "Pievienojiet krējumu un garšojiet"
+      }
+    ],
+    "diet": [
+      "traditional",
+      "comfort-food"
+    ],
+    "nutrition": {
+      "calories": 320,
+      "protein_g": 22,
+      "carbs_g": 28,
+      "fat_g": 14
+    },
+    "created_at": "2025-08-11T09:48:37.575Z",
+    "is_premium_only": false,
+    "view_count": 156
+  },
+  {
+    "id": "2",
+    "title": "Veģetārā Quinoa Buddha Bļoda",
+    "description": "Krāsaina un barības vērtīga bļoda ar quinoa, avokado un tahini mērci. Ideāla veselīgai uzturei.",
+    "author_name": "Admin User",
+    "author_email": "admin@virtuves-maksla.lv",
+    "user_id": 1,
+    "is_approved": true,
+    "average_rating": 4.9,
+    "rating_count": 32,
+    "favorite_count": 28,
+    "comment_count": 12,
+    "servings": 2,
+    "prep_time_minutes": 20,
+    "cook_time_minutes": 25,
+    "total_time_minutes": 45,
+    "difficulty": "easy",
+    "category": "lunch",
+    "cost_cents": 650,
+    "cover_image": "/images/buddha-bowl.jpg",
+    "images": [
+      "/images/buddha-bowl.jpg",
+      "/images/quinoa-prep.jpg"
+    ],
+    "ingredients": [
+      {
+        "name": "quinoa",
+        "quantity": 150,
+        "unit": "g"
+      },
+      {
+        "name": "avokado",
+        "quantity": 1,
+        "unit": "gab"
+      },
+      {
+        "name": "ķiršu tomāti",
+        "quantity": 200,
+        "unit": "g"
+      },
+      {
+        "name": "gurķis",
+        "quantity": 1,
+        "unit": "gab"
+      },
+      {
+        "name": "rūgtais salāts",
+        "quantity": 100,
+        "unit": "g"
+      },
+      {
+        "name": "tahini",
+        "quantity": 3,
+        "unit": "ēd. k."
+      },
+      {
+        "name": "citrona sula",
+        "quantity": 2,
+        "unit": "ēd. k."
+      },
+      {
+        "name": "olīveļļa",
+        "quantity": 2,
+        "unit": "ēd. k."
+      }
+    ],
+    "steps": [
+      {
+        "step": 1,
+        "text": "Izvāriet quinoa pēc iepakojuma instrukcijas"
+      },
+      {
+        "step": 2,
+        "text": "Sagrieziet avokado, tomātus un gurķi"
+      },
+      {
+        "step": 3,
+        "text": "Pagatavojiet tahini mērci ar citrona sulu"
+      },
+      {
+        "step": 4,
+        "text": "Saliktiet visas sastāvdaļas bļodā"
+      },
+      {
+        "step": 5,
+        "text": "Aplējiet ar mērci un pasniegiet"
+      }
+    ],
+    "diet": [
+      "vegetarian",
+      "vegan",
+      "healthy",
+      "gluten-free"
+    ],
+    "nutrition": {
+      "calories": 420,
+      "protein_g": 16,
+      "carbs_g": 45,
+      "fat_g": 22
+    },
+    "created_at": "2025-08-13T09:48:37.575Z",
+    "is_premium_only": false,
+    "view_count": 89
+  },
+  {
+    "id": "3",
+    "title": "Mājas Rudzu Maize ar Sēklām",
+    "description": "Svaigi cepta, aromātiska rudzu maize ar saulespuķu un ķirbju sēklām. Perfekta brokastīm.",
+    "author_name": "Māris Zvirbulis",
+    "author_email": "pavars@virtuves-maksla.lv",
+    "user_id": 2,
+    "is_approved": true,
+    "average_rating": 4.6,
+    "rating_count": 18,
+    "favorite_count": 15,
+    "comment_count": 6,
+    "servings": 12,
+    "prep_time_minutes": 30,
+    "cook_time_minutes": 50,
+    "total_time_minutes": 80,
+    "difficulty": "medium",
+    "category": "breakfast",
+    "cost_cents": 480,
+    "cover_image": "/images/rye-bread.jpg",
+    "images": [
+      "/images/rye-bread.jpg",
+      "/images/bread-baking.jpg"
+    ],
+    "ingredients": [
+      {
+        "name": "rudzu milti",
+        "quantity": 300,
+        "unit": "g"
+      },
+      {
+        "name": "kviešu milti",
+        "quantity": 200,
+        "unit": "g"
+      },
+      {
+        "name": "sausais raugs",
+        "quantity": 7,
+        "unit": "g"
+      },
+      {
+        "name": "sāls",
+        "quantity": 10,
+        "unit": "g"
+      },
+      {
+        "name": "ūdens",
+        "quantity": 350,
+        "unit": "ml"
+      },
+      {
+        "name": "medus",
+        "quantity": 2,
+        "unit": "ēd. k."
+      },
+      {
+        "name": "saulespuķu sēklas",
+        "quantity": 50,
+        "unit": "g"
+      },
+      {
+        "name": "ķirbju sēklas",
+        "quantity": 30,
+        "unit": "g"
+      }
+    ],
+    "steps": [
+      {
+        "step": 1,
+        "text": "Samaisiet sausās sastāvdaļas lielā bļodā"
+      },
+      {
+        "step": 2,
+        "text": "Pievienojiet siltu ūdeni ar medu"
+      },
+      {
+        "step": 3,
+        "text": "Izmīciet mīklu 10 minūtes"
+      },
+      {
+        "step": 4,
+        "text": "Ļaujiet uzbriest siltā vietā 1 stundu"
+      },
+      {
+        "step": 5,
+        "text": "Veidojiet klaipu un cepiet 50 min 200°C"
+      }
+    ],
+    "diet": [
+      "traditional",
+      "high-fiber"
+    ],
+    "nutrition": {
+      "calories": 180,
+      "protein_g": 6,
+      "carbs_g": 35,
+      "fat_g": 3
+    },
+    "created_at": "2025-08-09T09:48:37.575Z",
+    "is_premium_only": false,
+    "view_count": 67
+  },
+  {
+    "id": "4",
+    "title": "Gourmet Lasis ar Dilles Mērci",
+    "description": "Elegants lasis ar krēmīgu dilles mērci. Premium recepte īpašiem gadījumiem.",
+    "author_name": "Admin User",
+    "author_email": "admin@virtuves-maksla.lv",
+    "user_id": 1,
+    "is_approved": true,
+    "average_rating": 4.9,
+    "rating_count": 15,
+    "favorite_count": 22,
+    "comment_count": 5,
+    "servings": 4,
+    "prep_time_minutes": 15,
+    "cook_time_minutes": 20,
+    "total_time_minutes": 35,
+    "difficulty": "hard",
+    "category": "dinner",
+    "cost_cents": 1850,
+    "cover_image": "/images/salmon-dill.jpg",
+    "images": [
+      "/images/salmon-dill.jpg",
+      "/images/salmon-prep.jpg"
+    ],
+    "ingredients": [
+      {
+        "name": "lasis (fileja)",
+        "quantity": 600,
+        "unit": "g"
+      },
+      {
+        "name": "krējums",
+        "quantity": 200,
+        "unit": "ml"
+      },
+      {
+        "name": "svaigs dilles",
+        "quantity": 50,
+        "unit": "g"
+      },
+      {
+        "name": "baltais vīns",
+        "quantity": 100,
+        "unit": "ml"
+      },
+      {
+        "name": "citrona sula",
+        "quantity": 2,
+        "unit": "ēd. k."
+      },
+      {
+        "name": "sviests",
+        "quantity": 30,
+        "unit": "g"
+      },
+      {
+        "name": "sāls",
+        "quantity": 1,
+        "unit": "t. k."
+      },
+      {
+        "name": "balts pipars",
+        "quantity": 1,
+        "unit": "t. k."
+      }
+    ],
+    "steps": [
+      {
+        "step": 1,
+        "text": "Sagatavojiet lasi - notīriet un sagrieziet porcijās"
+      },
+      {
+        "step": 2,
+        "text": "Uzkarsējiet pannu ar sviestu"
+      },
+      {
+        "step": 3,
+        "text": "Apcepiet lasi no abām pusēm 3-4 minūtes"
+      },
+      {
+        "step": 4,
+        "text": "Pagatavojiet mērci ar krējumu un dillēm"
+      },
+      {
+        "step": 5,
+        "text": "Pasniegiet ar mērci un citronu"
+      }
+    ],
+    "diet": [
+      "premium",
+      "high-protein",
+      "low-carb"
+    ],
+    "nutrition": {
+      "calories": 380,
+      "protein_g": 32,
+      "carbs_g": 4,
+      "fat_g": 25
+    },
+    "created_at": "2025-08-14T09:48:37.575Z",
+    "is_premium_only": true,
+    "view_count": 234
+  },
+  {
+    "id": "5",
+    "title": "Ātrie Olu Mafini ar Siera",
+    "description": "Ātri un vienkārši brokastis. Ideāli aizņemtam rītam.",
+    "author_name": "Māris Zvirbulis",
+    "author_email": "pavars@virtuves-maksla.lv",
+    "user_id": 2,
+    "is_approved": true,
+    "average_rating": 4.3,
+    "rating_count": 28,
+    "favorite_count": 12,
+    "comment_count": 9,
+    "servings": 6,
+    "prep_time_minutes": 10,
+    "cook_time_minutes": 15,
+    "total_time_minutes": 25,
+    "difficulty": "easy",
+    "category": "breakfast",
+    "cost_cents": 320,
+    "cover_image": "/images/egg-muffins.jpg",
+    "images": [
+      "/images/egg-muffins.jpg"
+    ],
+    "ingredients": [
+      {
+        "name": "olas",
+        "quantity": 8,
+        "unit": "gab"
+      },
+      {
+        "name": "siers (rīvēts)",
+        "quantity": 100,
+        "unit": "g"
+      },
+      {
+        "name": "šķiņķis",
+        "quantity": 150,
+        "unit": "g"
+      },
+      {
+        "name": "piena",
+        "quantity": 50,
+        "unit": "ml"
+      },
+      {
+        "name": "sāls",
+        "quantity": 1,
+        "unit": "t. k."
+      },
+      {
+        "name": "pipars",
+        "quantity": 1,
+        "unit": "t. k."
+      }
+    ],
+    "steps": [
+      {
+        "step": 1,
+        "text": "Uzkarsējiet cepeškrāsni līdz 180°C"
+      },
+      {
+        "step": 2,
+        "text": "Saputojiet olas ar pienu"
+      },
+      {
+        "step": 3,
+        "text": "Pievienojiet sagrieztu šķiņķi un sieru"
+      },
+      {
+        "step": 4,
+        "text": "Ielejiet mafinu formās"
+      },
+      {
+        "step": 5,
+        "text": "Cepiet 15 minūtes līdz zeltaini"
+      }
+    ],
+    "diet": [
+      "quick",
+      "high-protein"
+    ],
+    "nutrition": {
+      "calories": 220,
+      "protein_g": 18,
+      "carbs_g": 3,
+      "fat_g": 15
+    },
+    "created_at": "2025-08-15T09:48:37.575Z",
+    "is_premium_only": false,
+    "view_count": 43
+  }
+]
