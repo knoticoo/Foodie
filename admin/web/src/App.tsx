@@ -340,7 +340,7 @@ const RecipesModule: React.FC<{
           <input
             type="text"
             placeholder="Meklēt receptes..."
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full pl-11 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
           />
@@ -570,7 +570,7 @@ const UsersModule: React.FC<{
           <input
             type="text"
             placeholder="Meklēt lietotājus..."
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full pl-11 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
           />
@@ -779,7 +779,7 @@ const CommentsModule: React.FC<{
           <input
             type="text"
             placeholder="Meklēt komentāros..."
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full pl-11 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
           />
@@ -865,6 +865,22 @@ export function App() {
   const [commentsLoading, setCommentsLoading] = useState(false)
   const [jwtToken, setJwtToken] = useState<string>(getJWTFromURL() || localStorage.getItem('JWT_TOKEN') || '')
   const [apiError, setApiError] = useState<string | null>(null)
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [userInfo, setUserInfo] = useState<any>(null)
+
+  const handleLogin = (token: string, userInfo: any) => {
+    setJwtToken(token)
+    setUserInfo(userInfo)
+    setIsAuthenticated(true)
+    localStorage.setItem('JWT_TOKEN', token)
+  }
+
+  const handleLogout = () => {
+    setJwtToken('')
+    setUserInfo(null)
+    setIsAuthenticated(false)
+    localStorage.removeItem('JWT_TOKEN')
+  }
 
   useEffect(() => {
     // Store JWT token in localStorage if available
@@ -878,8 +894,36 @@ export function App() {
     const urlToken = getJWTFromURL()
     if (urlToken && urlToken !== jwtToken) {
       setJwtToken(urlToken)
+      validateToken(urlToken)
+    } else if (jwtToken) {
+      validateToken(jwtToken)
     }
   }, [])
+
+  const validateToken = async (token: string) => {
+    try {
+      const response = await fetch(`${API}/api/auth/me`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      
+      if (response.ok) {
+        const userData = await response.json()
+        if (userData.is_admin) {
+          setUserInfo(userData)
+          setIsAuthenticated(true)
+        } else {
+          // User is not admin, clear token
+          handleLogout()
+        }
+      } else {
+        // Token is invalid, clear it
+        handleLogout()
+      }
+    } catch (error) {
+      console.error('Token validation failed:', error)
+      handleLogout()
+    }
+  }
 
   const buildHeaders = (): HeadersInit => {
     const h: Record<string, string> = {}
@@ -1013,6 +1057,11 @@ export function App() {
     )
   }
 
+  // Show login page if not authenticated
+  if (!isAuthenticated) {
+    return <AdminAuth onLogin={handleLogin} loading={loading} />
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex">
       {/* Mobile Sidebar Backdrop */}
@@ -1130,9 +1179,9 @@ export function App() {
           {!sidebarCollapsed && (
             <div className="space-y-2">
               <div className="flex items-center gap-2">
-                <div className={`w-2 h-2 rounded-full ${jwtToken ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                <div className={`w-2 h-2 rounded-full ${isAuthenticated ? 'bg-green-500' : 'bg-red-500'}`}></div>
                 <label className="text-xs font-medium text-gray-600">
-                  {jwtToken ? 'Pieslēgts kā administrators' : 'Nav autentificēts'}
+                  {isAuthenticated ? `Pieslēgts: ${userInfo?.email || userInfo?.full_name || 'Admin'}` : 'Nav autentificēts'}
                 </label>
               </div>
               {apiError && (
@@ -1154,6 +1203,7 @@ export function App() {
           </motion.button>
           
           <motion.button 
+            onClick={handleLogout}
             className="w-full flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-red-50 rounded-xl transition-colors"
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}

@@ -51,9 +51,9 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
       'focus:outline-none focus:ring-2 focus:ring-offset-1',
       'disabled:opacity-50 disabled:cursor-not-allowed',
              'text-neutral-900 text-left placeholder:text-neutral-500',
-{
-        'pl-11': icon && iconPosition === 'left', // Increased padding to prevent text overlap
-        'pr-11': icon && iconPosition === 'right',
+      {
+        'pl-10': icon && iconPosition === 'left', // Fixed padding to align with icon position
+        'pr-10': icon && iconPosition === 'right',
       }
     )
 
