@@ -1,84 +1,73 @@
 // Service Worker for Virtuves Māksla PWA
-const CACHE_NAME = 'virtuves-maksla-v1';
-const STATIC_CACHE = 'static-v1';
-const DYNAMIC_CACHE = 'dynamic-v1';
-const RECIPES_CACHE = 'recipes-v1';
-const IMAGES_CACHE = 'images-v1';
+const CACHE_NAME = 'virtuves-maksla-v1.2';
+const STATIC_CACHE_NAME = 'virtuves-maksla-static-v1.2';
+const DYNAMIC_CACHE_NAME = 'virtuves-maksla-dynamic-v1.2';
+const API_CACHE_NAME = 'virtuves-maksla-api-v1.2';
 
-// Assets to cache on install
-const STATIC_ASSETS = [
+// URLs to cache on install
+const STATIC_URLS = [
   '/',
-  '/static/css/main.css',
-  '/static/js/main.js',
+  '/recipes',
+  '/favorites',
+  '/profile',
+  '/login',
+  '/register',
   '/manifest.json',
-  '/images/logo.png',
-  '/images/recipe-placeholder.jpg',
-  '/offline.html',
+  '/static/js/bundle.js',
+  '/static/css/main.css',
+  '/icons/icon-192x192.png',
+  '/icons/icon-512x512.png'
 ];
 
 // API endpoints to cache
-const CACHE_STRATEGIES = {
-  recipes: {
-    pattern: /\/api\/recipes/,
-    strategy: 'networkFirst',
-    maxAge: 1000 * 60 * 30, // 30 minutes
-    maxEntries: 100,
-  },
-  images: {
-    pattern: /\.(jpg|jpeg|png|webp|avif|svg)$/,
-    strategy: 'cacheFirst',
-    maxAge: 1000 * 60 * 60 * 24 * 30, // 30 days
-    maxEntries: 200,
-  },
-  static: {
-    pattern: /\.(css|js|woff2?|ttf|eot)$/,
-    strategy: 'cacheFirst',
-    maxAge: 1000 * 60 * 60 * 24 * 365, // 1 year
-    maxEntries: 100,
-  },
-};
+const API_ENDPOINTS = [
+  '/api/recipes',
+  '/api/auth/me',
+  '/api/user/favorites'
+];
 
-// Install event - cache static assets
+// Install event - cache static resources
 self.addEventListener('install', (event) => {
-  console.log('🔧 Service Worker installing...');
+  console.log('[SW] Installing service worker...');
   
   event.waitUntil(
-    Promise.all([
-      caches.open(STATIC_CACHE).then((cache) => {
-        console.log('📦 Caching static assets');
-        return cache.addAll(STATIC_ASSETS);
-      }),
-      self.skipWaiting(),
-    ])
+    caches.open(STATIC_CACHE_NAME)
+      .then((cache) => {
+        console.log('[SW] Caching static assets');
+        return cache.addAll(STATIC_URLS);
+      })
+      .then(() => {
+        console.log('[SW] Skip waiting');
+        return self.skipWaiting();
+      })
+      .catch((error) => {
+        console.error('[SW] Installation failed:', error);
+      })
   );
 });
 
 // Activate event - clean up old caches
 self.addEventListener('activate', (event) => {
-  console.log('✅ Service Worker activating...');
+  console.log('[SW] Activating service worker...');
   
   event.waitUntil(
-    Promise.all([
-      // Clean up old caches
-      caches.keys().then((cacheNames) => {
+    caches.keys()
+      .then((cacheNames) => {
         return Promise.all(
-          cacheNames
-            .filter((cacheName) => {
-              return (
-                cacheName !== STATIC_CACHE &&
-                cacheName !== DYNAMIC_CACHE &&
-                cacheName !== RECIPES_CACHE &&
-                cacheName !== IMAGES_CACHE
-              );
-            })
-            .map((cacheName) => {
-              console.log('🗑️ Deleting old cache:', cacheName);
+          cacheNames.map((cacheName) => {
+            if (cacheName !== STATIC_CACHE_NAME && 
+                cacheName !== DYNAMIC_CACHE_NAME && 
+                cacheName !== API_CACHE_NAME) {
+              console.log('[SW] Deleting old cache:', cacheName);
               return caches.delete(cacheName);
-            })
+            }
+          })
         );
-      }),
-      self.clients.claim(),
-    ])
+      })
+      .then(() => {
+        console.log('[SW] Claiming clients');
+        return self.clients.claim();
+      })
   );
 });
 
@@ -86,480 +75,327 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
+  
+  // Skip non-GET requests and chrome-extension requests
+  if (request.method !== 'GET' || url.protocol === 'chrome-extension:') {
+    return;
+  }
 
-  // Skip non-GET requests
-  if (request.method !== 'GET') return;
+  // Handle API requests
+  if (url.pathname.startsWith('/api/')) {
+    event.respondWith(handleApiRequest(request));
+    return;
+  }
 
-  // Skip chrome-extension and other protocols
-  if (!url.protocol.startsWith('http')) return;
+  // Handle static assets (images, CSS, JS)
+  if (request.destination === 'image' || 
+      request.destination === 'style' || 
+      request.destination === 'script' ||
+      url.pathname.startsWith('/static/') ||
+      url.pathname.startsWith('/icons/')) {
+    event.respondWith(handleStaticAssets(request));
+    return;
+  }
 
-  event.respondWith(handleRequest(request));
+  // Handle navigation requests (HTML pages)
+  if (request.destination === 'document' || request.mode === 'navigate') {
+    event.respondWith(handleNavigationRequest(request));
+    return;
+  }
+
+  // Default: network first with cache fallback
+  event.respondWith(
+    fetch(request)
+      .then((response) => {
+        if (response.status === 200) {
+          const responseClone = response.clone();
+          caches.open(DYNAMIC_CACHE_NAME)
+            .then((cache) => cache.put(request, responseClone));
+        }
+        return response;
+      })
+      .catch(() => {
+        return caches.match(request);
+      })
+  );
 });
 
-// Main request handler
-async function handleRequest(request) {
+// Handle API requests - Network first, cache as fallback
+async function handleApiRequest(request) {
   const url = new URL(request.url);
   
-  // Handle different types of requests
-  if (url.pathname.startsWith('/api/recipes')) {
-    return handleRecipeRequest(request);
-  } else if (isImageRequest(request)) {
-    return handleImageRequest(request);
-  } else if (isStaticAsset(request)) {
-    return handleStaticRequest(request);
-  } else if (isNavigationRequest(request)) {
-    return handleNavigationRequest(request);
-  } else {
-    return handleDynamicRequest(request);
-  }
-}
-
-// Recipe API requests - Network First with fallback
-async function handleRecipeRequest(request) {
-  const cache = await caches.open(RECIPES_CACHE);
-  
   try {
     // Try network first
     const networkResponse = await fetch(request);
     
-    if (networkResponse.ok) {
-      // Cache successful responses
-      cache.put(request, networkResponse.clone());
-      return networkResponse;
+    if (networkResponse.status === 200) {
+      // Cache successful responses for GET requests
+      if (request.method === 'GET') {
+        const cache = await caches.open(API_CACHE_NAME);
+        cache.put(request, networkResponse.clone());
+      }
     }
     
-    throw new Error('Network response not ok');
+    return networkResponse;
   } catch (error) {
-    console.log('📱 Network failed, trying cache for:', request.url);
+    console.log('[SW] Network failed for API request, trying cache:', url.pathname);
     
     // Fallback to cache
-    const cachedResponse = await cache.match(request);
+    const cachedResponse = await caches.match(request);
     if (cachedResponse) {
       return cachedResponse;
     }
     
-    // Return offline fallback for recipe requests
-    return new Response(
-      JSON.stringify({
-        error: 'Offline',
-        message: 'Šī recepte nav pieejama bezsaistē',
-        offline: true,
-      }),
-      {
-        status: 503,
-        headers: { 'Content-Type': 'application/json' },
-      }
-    );
-  }
-}
-
-// Image requests - Cache First
-async function handleImageRequest(request) {
-  const cache = await caches.open(IMAGES_CACHE);
-  
-  // Try cache first
-  const cachedResponse = await cache.match(request);
-  if (cachedResponse) {
-    return cachedResponse;
-  }
-  
-  try {
-    // Fetch from network
-    const networkResponse = await fetch(request);
-    
-    if (networkResponse.ok) {
-      // Cache for future use
-      cache.put(request, networkResponse.clone());
-      return networkResponse;
+    // Return offline fallback for specific endpoints
+    if (url.pathname === '/api/recipes') {
+      return new Response(JSON.stringify({
+        recipes: [],
+        message: 'Offline mode - nav pieejama interneta savienojuma'
+      }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      });
     }
     
-    throw new Error('Network response not ok');
-  } catch (error) {
-    console.log('🖼️ Image failed to load:', request.url);
-    
-    // Return placeholder image
-    return caches.match('/images/recipe-placeholder.jpg');
-  }
-}
-
-// Static assets - Cache First
-async function handleStaticRequest(request) {
-  const cache = await caches.open(STATIC_CACHE);
-  
-  const cachedResponse = await cache.match(request);
-  if (cachedResponse) {
-    return cachedResponse;
-  }
-  
-  try {
-    const networkResponse = await fetch(request);
-    
-    if (networkResponse.ok) {
-      cache.put(request, networkResponse.clone());
-      return networkResponse;
-    }
-    
-    throw new Error('Network response not ok');
-  } catch (error) {
-    console.log('📄 Static asset failed:', request.url);
     throw error;
   }
 }
 
-// Navigation requests - Network First with offline fallback
+// Handle static assets - Cache first
+async function handleStaticAssets(request) {
+  const cachedResponse = await caches.match(request);
+  
+  if (cachedResponse) {
+    return cachedResponse;
+  }
+  
+  try {
+    const networkResponse = await fetch(request);
+    
+    if (networkResponse.status === 200) {
+      const cache = await caches.open(STATIC_CACHE_NAME);
+      cache.put(request, networkResponse.clone());
+    }
+    
+    return networkResponse;
+  } catch (error) {
+    console.log('[SW] Failed to fetch static asset:', request.url);
+    throw error;
+  }
+}
+
+// Handle navigation requests - Network first with offline fallback
 async function handleNavigationRequest(request) {
-  const cache = await caches.open(DYNAMIC_CACHE);
-  
   try {
-    // Try network first
     const networkResponse = await fetch(request);
     
-    if (networkResponse.ok) {
+    if (networkResponse.status === 200) {
+      const cache = await caches.open(DYNAMIC_CACHE_NAME);
       cache.put(request, networkResponse.clone());
-      return networkResponse;
     }
     
-    throw new Error('Network response not ok');
+    return networkResponse;
   } catch (error) {
-    console.log('🌐 Navigation offline, showing cached version');
+    console.log('[SW] Network failed for navigation, trying cache');
     
-    // Try cached version
-    const cachedResponse = await cache.match(request);
+    const cachedResponse = await caches.match(request);
     if (cachedResponse) {
       return cachedResponse;
     }
     
-    // Fallback to offline page
-    return caches.match('/offline.html');
-  }
-}
-
-// Dynamic requests - Network First
-async function handleDynamicRequest(request) {
-  const cache = await caches.open(DYNAMIC_CACHE);
-  
-  try {
-    const networkResponse = await fetch(request);
-    
-    if (networkResponse.ok) {
-      // Limit cache size
-      limitCacheSize(DYNAMIC_CACHE, 50);
-      cache.put(request, networkResponse.clone());
-      return networkResponse;
+    // Return cached index page as fallback for SPA routing
+    const indexPage = await caches.match('/');
+    if (indexPage) {
+      return indexPage;
     }
     
-    throw new Error('Network response not ok');
-  } catch (error) {
-    const cachedResponse = await cache.match(request);
-    if (cachedResponse) {
-      return cachedResponse;
-    }
-    
-    throw error;
+    // Final fallback - minimal offline page
+    return new Response(`
+      <!DOCTYPE html>
+      <html lang="lv">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Virtuves Māksla - Offline</title>
+        <style>
+          body {
+            font-family: system-ui, -apple-system, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-align: center;
+            padding: 20px;
+          }
+          .container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 40px;
+            border-radius: 20px;
+            max-width: 400px;
+          }
+          h1 { margin: 0 0 20px 0; font-size: 2rem; }
+          p { margin: 0 0 20px 0; line-height: 1.6; }
+          button {
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+          }
+          button:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+          }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <h1>🍳 Virtuves Māksla</h1>
+          <p>Atvainojiet, šobrīd nav pieejama interneta savienojuma. Lūdzu, pārbaudiet savienojumu un mēģiniet vēlreiz.</p>
+          <button onclick="location.reload()">Mēģināt vēlreiz</button>
+        </div>
+      </body>
+      </html>
+    `, {
+      status: 200,
+      headers: { 'Content-Type': 'text/html' }
+    });
   }
 }
 
-// Helper functions
-function isImageRequest(request) {
-  return CACHE_STRATEGIES.images.pattern.test(request.url);
-}
-
-function isStaticAsset(request) {
-  return CACHE_STRATEGIES.static.pattern.test(request.url);
-}
-
-function isNavigationRequest(request) {
-  return request.mode === 'navigate';
-}
-
-// Limit cache size
-async function limitCacheSize(cacheName, maxSize) {
-  const cache = await caches.open(cacheName);
-  const keys = await cache.keys();
-  
-  if (keys.length > maxSize) {
-    // Delete oldest entries
-    const keysToDelete = keys.slice(0, keys.length - maxSize);
-    await Promise.all(keysToDelete.map(key => cache.delete(key)));
-  }
-}
-
-// Background sync for offline actions
+// Background sync for forms
 self.addEventListener('sync', (event) => {
-  console.log('🔄 Background sync triggered:', event.tag);
+  console.log('[SW] Background sync triggered:', event.tag);
   
-  if (event.tag === 'recipe-favorite') {
-    event.waitUntil(syncFavorites());
-  } else if (event.tag === 'recipe-rating') {
-    event.waitUntil(syncRatings());
-  } else if (event.tag === 'offline-analytics') {
-    event.waitUntil(syncAnalytics());
+  if (event.tag === 'background-sync-recipe') {
+    event.waitUntil(syncRecipeSubmissions());
+  }
+  
+  if (event.tag === 'background-sync-comment') {
+    event.waitUntil(syncCommentSubmissions());
   }
 });
 
-// Sync offline favorites
-async function syncFavorites() {
+// Sync recipe submissions when back online
+async function syncRecipeSubmissions() {
   try {
-    const favorites = await getStoredActions('favorites');
+    const cache = await caches.open('pending-submissions');
+    const requests = await cache.keys();
     
-    for (const favorite of favorites) {
-      try {
-        await fetch('/api/favorites', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(favorite),
-        });
-        
-        // Remove from offline storage after successful sync
-        await removeStoredAction('favorites', favorite.id);
-      } catch (error) {
-        console.log('Failed to sync favorite:', error);
+    for (const request of requests) {
+      if (request.url.includes('submit-recipe')) {
+        try {
+          await fetch(request);
+          await cache.delete(request);
+          console.log('[SW] Synced recipe submission');
+        } catch (error) {
+          console.log('[SW] Failed to sync recipe submission:', error);
+        }
       }
     }
   } catch (error) {
-    console.log('Background sync failed:', error);
+    console.log('[SW] Background sync failed:', error);
   }
 }
 
-// Sync offline ratings
-async function syncRatings() {
+// Sync comment submissions when back online
+async function syncCommentSubmissions() {
   try {
-    const ratings = await getStoredActions('ratings');
+    const cache = await caches.open('pending-submissions');
+    const requests = await cache.keys();
     
-    for (const rating of ratings) {
-      try {
-        await fetch('/api/ratings', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(rating),
-        });
-        
-        await removeStoredAction('ratings', rating.id);
-      } catch (error) {
-        console.log('Failed to sync rating:', error);
+    for (const request of requests) {
+      if (request.url.includes('comments')) {
+        try {
+          await fetch(request);
+          await cache.delete(request);
+          console.log('[SW] Synced comment submission');
+        } catch (error) {
+          console.log('[SW] Failed to sync comment submission:', error);
+        }
       }
     }
   } catch (error) {
-    console.log('Background sync failed:', error);
+    console.log('[SW] Background sync failed:', error);
   }
 }
 
-// Sync offline analytics
-async function syncAnalytics() {
-  try {
-    const events = await getStoredActions('analytics');
-    
-    for (const event of events) {
-      try {
-        await fetch('/api/analytics', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(event),
-        });
-        
-        await removeStoredAction('analytics', event.id);
-      } catch (error) {
-        console.log('Failed to sync analytics event:', error);
-      }
-    }
-  } catch (error) {
-    console.log('Analytics sync failed:', error);
-  }
-}
-
-// IndexedDB helpers for offline storage
-async function getStoredActions(storeName) {
-  return new Promise((resolve, reject) => {
-    const request = indexedDB.open('OfflineActions', 1);
-    
-    request.onerror = () => reject(request.error);
-    request.onsuccess = () => {
-      const db = request.result;
-      const transaction = db.transaction([storeName], 'readonly');
-      const store = transaction.objectStore(storeName);
-      const getAllRequest = store.getAll();
-      
-      getAllRequest.onsuccess = () => resolve(getAllRequest.result || []);
-      getAllRequest.onerror = () => reject(getAllRequest.error);
-    };
-    
-    request.onupgradeneeded = () => {
-      const db = request.result;
-      if (!db.objectStoreNames.contains(storeName)) {
-        db.createObjectStore(storeName, { keyPath: 'id' });
-      }
-    };
-  });
-}
-
-async function removeStoredAction(storeName, id) {
-  return new Promise((resolve, reject) => {
-    const request = indexedDB.open('OfflineActions', 1);
-    
-    request.onerror = () => reject(request.error);
-    request.onsuccess = () => {
-      const db = request.result;
-      const transaction = db.transaction([storeName], 'readwrite');
-      const store = transaction.objectStore(storeName);
-      const deleteRequest = store.delete(id);
-      
-      deleteRequest.onsuccess = () => resolve();
-      deleteRequest.onerror = () => reject(deleteRequest.error);
-    };
-  });
-}
-
-// Push notification handler
+// Push notifications
 self.addEventListener('push', (event) => {
-  console.log('📱 Push notification received');
+  console.log('[SW] Push notification received');
   
   const options = {
-    body: 'Jaunā recepte ir pieejama!',
-    icon: '/images/logo-192.png',
-    badge: '/images/badge-72.png',
+    body: event.data ? event.data.text() : 'Jaunums Virtuves Mākslā!',
+    icon: '/icons/icon-192x192.png',
+    badge: '/icons/icon-96x96.png',
+    vibrate: [100, 50, 100],
     data: {
-      url: '/recipes',
-      timestamp: Date.now(),
+      dateOfArrival: Date.now(),
+      primaryKey: 1
     },
     actions: [
       {
-        action: 'view',
-        title: 'Skatīt recepti',
-        icon: '/images/view-icon.png',
+        action: 'explore',
+        title: 'Apskatīt',
+        icon: '/icons/icon-96x96.png'
       },
       {
-        action: 'dismiss',
-        title: 'Aizvērt',
-        icon: '/images/close-icon.png',
-      },
-    ],
-    requireInteraction: true,
-    tag: 'new-recipe',
+        action: 'close',
+        title: 'Aizvērt'
+      }
+    ]
   };
-  
-  if (event.data) {
-    const data = event.data.json();
-    options.body = data.body || options.body;
-    options.data = { ...options.data, ...data };
-  }
   
   event.waitUntil(
     self.registration.showNotification('Virtuves Māksla', options)
   );
 });
 
-// Notification click handler
+// Notification click handling
 self.addEventListener('notificationclick', (event) => {
+  console.log('[SW] Notification clicked:', event.action);
+  
   event.notification.close();
   
-  const action = event.action;
-  const data = event.notification.data;
-  
-  if (action === 'dismiss') {
-    return;
-  }
-  
-  // Default action or 'view' action
-  const url = action === 'view' ? data.url : '/';
-  
-  event.waitUntil(
-    clients.matchAll({ type: 'window' }).then((clientList) => {
-      // Try to focus existing tab
-      for (const client of clientList) {
-        if (client.url.includes(url) && 'focus' in client) {
-          return client.focus();
-        }
-      }
-      
-      // Open new tab
-      if (clients.openWindow) {
-        return clients.openWindow(url);
-      }
-    })
-  );
-});
-
-// Message handler for communication with main thread
-self.addEventListener('message', (event) => {
-  const { type, payload } = event.data;
-  
-  switch (type) {
-    case 'SKIP_WAITING':
-      self.skipWaiting();
-      break;
-      
-    case 'CACHE_RECIPE':
-      cacheRecipe(payload);
-      break;
-      
-    case 'CLEAR_CACHE':
-      clearAllCaches();
-      break;
-      
-    case 'GET_CACHE_SIZE':
-      getCacheSize().then(size => {
-        event.ports[0].postMessage({ type: 'CACHE_SIZE', size });
-      });
-      break;
-      
-    default:
-      console.log('Unknown message type:', type);
+  if (event.action === 'explore') {
+    event.waitUntil(
+      clients.openWindow('/')
+    );
   }
 });
 
-// Cache specific recipe
-async function cacheRecipe(recipe) {
-  const cache = await caches.open(RECIPES_CACHE);
-  const recipeUrl = `/api/recipes/${recipe.id}`;
+// Share target handling
+self.addEventListener('fetch', (event) => {
+  const url = new URL(event.request.url);
   
-  // Cache recipe data
-  await cache.put(
-    recipeUrl,
-    new Response(JSON.stringify(recipe), {
-      headers: { 'Content-Type': 'application/json' },
-    })
-  );
-  
-  // Cache recipe image if available
-  if (recipe.image) {
-    try {
-      const imageResponse = await fetch(recipe.image);
-      if (imageResponse.ok) {
-        const imageCache = await caches.open(IMAGES_CACHE);
-        await imageCache.put(recipe.image, imageResponse);
-      }
-    } catch (error) {
-      console.log('Failed to cache recipe image:', error);
-    }
+  if (url.pathname === '/share-recipe' && event.request.method === 'POST') {
+    event.respondWith(handleShareTarget(event.request));
   }
-}
+});
 
-// Clear all caches
-async function clearAllCaches() {
-  const cacheNames = await caches.keys();
-  await Promise.all(cacheNames.map(name => caches.delete(name)));
-  console.log('🗑️ All caches cleared');
-}
-
-// Get total cache size
-async function getCacheSize() {
-  const cacheNames = await caches.keys();
-  let totalSize = 0;
+async function handleShareTarget(request) {
+  const formData = await request.formData();
+  const title = formData.get('title') || '';
+  const description = formData.get('description') || '';
+  const url = formData.get('url') || '';
+  const image = formData.get('image');
   
-  for (const cacheName of cacheNames) {
-    const cache = await caches.open(cacheName);
-    const keys = await cache.keys();
-    
-    for (const key of keys) {
-      const response = await cache.match(key);
-      if (response) {
-        const blob = await response.blob();
-        totalSize += blob.size;
-      }
-    }
-  }
+  // Redirect to submit page with shared data
+  const params = new URLSearchParams({
+    title,
+    description,
+    url
+  });
   
-  return totalSize;
+  return Response.redirect(`/submit?${params.toString()}`, 302);
 }
 
-console.log('🎯 Service Worker loaded successfully');
+console.log('[SW] Service worker loaded successfully');
