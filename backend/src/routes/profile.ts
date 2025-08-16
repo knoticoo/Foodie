@@ -1,9 +1,9 @@
 import { Router, Request, Response } from 'express';
 import { requireAuth } from '../middleware/auth.js';
 import { pgPool } from '../db/pool.js';
-import multer from 'multer';
-import path from 'path';
-import fs from 'fs';
+import * as multer from 'multer';
+import * as path from 'path';
+import * as fs from 'fs';
 
 export const profileRouter = Router();
 
@@ -86,7 +86,7 @@ profileRouter.put('/', requireAuth, async (req: Request, res: Response) => {
 });
 
 // Upload profile picture
-profileRouter.post('/profile-picture', requireAuth, upload.single('profilePicture'), async (req: Request, res: Response) => {
+profileRouter.post('/profile-picture', requireAuth, upload.single('profilePicture'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'No file uploaded' });
