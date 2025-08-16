@@ -229,7 +229,7 @@ const NotFoundPage: React.FC = () => {
             <input
               type="text"
               placeholder="Meklēt receptes..."
-              className="w-full px-4 py-3 pl-12 bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent shadow-sm transition-shadow duration-200"
+              className="w-full px-4 py-3 pl-11 bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent shadow-sm transition-shadow duration-200"
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {
                   const query = (e.target as HTMLInputElement).value;
