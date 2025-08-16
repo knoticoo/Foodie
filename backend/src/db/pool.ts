@@ -43,17 +43,18 @@ class MockDatabase {
     }
     
     // Handle statistics queries
-    if (sql.includes('COUNT(*)') || sql.includes('count(*)')) {
+    if (sql.includes('COUNT(*)') || sql.includes('count(*)') || sql.includes('COUNT(DISTINCT')) {
       if (sql.toLowerCase().includes('users')) {
-        return { rows: [{ count: this.tables.users.length.toString() }], rowCount: 1 };
+        return { rows: [{ count: this.tables.users.length.toString(), total: this.tables.users.length }], rowCount: 1 };
       }
       if (sql.toLowerCase().includes('recipes')) {
-        return { rows: [{ count: this.tables.recipes.length.toString() }], rowCount: 1 };
+        const approvedRecipes = this.tables.recipes.filter(r => r.is_approved === true);
+        return { rows: [{ count: approvedRecipes.length.toString(), total: approvedRecipes.length }], rowCount: 1 };
       }
       if (sql.toLowerCase().includes('comments')) {
-        return { rows: [{ count: this.tables.comments.length.toString() }], rowCount: 1 };
+        return { rows: [{ count: this.tables.comments.length.toString(), total: this.tables.comments.length }], rowCount: 1 };
       }
-      return { rows: [{ count: '0' }], rowCount: 1 };
+      return { rows: [{ count: '0', total: 0 }], rowCount: 1 };
     }
 
     // Handle user queries
@@ -85,6 +86,13 @@ class MockDatabase {
 
     // Handle recipes queries
     if (sql.toLowerCase().includes('recipes')) {
+      // If it's the complex recipes SELECT with JOINs and WHERE is_approved = true
+      if (sql.includes('author_name') || sql.includes('average_rating') || sql.includes('is_approved')) {
+        // Return approved recipes with all the expected fields
+        const approvedRecipes = this.tables.recipes.filter(r => r.is_approved === true);
+        return { rows: approvedRecipes, rowCount: approvedRecipes.length };
+      }
+      // Simple recipe query
       return { rows: this.tables.recipes, rowCount: this.tables.recipes.length };
     }
 
