@@ -1,41 +1,72 @@
 import React, { useState } from 'react'
 import { motion } from 'framer-motion'
-import { ChefHat, Key, LogIn, Eye, EyeOff, AlertCircle } from 'lucide-react'
+import { ChefHat, Mail, Lock, LogIn, Eye, EyeOff, AlertCircle } from 'lucide-react'
+
+// Environment variables - same as main site
+const defaultApiBase = typeof window !== 'undefined'
+  ? `http://${window.location.hostname}:3000`
+  : 'http://127.0.0.1:3000'
+
+const API_BASE_URL = (import.meta as any).env?.VITE_API_BASE_URL ?? defaultApiBase
 
 interface AdminAuthProps {
-  onLogin: (token: string) => void
+  onLogin: (token: string, userInfo: any) => void
   loading?: boolean
-  error?: string
 }
 
-export const AdminAuth: React.FC<AdminAuthProps> = ({ onLogin, loading, error }) => {
-  const [adminKey, setAdminKey] = useState('')
-  const [showKey, setShowKey] = useState(false)
+export const AdminAuth: React.FC<AdminAuthProps> = ({ onLogin, loading }) => {
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [error, setError] = useState('')
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!adminKey.trim()) return
+    if (!email.trim() || !password.trim()) {
+      setError('Lūdzu, ievadiet e-pastu un paroli')
+      return
+    }
 
     setIsSubmitting(true)
+    setError('')
+    
     try {
-      // Validate admin key by making a test request
-      const response = await fetch('/api/admin/stats', {
-        headers: {
-          'Authorization': `Bearer ${adminKey}`
-        }
+      // Step 1: Login with email and password
+      const loginRes = await fetch(`${API_BASE_URL}/api/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
       })
-
-      if (response.ok || response.status === 403) {
-        // Token is valid format, let the main app handle it
-        onLogin(adminKey)
-      } else {
-        throw new Error('Nepareiza admin atslēga')
+      
+      if (!loginRes.ok) {
+        const errorData = await loginRes.json().catch(() => ({ error: 'Nezināma kļūda' }))
+        throw new Error(errorData.error || 'Nepareizi piekļuves dati')
       }
-    } catch (err) {
+      
+      const { token } = await loginRes.json()
+      
+      // Step 2: Check if user has admin privileges
+      const meRes = await fetch(`${API_BASE_URL}/api/auth/me`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      
+      if (!meRes.ok) {
+        throw new Error('Neizdevās pārbaudīt lietotāja datus')
+      }
+      
+      const userInfo = await meRes.json()
+      
+      if (!userInfo.is_admin) {
+        throw new Error('Jums nav administratora tiesību. Sazinieties ar sistēmas administratoru.')
+      }
+      
+      // Success - user is authenticated and has admin privileges
+      onLogin(token, userInfo)
+      
+    } catch (err: any) {
       console.error('Login error:', err)
-      // Still pass the token to main app for now
-      onLogin(adminKey)
+      setError(err.message || 'Pieslēgšanās neizdevās')
     } finally {
       setIsSubmitting(false)
     }
