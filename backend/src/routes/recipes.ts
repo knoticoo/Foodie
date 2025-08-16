@@ -21,7 +21,7 @@ recipesRouter.get('/', cacheMiddleware(1800), async (req, res) => {
     const page = Math.floor(offset / limit) + 1;
 
     // Build filters object for cache key
-    const filters = { sortBy, category, difficulty };
+    const filters: { [key: string]: any } = { sortBy, category, difficulty };
     Object.keys(filters).forEach(key => filters[key] === undefined && delete filters[key]);
 
     // Try cache first for search queries
@@ -498,7 +498,7 @@ recipesRouter.post('/:id/rate', requireAuth, async (req, res) => {
 // Get popular recipes with caching (1 hour cache)
 recipesRouter.get('/popular/trending', cacheMiddleware(3600), async (req, res) => {
   try {
-    const timeframe = req.query.timeframe || 'week';
+    const timeframe = typeof req.query.timeframe === 'string' ? req.query.timeframe : 'week';
     const limit = typeof req.query.limit === 'string' ? Math.min(Number(req.query.limit), 50) : 20;
 
     // Try cache first
@@ -595,7 +595,7 @@ recipesRouter.get('/search/suggestions', async (req, res) => {
       LIMIT 5
     `, [`%${query}%`]);
 
-    suggestions.push(...ingredientRows.map(row => ({
+    suggestions.push(...ingredientRows.map((row: any) => ({
       title: row.ingredient,
       type: 'ingredient'
     })));
