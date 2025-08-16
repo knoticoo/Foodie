@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, Request, Response } from 'express';
 import { requireAuth } from '../middleware/auth.js';
 import { pgPool } from '../db/pool.js';
 import multer from 'multer';
@@ -44,7 +44,7 @@ const upload = multer({
 profileRouter.use(requireAuth);
 
 // Get basic profile data (legacy endpoint)
-profileRouter.get('/', async (req, res) => {
+profileRouter.get('/', requireAuth, async (req: Request, res: Response) => {
   const user = (req as any).user as { id: string };
   const prefsRes = await pgPool.query('SELECT diet_preferences AS dietPreferences, budget_cents AS budgetCents FROM user_preferences WHERE user_id=$1', [user.id]);
   const favsRes = await pgPool.query('SELECT recipe_id FROM favorites WHERE user_id=$1 ORDER BY created_at DESC LIMIT 100', [user.id]);
@@ -56,7 +56,7 @@ profileRouter.get('/', async (req, res) => {
 });
 
 // Update user profile
-profileRouter.put('/', async (req, res) => {
+profileRouter.put('/', requireAuth, async (req: Request, res: Response) => {
   try {
     const user = (req as any).user as { id: string };
     const { name, bio, location, phone, website } = req.body;
@@ -86,7 +86,7 @@ profileRouter.put('/', async (req, res) => {
 });
 
 // Upload profile picture
-profileRouter.post('/profile-picture', upload.single('profilePicture'), async (req, res) => {
+profileRouter.post('/profile-picture', requireAuth, upload.single('profilePicture'), async (req: Request, res: Response) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'No file uploaded' });
@@ -112,7 +112,7 @@ profileRouter.post('/profile-picture', upload.single('profilePicture'), async (r
 });
 
 // Get user stats
-profileRouter.get('/stats', async (req, res) => {
+profileRouter.get('/stats', requireAuth, async (req: Request, res: Response) => {
   try {
     const user = (req as any).user as { id: string };
     
@@ -165,8 +165,8 @@ profileRouter.get('/stats', async (req, res) => {
   }
 });
 
-// Get user's submitted recipes
-profileRouter.get('/recipes', async (req, res) => {
+// Get user's created recipes
+profileRouter.get('/recipes', requireAuth, async (req: Request, res: Response) => {
   try {
     const user = (req as any).user as { id: string };
     const page = parseInt(req.query.page as string) || 1;
@@ -192,7 +192,7 @@ profileRouter.get('/recipes', async (req, res) => {
     );
     
     res.json({
-      recipes: result.rows.map(row => ({
+      recipes: result.rows.map((row: any) => ({
         ...row,
         rating: parseFloat(row.rating) || null,
         rating_count: parseInt(row.rating_count)
@@ -209,7 +209,7 @@ profileRouter.get('/recipes', async (req, res) => {
 });
 
 // Get user's favorite recipes
-profileRouter.get('/favorites', async (req, res) => {
+profileRouter.get('/favorites', requireAuth, async (req: Request, res: Response) => {
   try {
     const user = (req as any).user as { id: string };
     const page = parseInt(req.query.page as string) || 1;
@@ -236,7 +236,7 @@ profileRouter.get('/favorites', async (req, res) => {
     );
     
     res.json({
-      recipes: result.rows.map(row => ({
+      recipes: result.rows.map((row: any) => ({
         ...row,
         rating: parseFloat(row.rating) || null,
         rating_count: parseInt(row.rating_count)
@@ -253,7 +253,7 @@ profileRouter.get('/favorites', async (req, res) => {
 });
 
 // Delete user's recipe
-profileRouter.delete('/recipes/:id', async (req, res) => {
+profileRouter.delete('/recipes/:id', requireAuth, async (req: Request, res: Response) => {
   try {
     const user = (req as any).user as { id: string };
     const recipeId = req.params.id;
@@ -279,7 +279,7 @@ profileRouter.delete('/recipes/:id', async (req, res) => {
 });
 
 // Get user activity feed
-profileRouter.get('/activity', async (req, res) => {
+profileRouter.get('/activity', requireAuth, async (req: Request, res: Response) => {
   try {
     const user = (req as any).user as { id: string };
     const page = parseInt(req.query.page as string) || 1;
