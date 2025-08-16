@@ -155,20 +155,21 @@ export const AdminAuth: React.FC<AdminAuthProps> = ({ onLogin, loading }) => {
               }}>
                 <Mail size={20} />
               </div>
-              <input
+                             <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="admin@example.com"
                 style={{
                   width: '100%',
-                  padding: '12px 44px',
+                  padding: '12px 16px 12px 44px',
                   border: '2px solid #e5e7eb',
                   borderRadius: '12px',
                   fontSize: '16px',
                   outline: 'none',
                   transition: 'all 0.2s ease',
-                  backgroundColor: '#ffffff'
+                  backgroundColor: '#ffffff',
+                  boxSizing: 'border-box'
                 }}
                 onFocus={(e) => {
                   e.target.style.borderColor = '#667eea'
@@ -204,7 +205,7 @@ export const AdminAuth: React.FC<AdminAuthProps> = ({ onLogin, loading }) => {
               }}>
                 <Lock size={20} />
               </div>
-              <input
+                             <input
                 type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -217,7 +218,8 @@ export const AdminAuth: React.FC<AdminAuthProps> = ({ onLogin, loading }) => {
                   fontSize: '16px',
                   outline: 'none',
                   transition: 'all 0.2s ease',
-                  backgroundColor: '#ffffff'
+                  backgroundColor: '#ffffff',
+                  boxSizing: 'border-box'
                 }}
                 onFocus={(e) => {
                   e.target.style.borderColor = '#667eea'
