@@ -50,7 +50,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
       'w-full rounded-lg font-medium transition-all duration-200',
       'focus:outline-none focus:ring-2 focus:ring-offset-1',
       'disabled:opacity-50 disabled:cursor-not-allowed',
-             'text-neutral-900 text-right placeholder:text-neutral-500',
+             'text-neutral-900 text-left placeholder:text-neutral-500',
 {
         'pl-11': icon && iconPosition === 'left', // Increased padding to prevent text overlap
         'pr-11': icon && iconPosition === 'right',
@@ -102,7 +102,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
     } : {}
 
     return (
-      <div className="w-full text-right text-neutral-900">
+      <div className="w-full text-left text-neutral-900">
         {label && (
           <motion.label
             className={cn(

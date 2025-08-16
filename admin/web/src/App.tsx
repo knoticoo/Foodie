@@ -183,27 +183,21 @@ const ServerStatus: React.FC<{ health: any }> = ({ health }) => (
       <Server className="w-5 h-5 text-blue-500" />
       Servera statuss
     </h2>
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-      <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl">
-        <div className={`w-4 h-4 rounded-full animate-pulse ${health ? 'bg-green-500' : 'bg-red-500'}`} />
-        <div>
-          <p className="font-semibold text-gray-900">API Serveris</p>
-          <p className="text-sm text-gray-500">{health ? 'Darbojas' : 'Nedarbojās'}</p>
-        </div>
+    <div className="stats-grid">
+      <div className="stats-card">
+        <div className={`w-4 h-4 rounded-full animate-pulse mx-auto mb-3 ${health ? 'bg-green-500' : 'bg-red-500'}`} />
+        <p className="font-semibold text-gray-900">API Serveris</p>
+        <p className="text-sm text-gray-500">{health ? 'Darbojas' : 'Nedarbojās'}</p>
       </div>
-      <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl">
-        <Database className="w-5 h-5 text-blue-500" />
-        <div>
-          <p className="font-semibold text-gray-900">Datubāze</p>
-          <p className="text-sm text-gray-500">{health ? 'Savienots' : 'Nav savienots'}</p>
-        </div>
+      <div className="stats-card">
+        <Database className="w-5 h-5 text-blue-500 mx-auto mb-3" />
+        <p className="font-semibold text-gray-900">Datubāze</p>
+        <p className="text-sm text-gray-500">{health ? 'Savienots' : 'Nav savienots'}</p>
       </div>
-      <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl">
-        <Clock className="w-5 h-5 text-yellow-500" />
-        <div>
-          <p className="font-semibold text-gray-900">Atbildes laiks</p>
-          <p className="text-sm text-gray-500">{health?.durationMs || 0}ms</p>
-        </div>
+      <div className="stats-card">
+        <Clock className="w-5 h-5 text-yellow-500 mx-auto mb-3" />
+        <p className="font-semibold text-gray-900">Atbildes laiks</p>
+        <p className="text-sm text-gray-500">{health?.durationMs || 0}ms</p>
       </div>
     </div>
   </motion.div>
@@ -323,12 +317,12 @@ const RecipesModule: React.FC<{
 
   return (
     <motion.div variants={fadeInUp} className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+      <div className="page-header">
+        <div className="page-title">
           <BookOpen className="w-5 h-5 text-green-500" />
-          Receptu pārvaldība
-        </h2>
-        <div className="flex items-center gap-3">
+          <h2 className="text-xl font-bold text-gray-900">Receptu pārvaldība</h2>
+        </div>
+        <div className="page-actions">
           <Button variant="secondary" icon={<RefreshCw className="w-4 h-4" />} onClick={onRefresh}>
             Atjaunot
           </Button>
@@ -339,8 +333,8 @@ const RecipesModule: React.FC<{
       </div>
 
       {/* Search and Filter */}
-      <div className="flex flex-col md:flex-row gap-4 mb-6">
-        <div className="flex-1 relative">
+      <div className="search-filter-section">
+        <div className="search-input relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
           <input
             type="text"
@@ -351,7 +345,7 @@ const RecipesModule: React.FC<{
           />
         </div>
         <select
-          className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          className="filter-select px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           value={filter}
           onChange={e => setFilter(e.target.value)}
         >
@@ -363,11 +357,9 @@ const RecipesModule: React.FC<{
       </div>
 
       {loading ? (
-        <div className="flex items-center justify-center py-16">
-          <div className="text-center">
-            <RefreshCw className="w-8 h-8 text-blue-500 animate-spin mx-auto mb-3" />
-            <span className="text-gray-600">Ielādē receptes...</span>
-          </div>
+        <div className="loading-container">
+          <RefreshCw className="w-8 h-8 text-blue-500 animate-spin" />
+          <span className="text-gray-600">Ielādē receptes...</span>
         </div>
       ) : filteredRecipes.length > 0 ? (
         <div className="overflow-x-auto">
@@ -415,7 +407,7 @@ const RecipesModule: React.FC<{
                     {recipe.created_at ? new Date(recipe.created_at).toLocaleDateString('lv-LV') : 'Nezināms'}
                   </td>
                   <td className="py-4 px-4">
-                    <div className="flex gap-2">
+                    <div className="table-actions">
                       <Button 
                         variant="ghost" 
                         size="sm" 
@@ -442,7 +434,7 @@ const RecipesModule: React.FC<{
           </table>
         </div>
       ) : (
-        <div className="text-center py-16">
+        <div className="empty-state">
           <BookOpen className="w-16 h-16 text-gray-300 mx-auto mb-4" />
           <h3 className="text-lg font-semibold text-gray-700 mb-2">
             {searchTerm || filter !== 'all' ? 'Nav atrasts neviens rezultāts' : 'Nav atrasta neviena recepte'}

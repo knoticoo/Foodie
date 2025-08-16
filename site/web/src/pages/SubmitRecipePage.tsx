@@ -332,7 +332,7 @@ export const SubmitRecipePage: React.FC = () => {
                       onChange={(e) => setDescription(e.target.value)}
                       placeholder="Īss receptes apraksts..."
                       rows={4}
-                      className="w-full px-4 py-3 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors resize-none text-neutral-900 text-right placeholder:text-neutral-500"
+                      className="w-full px-4 py-3 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors resize-none text-neutral-900 text-left placeholder:text-neutral-500"
                     />
                   </div>
 
@@ -344,7 +344,7 @@ export const SubmitRecipePage: React.FC = () => {
                       <select
                         value={category}
                         onChange={(e) => setCategory(e.target.value)}
-                        className="w-full px-4 py-3 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-neutral-900 text-right"
+                        className="w-full px-4 py-3 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-neutral-900 text-left"
                       >
                         <option value="">Izvēlieties kategoriju</option>
                         {categories.map((cat) => (
@@ -452,7 +452,7 @@ export const SubmitRecipePage: React.FC = () => {
                         <select
                           value={ingredient.unit || 'g'}
                           onChange={(e) => updateIngredient(idx, 'unit', e.target.value)}
-                          className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-neutral-900 text-right"
+                          className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-neutral-900 text-left"
                         >
                           {units.map(unit => (
                             <option key={unit} value={unit}>{unit}</option>
@@ -512,7 +512,7 @@ export const SubmitRecipePage: React.FC = () => {
                             onChange={(e) => updateStep(idx, e.target.value)}
                             rows={3}
                             required={idx === 0}
-                                                         className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 resize-none text-neutral-900 text-right placeholder:text-neutral-500"
+                                                         className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 resize-none text-neutral-900 text-left placeholder:text-neutral-500"
 />
                           <div className="flex items-center gap-3">
                             {step.image && (
