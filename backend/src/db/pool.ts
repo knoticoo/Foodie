@@ -132,19 +132,120 @@ class MockDatabase {
       created_at: new Date().toISOString()
     });
 
-    // Add some test recipes
+    // Add some detailed test recipes that match the frontend expectations
     this.tables.recipes.push({
       id: 1,
-      title: 'Test Recipe 1',
-      author: 'Admin User',
-      created_at: new Date().toISOString()
+      title: 'Klasiskais Borščs',
+      description: 'Tradicionāls latviešu borščs ar bieti un gaļu',
+      author_name: 'Admin User',
+      author_email: 'admin@test.com',
+      is_approved: true,
+      average_rating: 4.5,
+      rating_count: 12,
+      favorite_count: 8,
+      comment_count: 5,
+      servings: 4,
+      prep_time_minutes: 30,
+      cook_time_minutes: 90,
+      total_time_minutes: 120,
+      difficulty: 'medium',
+      category: 'dinner',
+      cost_cents: 650,
+      cover_image: '/images/borscht.jpg',
+      images: ['/images/borscht.jpg'],
+      ingredients: [
+        {name: 'bietes', quantity: 500, unit: 'g'},
+        {name: 'gaļa', quantity: 300, unit: 'g'},
+        {name: 'kāposti', quantity: 200, unit: 'g'},
+        {name: 'burkāni', quantity: 150, unit: 'g'}
+      ],
+      steps: [
+        {step: 1, text: 'Nomizojiet un sarīvējiet bietes'},
+        {step: 2, text: 'Uzvāriet gaļu ar garšvielām'},
+        {step: 3, text: 'Pievienojiet dārzeņus un vāriet 1 stundu'}
+      ],
+      diet: ['traditional'],
+      nutrition: {calories: 280, protein_g: 18, carbs_g: 25, fat_g: 12},
+      created_at: new Date(Date.now() - 86400000).toISOString(), // yesterday
+      user_id: 1,
+      is_premium_only: false
     });
 
     this.tables.recipes.push({
       id: 2,
-      title: 'Test Recipe 2',
-      author: 'Regular User',
-      created_at: new Date().toISOString()
+      title: 'Veģetārā Quinoa Bļoda',
+      description: 'Veselīga un barojoša quinoa bļoda ar dārzeņiem',
+      author_name: 'Regular User',
+      author_email: 'user@test.com',
+      is_approved: true,
+      average_rating: 4.8,
+      rating_count: 25,
+      favorite_count: 18,
+      comment_count: 12,
+      servings: 2,
+      prep_time_minutes: 15,
+      cook_time_minutes: 25,
+      total_time_minutes: 40,
+      difficulty: 'easy',
+      category: 'lunch',
+      cost_cents: 450,
+      cover_image: '/images/quinoa-bowl.jpg',
+      images: ['/images/quinoa-bowl.jpg'],
+      ingredients: [
+        {name: 'quinoa', quantity: 200, unit: 'g'},
+        {name: 'avokado', quantity: 1, unit: 'gab'},
+        {name: 'tomāti', quantity: 2, unit: 'gab'},
+        {name: 'gurķi', quantity: 1, unit: 'gab'}
+      ],
+      steps: [
+        {step: 1, text: 'Izvāriet quinoa pēc instrukcijas'},
+        {step: 2, text: 'Sagrieziet dārzeņus'},
+        {step: 3, text: 'Sajauciet visas sastāvdaļas bļodā'}
+      ],
+      diet: ['vegetarian', 'healthy'],
+      nutrition: {calories: 380, protein_g: 14, carbs_g: 45, fat_g: 16},
+      created_at: new Date(Date.now() - 43200000).toISOString(), // 12 hours ago
+      user_id: 2,
+      is_premium_only: false
+    });
+
+    this.tables.recipes.push({
+      id: 3,
+      title: 'Mājas Maize',
+      description: 'Svaigi cepta mājas maize ar sēklām',
+      author_name: 'Admin User',
+      author_email: 'admin@test.com',
+      is_approved: true,
+      average_rating: 4.2,
+      rating_count: 8,
+      favorite_count: 6,
+      comment_count: 3,
+      servings: 8,
+      prep_time_minutes: 20,
+      cook_time_minutes: 45,
+      total_time_minutes: 65,
+      difficulty: 'medium',
+      category: 'breakfast',
+      cost_cents: 320,
+      cover_image: '/images/homemade-bread.jpg',
+      images: ['/images/homemade-bread.jpg'],
+      ingredients: [
+        {name: 'milti', quantity: 500, unit: 'g'},
+        {name: 'raugs', quantity: 7, unit: 'g'},
+        {name: 'sāls', quantity: 10, unit: 'g'},
+        {name: 'ūdens', quantity: 350, unit: 'ml'}
+      ],
+      steps: [
+        {step: 1, text: 'Samaisiet sausās sastāvdaļas'},
+        {step: 2, text: 'Pievienojiet ūdeni un izmīciet mīklu'},
+        {step: 3, text: 'Ļaujiet uzbriest 1 stundu'},
+        {step: 4, text: 'Cepiet cepeškrāsnī 45 minūtes'}
+      ],
+      diet: ['traditional'],
+      nutrition: {calories: 220, protein_g: 8, carbs_g: 45, fat_g: 2},
+      created_at: new Date(Date.now() - 172800000).toISOString(), // 2 days ago
+      user_id: 1,
+      is_premium_only: false
     });
   }
 }
